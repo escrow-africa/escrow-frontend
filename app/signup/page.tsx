@@ -15,7 +15,7 @@ export default function Signup() {
             <p >Create your profile to start using the app.</p>
             <div className="flex gap-4 mt-3">
               <div className="w-full">
-                <label htmlFor="full-name">FULL NAME</label>
+                <label htmlFor="full-name" className="tracking-[0.4em]" >FULL NAME</label>
                 <input
                   type="text"
                   placeholder="enter your name"
@@ -25,7 +25,7 @@ export default function Signup() {
               </div>
 
               <div className="w-full">
-                <label htmlFor="phone">PHONE</label>
+                <label htmlFor="phone" className="tracking-[0.4em]" >PHONE</label>
                 <input
                   type="number"
                   placeholder="enter your phone"
@@ -36,7 +36,7 @@ export default function Signup() {
             </div>
 
             <div className="mt-5">
-              <label htmlFor="email">EMAIL</label>
+              <label htmlFor="email" className="tracking-[0.4em]" >EMAIL</label>
               <input
                 type="email"
                 placeholder="enter your email"
@@ -46,7 +46,7 @@ export default function Signup() {
             </div>
 
             <div className="mt-3">
-              <label htmlFor="password">PASSWORD</label>
+              <label htmlFor="password" className="tracking-[0.4em]">PASSWORD</label>
               <input
                 type="password"
                 placeholder="enter your password"
@@ -59,7 +59,7 @@ export default function Signup() {
 
 
           </form>
-          <p className="text-center">HAVE AN ACCOUNT? <a href="/login" className="text-[#F3B659] ml-1">LOGIN</a></p>
+          <p className="text-center tracking-[0.4em] text-xs">HAVE AN ACCOUNT? <a href="/login" className="text-[#F3B659] ml-1">LOGIN</a></p>
 
         </main>
       </div>
