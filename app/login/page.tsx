@@ -8,7 +8,7 @@ export default function Login(){
                  <Image src="/logo.png" alt="Logo" width={70} height={65} />
                  <h1 className="font-bold text-4xl mt-3">
                    LOGIN </h1>
-                 <span className=" text-[#F3B659] font-bold text-4xl mb-5">ACCOUNT</span>
+                 <h1 className=" text-[#F3B659] font-bold text-4xl mb-5">ACCOUNT</h1>
        
        
                  <form action="" className=" w-full text-[#767676]">
