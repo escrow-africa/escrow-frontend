@@ -1,3 +1,4 @@
+import Button from "@/components/Button";
 import Image from "next/image";
 export default function Signup() {
   return (
@@ -55,7 +56,7 @@ export default function Signup() {
               />
             </div>
 
-            <button className="btn w-full my-8 ">CREATE PROFILE</button>
+            <Button>CREATE PROFILE</Button>
 
 
           </form>

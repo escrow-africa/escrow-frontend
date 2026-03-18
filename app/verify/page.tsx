@@ -1,4 +1,5 @@
 "use client"
+import Button from "@/components/Button";
 import { OTPInput } from "input-otp";
 import Image from "next/image";
 
@@ -41,11 +42,7 @@ return (
           />
         </div>
 
-
-        <button className="btn w-full my-6">
-          VERIFY CODE
-
-        </button>
+<Button>VERIFY CODE</Button>
       </form>
       <p className="text-[#767676] text-xs tracking-[0.4em]">RESEND CODE</p>
 

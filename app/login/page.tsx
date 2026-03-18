@@ -1,3 +1,4 @@
+import Button from "@/components/Button";
 import Image from "next/image";
 export default function Login(){
     return(
@@ -35,7 +36,7 @@ export default function Login(){
                      />
                    </div>
        
-                   <button className="btn w-full my-8 ">LOGIN</button>
+                    <Button>LOGIN</Button>
        
        
                  </form>
