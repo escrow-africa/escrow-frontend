@@ -1,4 +1,5 @@
 import Button from "@/components/Button";
+import Input from "@/components/Input";
 import Image from "next/image";
 export default function Login(){
     return(
@@ -18,22 +19,12 @@ export default function Login(){
        
                    <div className="mt-5">
                      <label htmlFor="email" className="tracking-[0.4em]" >EMAIL ADDRESS</label>
-                     <input
-                       type="email"
-                       placeholder="enter your email"
-                       id="email"
-                       className="w-full border border-[#767676] rounded-md py-3 px-2 mt-1"
-                     />
+                     <Input type="email" placeholder="enter your email"  />
                    </div>
        
                    <div className="mt-3">
                      <label htmlFor="password" className="tracking-[0.4em]" >PASSWORD</label>
-                     <input
-                       type="password"
-                       placeholder="enter your password"
-                       id="password"
-                       className="w-full border border-[#767676] rounded-md py-3 px-2 mt-1"
-                     />
+                     <Input type="password" placeholder="enter your password"  />
                    </div>
        
                     <Button>LOGIN</Button>
