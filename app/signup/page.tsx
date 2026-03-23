@@ -41,7 +41,7 @@ const onSubmit = async (data:SignUpData)=>{
           <Image src="/logo.png" alt="Logo" width={70} height={65} />
           <h1 className="font-bold text-4xl mt-3">
             CREATE </h1>
-          <span className=" text-[#F3B659] font-bold text-4xl mb-5">PROFILE</span>
+          <h1 className=" text-[#F3B659] font-bold text-4xl mb-5">PROFILE</h1>
 
 
           <form onSubmit={handleSubmit(onSubmit)} className=" w-full text-[#767676]">

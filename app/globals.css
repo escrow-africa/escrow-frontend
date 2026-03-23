@@ -7,5 +7,19 @@ body {
   
   
 }
+.light {
+  background-color: white;
+}
+
+/* H1 override */
+.light h1 {
+  color: #0B493A;
+}
+
+/* Button override */
+.light button {
+  background-color: #0B493A;
+  color: #F3B659;
+}
 
 
