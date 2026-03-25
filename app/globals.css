@@ -21,5 +21,11 @@ body {
   background-color: #0B493A;
   color: #F3B659;
 }
+/* Override the dark mode primary utility classes */
+.light .bg-black {
+  background-color: white !important;
+}
 
-
+.light .text-white {
+  color: black !important;
+}

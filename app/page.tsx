@@ -6,11 +6,11 @@ import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Home() {
   return (
-    <div className="bg-black text-white ">
+    <div className=" ">
       <div className="pl-2 pt-2">
         <ThemeToggle />
       </div>
-       <Signup /> 
+      <Signup />
       {/* <SelectRole /> */}
     </div>
   );

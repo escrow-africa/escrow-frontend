@@ -8,19 +8,19 @@ type ThemeContextType = {
 
 export const ThemeContext = createContext<ThemeContextType | null>(null);
 
-export default function ThemeProvider({ children }: { children: ReactNode }){
-    const [theme, setTheme]=useState("dark")
+export default function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState("dark")
 
-    const toggleTheme=()=>{
-setTheme((curr)=>(curr==='dark' ? 'light' : 'dark'))
-    }
+  const toggleTheme = () => {
+    setTheme((curr) => (curr === 'dark' ? 'light' : 'dark'))
+  }
 
-    return(
+  return (
 
- <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
       <div className={theme === "light" ? "light" : ""}>
         {children}
       </div>
     </ThemeContext.Provider>
-    )
+  )
 }
