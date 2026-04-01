@@ -1,6 +1,6 @@
 
 import SelectRole from "@/components/SelectRole";
-import Signup from "./signup/page";
+import Signup from "./(auth)/signup/page";
 import ThemeToggle from "@/components/ThemeToggle";
 
 
