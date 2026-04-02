@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import VerifyForm from "@/components/VerifyForm";
 
 export default function VerifyPage() {
-  return <VerifyForm />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyForm />
+    </Suspense>
+  );
 }
