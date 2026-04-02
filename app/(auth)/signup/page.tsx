@@ -7,20 +7,25 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Image from "next/image";
 import Link from "next/link";
-import { registerUser } from "@/components/services/authService";
+
+import { useAuthStore } from "@/store/authStore";
 
 export default function Signup() {
   const router = useRouter()
+  const registerUser = useAuthStore((state)=>state.register);
+const loading = useAuthStore((state)=>state.loading);
+
   const {
   register,
   handleSubmit,
   formState:{errors,isSubmitting}
 } = useForm<SignUpData>();
+
 const onSubmit = async (data:SignUpData)=>{
 
  try{
 
-   await registerUser(data) // temporary
+   await registerUser(data)
 
    toast.success("Account created")
 
@@ -98,7 +103,7 @@ const onSubmit = async (data:SignUpData)=>{
                 
             </div>
 
-            <Button type="submit">{isSubmitting ? "Creating..." : "CREATE PROFILE"}</Button>
+            <Button type="submit" disabled={isSubmitting || loading}>{isSubmitting ? "Creating..." : "CREATE PROFILE"}</Button>
 
 
           </form>
