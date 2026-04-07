@@ -77,6 +77,17 @@ const onSubmit = async (data:SignUpData)=>{
             </div>
 
             <div className="mt-5">
+              <label htmlFor="whatsappPhone" className="tracking-[0.4em]" >WHATSAPP PHONE</label>
+              <Input type="tel" placeholder="enter your whatsapp phone"  {...register("whatsappPhone",{
+   required:"WhatsApp phone number required"
+ })}/>{errors.whatsappPhone && (
+ <p className="text-red-500 text-sm">
+  {errors.whatsappPhone.message}
+ </p>
+)}
+            </div>
+
+            <div className="mt-5">
               <label htmlFor="email" className="tracking-[0.4em]" >EMAIL</label>
               <Input type="email" placeholder="enter your email" {...register("email",{
    required:"Email required"
