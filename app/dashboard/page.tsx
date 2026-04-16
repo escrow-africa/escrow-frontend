@@ -7,6 +7,7 @@ import TransactionList, { Transaction } from "../../components/dashboard/Transac
 import ActiveEscrowsList, { ActiveEscrow } from "../../components/dashboard/ActiveEscrowsList";
 import PremiumReminderModal from "../../components/dashboard/PremiumReminderModal";
 import { TrendingUp, Wallet, ShieldCheck, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // Mock Data for UI presentation. 
 // Replace with actual API fetches in the future.
@@ -27,6 +28,7 @@ const MOCK_ESCROWS: ActiveEscrow[] = [
 export default function DashboardPage() {
   const [userName] = useState("Madeleine");
   const [isReminderOpen, setIsReminderOpen] = useState(false);
+  const router = useRouter();
 
   // In a real app, this might be triggered by a timer or condition
   // useEffect(() => {
@@ -48,11 +50,17 @@ export default function DashboardPage() {
         </div>
         
         <div className="flex gap-4">
-          <button className="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm">
+          <button 
+            onClick={() => router.push('/dashboard/wallet?action=fund')}
+            className="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm"
+          >
             <span className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-current pb-0.5">+</span>
             Fund Wallet
           </button>
-          <button className="px-6 py-2.5 bg-[#0F3D2E] hover:bg-[#185541] rounded-xl text-sm font-semibold text-white transition-colors flex items-center gap-2 shadow-md">
+          <button 
+            onClick={() => router.push('/dashboard/create-escrow')}
+            className="px-6 py-2.5 bg-[#0F3D2E] hover:bg-[#185541] rounded-xl text-sm font-semibold text-white transition-colors flex items-center gap-2 shadow-md"
+          >
             <ShieldCheck size={18} />
             Create Escrow
           </button>
