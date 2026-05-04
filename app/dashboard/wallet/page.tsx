@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import WalletCard from "../../../components/dashboard/WalletCard";
-import PendingFundsCard from "../../../components/dashboard/PendingFundsCard";
-import TransactionHistory, { TransactionItem } from "../../../components/dashboard/TransactionHistory";
-import TransactionDetail from "../../../components/dashboard/TransactionDetail";
-import FundWalletFlow from "../../../components/dashboard/FundWalletFlow";
-import WithdrawFundsFlow from "../../../components/dashboard/WithdrawFundsFlow";
+import WalletCard from "../../../components/dashboard/wallet/WalletCard";
+import PendingFundsCard from "../../../components/dashboard/wallet/PendingFundsCard";
+import TransactionHistory, { TransactionItem } from "../../../components/dashboard/transaction/TransactionHistory";
+import TransactionDetail from "../../../components/dashboard/transaction/TransactionDetail";
+import FundWalletFlow from "../../../components/dashboard/wallet/FundWalletFlow";
+import WithdrawFundsFlow from "../../../components/dashboard/wallet/WithdrawFundsFlow";
 
 // Mock Data representing backend connection eventually
 const MOCK_WALLET_DATA = {

@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
-import Sidebar from "../../components/dashboard/Sidebar";
-import Header from "../../components/dashboard/Header";
+import Sidebar from "../../components/dashboard/layout/Sidebar";
+import Header from "../../components/dashboard/layout/Header";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
@@ -9,10 +9,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <Sidebar />
 
 
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-
+      <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-
 
         <main className="flex-1 overflow-y-auto w-full">
           <div className="mx-auto max-w-7xl px-8 py-8 h-full">
