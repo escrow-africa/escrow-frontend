@@ -4,10 +4,22 @@ import React, { useState } from "react";
 import { Download, ShieldCheck, CheckCircle2, MessageSquare, FileText, AlertCircle, ChevronRight, HelpCircle } from "lucide-react";
 import EscrowTimeline, { TimelineStep } from "../../../../components/dashboard/escrow/EscrowTimeline";
 import MarkDeliveredModal from "../../../../components/dashboard/escrow/MarkDeliveredModal";
+import ExtendDeadlineModal from "../../../../components/dashboard/escrow/ExtendDeadlineModal";
+import TransactionSupportModal from "../../../../components/dashboard/escrow/TransactionSupportModal";
+import VerifyFundsModal from "../../../../components/dashboard/escrow/VerifyFundsModal";
+import TimelineDisputeModal from "../../../../components/dashboard/escrow/TimelineDisputeModal";
+import TechnicalIssueModal from "../../../../components/dashboard/escrow/TechnicalIssueModal";
+import SupportTicketOpenedModal from "../../../../components/dashboard/escrow/SupportTicketOpenedModal";
 import EscrowDetailsDropdown from "../../../../components/dashboard/escrow/EscrowDetailsDropdown";
 
 export default function EscrowDetailsPage({ params }: { params: { id: string } }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+  const [isVerifyFundsModalOpen, setIsVerifyFundsModalOpen] = useState(false);
+  const [isTimelineDisputeModalOpen, setIsTimelineDisputeModalOpen] = useState(false);
+  const [isTechnicalIssueModalOpen, setIsTechnicalIssueModalOpen] = useState(false);
+  const [isTicketOpenedModalOpen, setIsTicketOpenedModalOpen] = useState(false);
 
   // Mock data tailored to the screenshot
   const timelineSteps: TimelineStep[] = [
@@ -25,7 +37,10 @@ export default function EscrowDetailsPage({ params }: { params: { id: string } }
           <h1 className="text-3xl font-bold text-[#0F3D2E]">Escrows</h1>
         </div>
         <div className="flex items-center gap-3">
-          <EscrowDetailsDropdown />
+          <EscrowDetailsDropdown 
+            onExtendDeadline={() => setIsExtendModalOpen(true)}
+            onSupport={() => setIsSupportModalOpen(true)}
+          />
           <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors shadow-sm">
             <Download size={16} />
             Invoice
@@ -160,7 +175,10 @@ export default function EscrowDetailsPage({ params }: { params: { id: string } }
           </div>
 
           {/* Help link */}
-          <button className="bg-white rounded-[16px] p-5 border border-gray-100 shadow-sm flex items-center justify-between group hover:border-gray-200 transition-colors">
+          <button 
+            onClick={() => setIsSupportModalOpen(true)}
+            className="bg-white rounded-[16px] p-5 border border-gray-100 shadow-sm flex items-center justify-between group hover:border-gray-200 transition-colors"
+          >
             <div className="flex items-center gap-2 text-sm font-bold text-gray-700">
               <HelpCircle size={16} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
               Need help with this?
@@ -173,6 +191,60 @@ export default function EscrowDetailsPage({ params }: { params: { id: string } }
 
       {/* Modal Flow */}
       <MarkDeliveredModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <ExtendDeadlineModal isOpen={isExtendModalOpen} onClose={() => setIsExtendModalOpen(false)} />
+      <TransactionSupportModal 
+        isOpen={isSupportModalOpen} 
+        onClose={() => setIsSupportModalOpen(false)} 
+        onSelectOption={(option) => {
+          setIsSupportModalOpen(false);
+          if (option === "payment_verification") {
+            setTimeout(() => setIsVerifyFundsModalOpen(true), 150);
+          } else if (option === "timeline_dispute") {
+            setTimeout(() => setIsTimelineDisputeModalOpen(true), 150);
+          } else if (option === "technical_issue") {
+            setTimeout(() => setIsTechnicalIssueModalOpen(true), 150);
+          }
+        }} 
+      />
+      <VerifyFundsModal 
+        isOpen={isVerifyFundsModalOpen} 
+        onClose={() => setIsVerifyFundsModalOpen(false)} 
+        onSuccess={() => {
+          setIsVerifyFundsModalOpen(false);
+          setTimeout(() => setIsTicketOpenedModalOpen(true), 150);
+        }}
+      />
+      
+      <TimelineDisputeModal 
+        isOpen={isTimelineDisputeModalOpen} 
+        onClose={() => setIsTimelineDisputeModalOpen(false)}
+        onBack={() => {
+          setIsTimelineDisputeModalOpen(false);
+          setTimeout(() => setIsSupportModalOpen(true), 150);
+        }}
+        onSuccess={() => {
+          setIsTimelineDisputeModalOpen(false);
+          setTimeout(() => setIsTicketOpenedModalOpen(true), 150);
+        }}
+      />
+      
+      <TechnicalIssueModal 
+        isOpen={isTechnicalIssueModalOpen} 
+        onClose={() => setIsTechnicalIssueModalOpen(false)}
+        onBack={() => {
+          setIsTechnicalIssueModalOpen(false);
+          setTimeout(() => setIsSupportModalOpen(true), 150);
+        }}
+        onSuccess={() => {
+          setIsTechnicalIssueModalOpen(false);
+          setTimeout(() => setIsTicketOpenedModalOpen(true), 150);
+        }}
+      />
+      
+      <SupportTicketOpenedModal 
+        isOpen={isTicketOpenedModalOpen} 
+        onClose={() => setIsTicketOpenedModalOpen(false)} 
+      />
     </div>
   );
 }

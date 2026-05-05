@@ -80,7 +80,7 @@ export default function EscrowsPage() {
   const filteredEscrows = MOCK_ESCROWS.filter(escrow => escrow.tab === activeTab);
 
   return (
-    <div className="flex flex-col h-full fade-in pb-12">
+    <div className="flex flex-col h-full fade-in pb-12 mb-24">
       {/* Header */}
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -122,42 +122,42 @@ export default function EscrowsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         {/* Tabs */}
         <div className="flex items-center bg-gray-50/50 p-1.5 rounded-[14px] border border-gray-100">
-          <button 
+          <button
             onClick={() => setActiveTab('active')}
             className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'active' ? 'bg-white text-[#0F3D2E] shadow-sm border border-gray-100/50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'}`}
           >
             Active
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('completed')}
             className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'completed' ? 'bg-white text-[#0F3D2E] shadow-sm border border-gray-100/50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'}`}
           >
             Completed
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('disputed')}
             className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'disputed' ? 'bg-white text-[#0F3D2E] shadow-sm border border-gray-100/50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'}`}
           >
             Disputed
           </button>
         </div>
-        
+
         {/* Search Bar */}
         <div className="relative w-full sm:w-[320px]">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Search ID or buyer..." 
+          <input
+            type="text"
+            placeholder="Search ID or buyer..."
             className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0F3D2E]/20 focus:border-[#0F3D2E]/30 transition-all placeholder:text-gray-400 font-medium"
           />
         </div>
       </div>
 
       {/* Escrows Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         {filteredEscrows.map(escrow => (
-          <EscrowCard 
-            key={escrow.id} 
+          <EscrowCard
+            key={escrow.id}
             id={escrow.id}
             displayId={escrow.displayId}
             partnerName={escrow.partnerName}

@@ -1,26 +1,38 @@
+"use client";
 
 import Image from "next/image";
 import { Search, Bell, User } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 interface HeaderProps {
-  title?: string;
   userName?: string;
   userRole?: string;
   avatarUrl?: string;
 }
 
 export default function Header({
-  title = "Dashboard",
   userName = "Madeleine Nkiru",
   userRole = "Verified Seller",
   avatarUrl = "",
 }: HeaderProps) {
+  const pathname = usePathname() || "";
+  
+  // Determine title based on current path
+  let title = "Dashboard";
+  if (pathname.includes("/dashboard/escrows")) title = "Escrows";
+  else if (pathname.includes("/dashboard/wallet")) title = "Wallet";
+  else if (pathname.includes("/dashboard/create-escrow")) title = "Create Escrow";
+  else if (pathname.includes("/dashboard/disputes")) title = "Disputes";
+  else if (pathname.includes("/dashboard/notifications")) title = "Notifications";
+  else if (pathname.includes("/dashboard/settings")) title = "Settings";
+  else if (pathname.includes("/dashboard/help")) title = "Help";
+
   return (
     <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 z-10 w-full">
       {/* Page Title */}
       <div>
-        <h1 className="text-2xl font-bold text-[#0F3D2E]">{title}</h1>
-        <div className="w-12 h-1 bg-[#0F3D2E] rounded-full mt-1"></div>
+        <h1 className="text-2xl font-bold text-[#0F3D2E] capitalize">{title}</h1>
+        <div className="w-12 h-1 bg-[#F3B659] rounded-full mt-1"></div>
       </div>
 
       {/* Right Side Tools */}

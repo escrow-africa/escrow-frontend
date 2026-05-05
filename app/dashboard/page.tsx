@@ -33,7 +33,7 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="flex flex-col h-full fade-in pb-12">
+    <div className="flex flex-col h-full fade-in pb-24">
       {/* Welcome Section */}
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -102,7 +102,7 @@ export default function DashboardPage() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column (Transactions & Quick Actions) */}
-        <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-8">
+        <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-8 mb-8">
           <QuickActions />
           <TransactionList transactions={MOCK_TRANSACTIONS} />
         </div>
