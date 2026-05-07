@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { ShieldCheck, Clock, Search } from "lucide-react";
 import EscrowStatCard from "../../../components/dashboard/escrow/EscrowStatCard";
 import EscrowCard, { EscrowStatus } from "../../../components/dashboard/escrow/EscrowCard";
@@ -87,10 +88,10 @@ export default function EscrowsPage() {
           <h1 className="text-3xl font-bold text-[#0F3D2E] mb-2">Escrow Lab</h1>
           <p className="text-gray-500 text-sm">Securely manage your high-value transactions</p>
         </div>
-        <button className="px-6 py-2.5 bg-[#0F3D2E] hover:bg-[#185541] rounded-xl text-sm font-semibold text-white transition-colors flex items-center gap-2 shadow-md">
+        <Link href="/dashboard/create-escrow" className="px-6 py-2.5 bg-[#0F3D2E] hover:bg-[#185541] rounded-xl text-sm font-semibold text-white transition-colors flex items-center gap-2 shadow-md">
           <ShieldCheck size={18} />
           Create New Escrow
-        </button>
+        </Link>
       </div>
 
       {/* Stats Row */}

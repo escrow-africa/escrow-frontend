@@ -15,6 +15,97 @@ import LegalAgreementModal from "../../../../components/dashboard/escrow/LegalAg
 import CancelEscrowModal from "../../../../components/dashboard/escrow/CancelEscrowModal";
 import ProofOfDeliveryModal from "../../../../components/dashboard/escrow/ProofOfDeliveryModal";
 
+// Types for escrow data
+type EscrowStatus = "RELEASED" | "IN_DISPUTE" | "SECURED" | "IN_REVIEW";
+
+interface EscrowDetail {
+  id: string;
+  status: EscrowStatus;
+  customerName: string;
+  customerInitial: string;
+  lockedFunds: string;
+  milestone: string;
+  baseAmount: string;
+  platformFee: string;
+  payout: string;
+  timelineSteps: TimelineStep[];
+  managementType: "awaiting-delivery" | "awaiting-review" | "in-dispute";
+}
+
+// Mock data for different escrow states - Replace with real backend data later
+const escrowDataMap: Record<string, EscrowDetail> = {
+  "ESC-103": {
+    id: "ESC-103",
+    status: "RELEASED",
+    customerName: "Charlie Man",
+    customerInitial: "C",
+    lockedFunds: "₦200,150",
+    milestone: "Social Media Graphics",
+    baseAmount: "₦200,150",
+    platformFee: "-₦1,050",
+    payout: "₦199,100.00",
+    timelineSteps: [
+      { title: "Escrow Created", date: "Mar 20, 2026", status: "completed" },
+      { title: "Funds Deposited", date: "Mar 22, 2026", status: "completed" },
+      { title: "Delivered", date: "Mar 24, 2026", status: "completed" },
+      { title: "Funds Released", date: "Mar 30, 2026", status: "completed" },
+    ],
+    managementType: "awaiting-delivery",
+  },
+  "ESC-101": {
+    id: "ESC-101",
+    status: "SECURED",
+    customerName: "Madeleine Nkiru",
+    customerInitial: "M",
+    lockedFunds: "₦52,150",
+    milestone: "Logo Design Service",
+    baseAmount: "₦52,150",
+    platformFee: "-₦1,050",
+    payout: "₦51,100.00",
+    timelineSteps: [
+      { title: "Escrow Created", date: "Mar 20, 2026", status: "completed" },
+      { title: "Funds Deposited", date: "Mar 22, 2026", status: "completed" },
+      { title: "Awaiting Delivery", date: "Mar 30, 2026", status: "current" },
+    ],
+    managementType: "awaiting-delivery",
+  },
+  "ESC-104": {
+    id: "ESC-104",
+    status: "IN_DISPUTE",
+    customerName: "David Charles",
+    customerInitial: "D",
+    lockedFunds: "₦250,150",
+    milestone: "Mobile App Prototype",
+    baseAmount: "₦250,150",
+    platformFee: "-₦1,050",
+    payout: "₦249,100.00",
+    timelineSteps: [
+      { title: "Escrow Created", date: "Mar 20, 2026", status: "completed" },
+      { title: "Funds Deposited", date: "Mar 22, 2026", status: "completed" },
+      { title: "Dispute Raised", date: "Mar 30, 2026", status: "completed" },
+    ],
+    managementType: "in-dispute",
+  },
+  "ESC-102": {
+    id: "ESC-102",
+    status: "IN_REVIEW",
+    customerName: "Ruby Thomas",
+    customerInitial: "R",
+    lockedFunds: "₦202,150",
+    milestone: "E-commerce website",
+    baseAmount: "₦202,150",
+    platformFee: "-₦1,050",
+    payout: "₦201,100.00",
+    timelineSteps: [
+      { title: "Escrow Created", date: "Mar 20, 2026", status: "completed" },
+      { title: "Funds Deposited", date: "Mar 22, 2026", status: "completed" },
+      { title: "Item Marked Delivered", date: "Mar 26, 2026", status: "completed" },
+      { title: "Inspection Period", date: "Mar 30, 2026", status: "current" },
+    ],
+    managementType: "awaiting-review",
+  },
+};
+
 export default function EscrowDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,21 +119,9 @@ export default function EscrowDetailsPage({ params }: { params: Promise<{ id: st
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
 
-  const isReviewState = unwrappedParams.id === "ESC-102";
-
-  // Mock data tailored to the screenshot
-  const timelineSteps: TimelineStep[] = isReviewState 
-    ? [
-        { title: "Escrow Created", date: "Mar 20, 2026", status: "completed" },
-        { title: "Funds Deposited", date: "Mar 22, 2026", status: "completed" },
-        { title: "Item Marked Delivered", date: "Mar 26, 2026", status: "completed" },
-        { title: "Inspection Period", date: "Mar 30, 2026", status: "current" },
-      ]
-    : [
-        { title: "Escrow Created", date: "Mar 20, 2026", status: "completed" },
-        { title: "Funds Deposited", date: "Mar 22, 2026", status: "completed" },
-        { title: "Awaiting Delivery", date: "Mar 30, 2026", status: "current" },
-      ];
+  // Get escrow data from mock map (replace with API call later)
+  const escrow = escrowDataMap[unwrappedParams.id] || escrowDataMap["ESC-102"];
+  const timelineSteps = escrow.timelineSteps;
 
   return (
     <div className="flex flex-col h-full fade-in pb-12 max-w-6xl mx-auto">
@@ -77,23 +156,34 @@ export default function EscrowDetailsPage({ params }: { params: Promise<{ id: st
             {/* Header Section */}
             <div className="flex justify-between items-start mb-10 pb-10 border-b border-gray-100">
               <div className="flex gap-4">
-                <div className={`w-14 h-14 rounded-2xl ${isReviewState ? 'bg-gray-100' : 'bg-[#E6F4EA]'} flex items-center justify-center text-xl font-bold ${isReviewState ? 'text-[#0F3D2E]' : 'text-[#0F3D2E]'}`}>
-                  {isReviewState ? 'R' : 'M'}
+                <div className={`w-14 h-14 rounded-2xl ${escrow.status === "RELEASED" ? 'bg-gray-100' : escrow.status === "IN_DISPUTE" ? 'bg-red-100' : 'bg-[#E6F4EA]'} flex items-center justify-center text-xl font-bold text-[#0F3D2E]`}>
+                  {escrow.customerInitial}
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`px-2 py-0.5 rounded-full ${isReviewState ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} text-[10px] font-bold tracking-wider uppercase flex items-center gap-1`}>
-                      {isReviewState ? <Truck size={10} className="hidden" /> : <ShieldCheck size={10} />}
-                      {isReviewState ? <><Truck size={10} className="mr-0.5"/> IN REVIEW</> : 'SECURED'}
+                    <span className={`px-2 py-0.5 rounded-full ${
+                      escrow.status === "RELEASED" ? 'bg-green-50 text-green-600' :
+                      escrow.status === "IN_DISPUTE" ? 'bg-red-50 text-red-600' :
+                      escrow.status === "IN_REVIEW" ? 'bg-orange-50 text-orange-600' :
+                      'bg-blue-50 text-blue-600'
+                    } text-[10px] font-bold tracking-wider uppercase flex items-center gap-1`}>
+                      {escrow.status === "IN_DISPUTE" && <AlertCircle size={10} className="mr-0.5" />}
+                      {escrow.status === "IN_REVIEW" && <Truck size={10} className="mr-0.5" />}
+                      {escrow.status === "RELEASED" && <CheckCircle2 size={10} className="mr-0.5" />}
+                      {escrow.status === "SECURED" && <ShieldCheck size={10} />}
+                      {escrow.status === "RELEASED" ? "RELEASED" :
+                       escrow.status === "IN_DISPUTE" ? "IN DISPUTE" :
+                       escrow.status === "IN_REVIEW" ? "IN REVIEW" :
+                       "SECURED"}
                     </span>
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-0.5">{isReviewState ? 'Ruby Thomas' : 'Madeleine Nkiru'}</h2>
-                  <p className="text-xs text-gray-400 font-medium">TRANSACTION ID: #{unwrappedParams.id}</p>
+                  <h2 className="text-xl font-bold text-gray-900 mb-0.5">{escrow.customerName}</h2>
+                  <p className="text-xs text-gray-400 font-medium">TRANSACTION ID: #{escrow.id}</p>
                 </div>
               </div>
               <div className="text-right bg-[#F8FAF9] px-5 py-3 rounded-2xl">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Locked Funds</p>
-                <p className="text-2xl font-bold text-[#0F3D2E]">{isReviewState ? '₦202,150' : '₦52,150'}</p>
+                <p className="text-2xl font-bold text-[#0F3D2E]">{escrow.lockedFunds}</p>
               </div>
             </div>
 
@@ -110,7 +200,7 @@ export default function EscrowDetailsPage({ params }: { params: Promise<{ id: st
                   <div className="w-6 h-6 rounded-full bg-[#E6F4EA] flex items-center justify-center text-[#00A859]">
                     <CheckCircle2 size={14} />
                   </div>
-                  <span className="text-sm font-bold text-gray-900">{isReviewState ? 'E-commerce website' : 'Logo Design Service'}</span>
+                  <span className="text-sm font-bold text-gray-900">{escrow.milestone}</span>
                 </div>
               </div>
 
@@ -123,15 +213,15 @@ export default function EscrowDetailsPage({ params }: { params: Promise<{ id: st
                 <div className="bg-[#F8FAF9] rounded-xl p-5 border border-gray-100">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-sm font-medium text-gray-500">Base Amount</span>
-                    <span className="text-sm font-bold text-gray-900">{isReviewState ? '₦202,150' : '₦52,150'}</span>
+                    <span className="text-sm font-bold text-gray-900">{escrow.baseAmount}</span>
                   </div>
                   <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
                     <span className="text-sm font-medium text-gray-500">Platform Fee (1.5%)</span>
-                    <span className="text-sm font-bold text-red-500">-₦1,050</span>
+                    <span className="text-sm font-bold text-red-500">{escrow.platformFee}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-bold text-gray-900 uppercase tracking-wider">Your Payout</span>
-                    <span className="text-lg font-bold text-[#00A859]">{isReviewState ? '₦201,100.00' : '₦51,100.00'}</span>
+                    <span className="text-lg font-bold text-[#00A859]">{escrow.payout}</span>
                   </div>
                 </div>
               </div>
@@ -150,7 +240,7 @@ export default function EscrowDetailsPage({ params }: { params: Promise<{ id: st
           <div className="bg-white rounded-[20px] p-6 border border-gray-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] text-center flex flex-col items-center">
             <h3 className="text-lg font-bold text-gray-900 mb-6">Management Center</h3>
             
-            {isReviewState ? (
+            {escrow.managementType === "awaiting-review" ? (
               <div className="w-full bg-[#FFF9F2] border border-[#FFE8CC] rounded-xl p-5 mb-4 text-left">
                 <div className="flex items-center gap-2 mb-3">
                   <Lock size={16} className="text-[#F5A623]" />
@@ -171,7 +261,7 @@ export default function EscrowDetailsPage({ params }: { params: Promise<{ id: st
                   </button>
                 </div>
               </div>
-            ) : (
+            ) : escrow.status === "SECURED" ? (
               <button 
                 onClick={() => setIsModalOpen(true)}
                 className="w-full flex justify-center items-center gap-2 bg-[#0F3D2E] hover:bg-[#185541] text-white font-semibold py-3.5 rounded-xl transition-colors mb-4"
@@ -181,7 +271,7 @@ export default function EscrowDetailsPage({ params }: { params: Promise<{ id: st
                 </div>
                 Mark as Delivered
               </button>
-            )}
+            ) : null}
             
             <div className="grid grid-cols-2 gap-4 w-full mb-6 pb-6 border-b border-gray-100">
               <button className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
@@ -221,7 +311,7 @@ export default function EscrowDetailsPage({ params }: { params: Promise<{ id: st
           {/* Help link */}
           <button 
             onClick={() => setIsSupportModalOpen(true)}
-            className="bg-white rounded-[16px] p-5 border border-gray-100 shadow-sm flex items-center justify-between group hover:border-gray-200 transition-colors"
+            className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center justify-between group hover:border-gray-200 transition-colors"
           >
             <div className="flex items-center gap-2 text-sm font-bold text-gray-700">
               <HelpCircle size={16} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
