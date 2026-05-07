@@ -21,7 +21,7 @@ interface MockEscrow {
 
 const MOCK_ESCROWS: MockEscrow[] = [
   {
-    id: "1",
+    id: "ESC-103",
     displayId: "#ESC-103",
     partnerName: "Charlie Man",
     avatarInitials: "C",
@@ -34,7 +34,7 @@ const MOCK_ESCROWS: MockEscrow[] = [
     tab: "completed"
   },
   {
-    id: "2",
+    id: "ESC-101",
     displayId: "#ESC-101",
     partnerName: "Madeleine Nkiru",
     avatarInitials: "M",
@@ -47,7 +47,7 @@ const MOCK_ESCROWS: MockEscrow[] = [
     tab: "active"
   },
   {
-    id: "3",
+    id: "ESC-102",
     displayId: "#ESC-102",
     partnerName: "Ruby Thomas",
     avatarInitials: "R",
@@ -60,7 +60,7 @@ const MOCK_ESCROWS: MockEscrow[] = [
     tab: "active"
   },
   {
-    id: "4",
+    id: "ESC-104",
     displayId: "#ESC-104",
     partnerName: "David Charles",
     avatarInitials: "D",

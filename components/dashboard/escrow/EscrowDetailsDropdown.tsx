@@ -4,9 +4,16 @@ import { MoreVertical, Calendar, Edit3, HelpCircle, FileText, XSquare } from "lu
 interface EscrowDetailsDropdownProps {
   onExtendDeadline?: () => void;
   onSupport?: () => void;
+  onViewContract?: () => void;
+  onCancelEscrow?: () => void;
 }
 
-export default function EscrowDetailsDropdown({ onExtendDeadline, onSupport }: EscrowDetailsDropdownProps) {
+export default function EscrowDetailsDropdown({ 
+  onExtendDeadline, 
+  onSupport,
+  onViewContract,
+  onCancelEscrow
+}: EscrowDetailsDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -62,14 +69,20 @@ export default function EscrowDetailsDropdown({ onExtendDeadline, onSupport }: E
             Transaction Support
           </button>
           
-          <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left">
+          <button 
+            onClick={() => handleAction(onViewContract)}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
+          >
             <FileText size={16} className="text-gray-400" />
             View Legal Contract
           </button>
           
           <div className="h-px bg-gray-100 my-1 w-full" />
           
-          <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 transition-colors text-left">
+          <button 
+            onClick={() => handleAction(onCancelEscrow)}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 transition-colors text-left"
+          >
             <XSquare size={16} />
             Cancel Escrow
           </button>
