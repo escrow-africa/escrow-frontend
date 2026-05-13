@@ -7,27 +7,36 @@ import TransactionHistory, { TransactionItem } from "../../../components/dashboa
 import TransactionDetail from "../../../components/dashboard/transaction/TransactionDetail";
 import FundWalletFlow from "../../../components/dashboard/wallet/FundWalletFlow";
 import WithdrawFundsFlow from "../../../components/dashboard/wallet/WithdrawFundsFlow";
-
-// Mock Data representing backend connection eventually
-const MOCK_WALLET_DATA = {
-  balance: "400,200.50",
-  accountNumber: "**** **** 4290",
-  expiryDate: "12 / 28",
-  cardHolder: "Madeleine Nkiru",
-  pendingProcessing: "350,000.00",
-  pendingActive: "53,500.00",
-};
-
-const MOCK_TRANSACTIONS: TransactionItem[] = [
-  { id: "TX-9021", title: "Escrow payout from John Doe", date: "3/20/2026, 6:30:00 AM", amount: "700,000.00", type: "in", status: "COMPLETED", paymentMethod: "GAfrica Wallet" },
-  { id: "TX-9022", title: "Withdrawal to GTBank", date: "3/20/2026, 8:15:00 AM", amount: "400,000.00", type: "out", status: "PENDING", paymentMethod: "Bank Transfer" },
-  { id: "TX-9023", title: "Ad Promotion: Premium UI Kit", date: "3/20/2026, 12:45:00 PM", amount: "200,000.00", type: "in", status: "COMPLETED", paymentMethod: "Card" },
-  { id: "TX-9024", title: "Ad Promotion: Premium UI Kit", date: "3/20/2026, 1:20:00 PM", amount: "200,000.00", type: "in", status: "COMPLETED", paymentMethod: "Card" },
-];
+import { useWalletStore } from "../../../store/walletStore";
 
 export default function WalletPage() {
   const [viewState, setViewState] = useState<"overview" | "transaction_detail" | "fund_wallet" | "withdraw_funds">("overview");
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionItem | null>(null);
+
+  const { walletDetails, isLoading, error, fetchWalletDetails } = useWalletStore();
+
+  const getUserIdFromToken = () => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const payload = token.split(".")[1];
+          const decoded = JSON.parse(atob(payload));
+          return decoded.userId || decoded.id || decoded.sub;
+        } catch (e) {
+          return null;
+        }
+      }
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    const userId = getUserIdFromToken();
+    if (userId) {
+      fetchWalletDetails(userId);
+    }
+  }, [fetchWalletDetails]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -58,11 +67,28 @@ export default function WalletPage() {
     setViewState("overview");
   };
 
+  // Safe fallbacks if wallet details are missing or loading
+  const balance = walletDetails?.balance?.toLocaleString() || "0.00";
+  const pendingProcessing = walletDetails?.pendingProcessing?.toLocaleString() || "0.00";
+  const pendingActive = walletDetails?.pendingActive?.toLocaleString() || "0.00";
+  const virtualAccount = walletDetails?.virtualAccount || {
+    accountNumber: "**** **** ****",
+    accountName: "Loading...",
+    bankName: "..."
+  };
+  const transactions = walletDetails?.transactions || [];
+
   return (
     <div className="flex flex-col h-full fade-in pb-12 w-full pt-2">
-      <div className="mb-8">
+      <div className="mb-8 flex justify-between items-center">
         <h1 className="text-3xl font-bold text-[#0F3D2E]">Wallet</h1>
       </div>
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 text-red-500 rounded-xl">
+          {error}
+        </div>
+      )}
 
       {viewState === "transaction_detail" && selectedTransaction ? (
         <div className="mt-8">
@@ -73,7 +99,7 @@ export default function WalletPage() {
         </div>
       ) : viewState === "fund_wallet" ? (
         <div className="flex h-full items-center justify-center mt-8 pb-12">
-          <FundWalletFlow onComplete={handleBackToOverview} />
+          <FundWalletFlow onComplete={handleBackToOverview} userId={getUserIdFromToken()} />
         </div>
       ) : viewState === "withdraw_funds" ? (
         <div className="flex h-full items-center justify-center mt-8 pb-12">
@@ -87,10 +113,10 @@ export default function WalletPage() {
             <div className="lg:col-span-8 flex">
               <div className="w-full">
                 <WalletCard
-                  balance={MOCK_WALLET_DATA.balance}
-                  accountNumber={MOCK_WALLET_DATA.accountNumber}
-                  expiryDate={MOCK_WALLET_DATA.expiryDate}
-                  cardHolder={MOCK_WALLET_DATA.cardHolder}
+                  balance={balance}
+                  accountNumber={virtualAccount.accountNumber}
+                  expiryDate=""
+                  cardHolder={virtualAccount.accountName}
                   onFundWallet={handleFundWallet}
                   onWithdrawFunds={handleWithdrawFunds}
                 />
@@ -100,14 +126,14 @@ export default function WalletPage() {
             {/* Pending Cards Stack */}
             <div className="lg:col-span-4 flex flex-col gap-6">
               <PendingFundsCard
-                amount={MOCK_WALLET_DATA.pendingProcessing}
+                amount={pendingProcessing}
                 statusText="PROCESSING (24-48H)"
                 type="processing"
                 onActionClick={() => console.log("Details processing")}
               />
               <PendingFundsCard
-                amount={MOCK_WALLET_DATA.pendingActive}
-                statusText="4 ACTIVE TRANSACTIONS"
+                amount={pendingActive}
+                statusText="ACTIVE ESCROW TRANSACTIONS"
                 type="active"
                 onActionClick={() => console.log("Manage active")}
               />
@@ -117,7 +143,7 @@ export default function WalletPage() {
           {/* Bottom Section - Transaction History */}
           <div className="w-full">
             <TransactionHistory 
-              transactions={MOCK_TRANSACTIONS}
+              transactions={transactions}
               onSelectTransaction={handleTransactionSelect}
             />
           </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Building2, ShieldCheck, CheckCircle2, ChevronDown, Smartphone, Check, CreditCard, Download } from "lucide-react";
+import { useWalletStore, Bank } from "../../../store/walletStore";
 
 interface WithdrawFundsFlowProps {
   onComplete: () => void;
@@ -10,23 +11,28 @@ export default function WithdrawFundsFlow({ onComplete }: WithdrawFundsFlowProps
   const [amount, setAmount] = useState<string>("");
   
   // Bank Details
-  const [bank, setBank] = useState<string>("");
+  const [bankCode, setBankCode] = useState<string>("");
   const [accountNumber, setAccountNumber] = useState<string>("");
   const [isVerified, setIsVerified] = useState<boolean>(false);
 
   // Security
   const [pin, setPin] = useState<string>("");
 
-  const availableBalance = 150200.50;
+  const { banks, fetchBankList, walletDetails } = useWalletStore();
+  const availableBalance = walletDetails?.balance || 0;
+
+  useEffect(() => {
+    fetchBankList();
+  }, [fetchBankList]);
 
   // Auto verify account mock
   useEffect(() => {
-    if (bank && accountNumber.length >= 10) {
+    if (bankCode && accountNumber.length >= 10) {
       setIsVerified(true);
     } else {
       setIsVerified(false);
     }
-  }, [bank, accountNumber]);
+  }, [bankCode, accountNumber]);
 
   // Mock processing delay for success
   useEffect(() => {
@@ -39,7 +45,7 @@ export default function WithdrawFundsFlow({ onComplete }: WithdrawFundsFlowProps
   }, [step]);
 
   const handleWithdrawAll = () => {
-    setAmount("150,200.50");
+    setAmount(availableBalance.toString());
   };
 
   const handleContinueToBank = () => {
@@ -57,6 +63,8 @@ export default function WithdrawFundsFlow({ onComplete }: WithdrawFundsFlowProps
   const numAmount = parseFloat(amount.replace(/,/g, '')) || 0;
   const fee = numAmount * 0.015;
   const totalReceive = numAmount - fee;
+
+  const selectedBank = banks.find(b => b.code === bankCode);
 
   return (
     <div className="w-full max-w-md mx-auto pt-8">
@@ -84,14 +92,10 @@ export default function WithdrawFundsFlow({ onComplete }: WithdrawFundsFlowProps
                   placeholder="0.00"
                   className="w-full bg-gray-50/50 border border-gray-100 text-gray-900 font-bold text-lg rounded-xl py-4 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-[#0F3D2E]/20"
                 />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center justify-center text-gray-400">
-                  <span className="text-[10px] leading-[8px] cursor-pointer hover:text-gray-600">▲</span>
-                  <span className="text-[10px] leading-[8px] cursor-pointer hover:text-gray-600 focus:text-gray-600">▼</span>
-                </div>
               </div>
 
               <div className="flex justify-between items-center mt-3 px-1">
-                <span className="text-xs text-gray-500 font-medium">Available: ₦150,200.50</span>
+                <span className="text-xs text-gray-500 font-medium">Available: ₦{availableBalance.toLocaleString()}</span>
                 <button 
                   onClick={handleWithdrawAll}
                   className="text-xs text-[#0F3D2E] font-bold hover:underline"
@@ -103,9 +107,9 @@ export default function WithdrawFundsFlow({ onComplete }: WithdrawFundsFlowProps
 
             <button 
               onClick={handleContinueToBank}
-              disabled={!amount}
+              disabled={!amount || numAmount > availableBalance}
               className={`w-full py-4 rounded-xl font-bold transition-colors mt-4 ${
-                amount ? "bg-[#0F3D2E] text-white hover:bg-[#185541]" : "bg-[#8DAAA0] text-white cursor-not-allowed text-opacity-90"
+                amount && numAmount <= availableBalance ? "bg-[#0F3D2E] text-white hover:bg-[#185541]" : "bg-[#8DAAA0] text-white cursor-not-allowed text-opacity-90"
               }`}
             >
               Continue
@@ -127,14 +131,22 @@ export default function WithdrawFundsFlow({ onComplete }: WithdrawFundsFlowProps
               </label>
               <div className="relative">
                 <select 
-                  value={bank}
-                  onChange={(e) => setBank(e.target.value)}
+                  value={bankCode}
+                  onChange={(e) => setBankCode(e.target.value)}
                   className="w-full bg-gray-50/70 appearance-none border border-gray-100 text-gray-900 font-medium rounded-xl py-3.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#0F3D2E]/20"
                 >
                   <option value="" disabled>Choose a bank</option>
-                  <option value="Sterling Bank">Sterling Bank</option>
-                  <option value="Guaranty Trust Bank">Guaranty Trust Bank</option>
-                  <option value="Access Bank">Access Bank</option>
+                  {banks.map((b) => (
+                    <option key={b.code} value={b.code}>{b.name}</option>
+                  ))}
+                  {/* Fallbacks if banks array is empty while testing */}
+                  {banks.length === 0 && (
+                    <>
+                      <option value="000001">Sterling Bank</option>
+                      <option value="000002">Guaranty Trust Bank</option>
+                      <option value="000003">Access Bank</option>
+                    </>
+                  )}
                 </select>
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                   <ChevronDown size={16} />
@@ -160,7 +172,7 @@ export default function WithdrawFundsFlow({ onComplete }: WithdrawFundsFlowProps
               <div className="bg-[#E6F4EA] border border-[#C3E6CB] rounded-xl p-3 flex items-center gap-2 mb-6 animate-in fade-in zoom-in duration-300">
                 <CheckCircle2 size={16} className="text-[#1E7E34]" />
                 <span className="text-xs font-bold text-[#1E7E34] uppercase tracking-wider">
-                  ACCOUNT VERIFIED: MADELEINE ANAGHA
+                  ACCOUNT VERIFIED: (MOCK NAME)
                 </span>
               </div>
             )}
@@ -188,7 +200,7 @@ export default function WithdrawFundsFlow({ onComplete }: WithdrawFundsFlowProps
             <div className="bg-gray-50 border border-gray-100 rounded-xl p-6 mb-4">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-sm text-gray-500">Amount</span>
-                <span className="text-sm font-bold text-gray-900">₦{amount || "50,000.00"}</span>
+                <span className="text-sm font-bold text-gray-900">₦{amount}</span>
               </div>
               <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
                 <span className="text-sm text-gray-500">Fee (1.5%)</span>
@@ -206,7 +218,7 @@ export default function WithdrawFundsFlow({ onComplete }: WithdrawFundsFlowProps
                </div>
                <div>
                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">DESTINATION BANK</p>
-                 <p className="text-sm font-bold text-gray-900">{bank} • {accountNumber}</p>
+                 <p className="text-sm font-bold text-gray-900">{selectedBank?.name || bankCode} • {accountNumber}</p>
                </div>
             </div>
 

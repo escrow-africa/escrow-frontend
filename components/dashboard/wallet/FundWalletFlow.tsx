@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { CreditCard, Building2, Smartphone, Check, ShieldCheck, CheckCircle2, Clock, Copy } from "lucide-react";
+import { useWalletStore } from "../../../store/walletStore";
+import toast from "react-hot-toast";
 
 interface FundWalletFlowProps {
   onComplete: () => void;
+  userId: string | null;
 }
 
-export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
+export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowProps) {
   const [step, setStep] = useState<number>(1);
   const [amount, setAmount] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<string>("debit_card");
@@ -15,37 +18,99 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
 
+  // OTP Step
+  const [otp, setOtp] = useState("");
+  const [transactionReference, setTransactionReference] = useState("");
+  const [tokenId, setTokenId] = useState("");
+
+  // Details from API
+  const [paymentDetails, setPaymentDetails] = useState<any>(null);
+
+  const { fundWallet, verifyCardOtp, isLoading } = useWalletStore();
+
   const handleAmountSelect = (val: string) => {
     setAmount(val);
   };
 
-  const handleContinueToPay = () => {
-    if (amount) {
-      if (paymentMethod === "bank") {
-        setStep(5);
-      } else if (paymentMethod === "ussd") {
-        setStep(6);
-      } else {
-        setStep(2);
+  const handleContinueToPay = async () => {
+    if (!amount) return;
+    
+    if (paymentMethod === "bank" || paymentMethod === "ussd") {
+      try {
+        const numAmount = parseFloat(amount.replace(/,/g, ''));
+        const response = await fundWallet({ 
+          userId,
+          amount: numAmount, 
+          method: paymentMethod 
+        });
+        setPaymentDetails(response.data || response);
+        
+        if (paymentMethod === "bank") {
+          setStep(5);
+        } else if (paymentMethod === "ussd") {
+          setStep(6);
+        }
+      } catch (error: any) {
+        console.error("Initiate funding error:", error);
+        toast.error(error?.response?.data?.message || error?.message || "Failed to initiate funding.");
+      }
+    } else {
+      setStep(2);
+    }
+  };
+
+  const handlePaySubmit = async () => {
+    if (cardNumber && expiry && cvv) {
+      setStep(3); // Processing
+      try {
+        const numAmount = parseFloat(amount.replace(/,/g, ''));
+        const [expiryMonth, expiryYearRaw] = expiry.split('/');
+        const expiryYear = expiryYearRaw?.trim().length === 2 ? `20${expiryYearRaw.trim()}` : expiryYearRaw?.trim();
+        
+        const response = await fundWallet({
+          userId,
+          amount: numAmount,
+          method: "card",
+          card: {
+            number: cardNumber.replace(/\s/g, ''),
+            cvv,
+            expiryMonth: expiryMonth?.trim(),
+            expiryYear
+          }
+        });
+        
+        // Assume API returns reference for OTP if needed, or success
+        if (response?.requiresOtp || response?.data?.requiresOtp || response?.transactionReference || response?.data?.transactionReference) {
+          setTransactionReference(response.transactionReference || response.data?.transactionReference || "");
+          setTokenId(response.tokenId || response.data?.tokenId || "");
+          setStep(7); // Move to OTP step
+        } else {
+          setStep(4); // Success
+        }
+      } catch (error: any) {
+        console.error("Fund wallet API error:", error);
+        toast.error(error?.response?.data?.message || error?.message || "Payment failed. Please try again.");
+        setStep(2); // Go back to form
       }
     }
   };
 
-  const handlePaySubmit = () => {
-    if (cardNumber && expiry && cvv) {
+  const handleVerifyOtp = async () => {
+    if (otp) {
       setStep(3); // Processing
+      try {
+        await verifyCardOtp({ 
+          transactionReference,
+          tokenId,
+          token: otp
+        });
+        setStep(4); // Success
+      } catch (error) {
+        toast.error("Invalid OTP or verification failed.");
+        setStep(7); // Go back to OTP
+      }
     }
   };
-
-  // Mock processing delay
-  useEffect(() => {
-    if (step === 3) {
-      const timer = setTimeout(() => {
-        setStep(4);
-      }, 3000); // 3 seconds mock delay
-      return () => clearTimeout(timer);
-    }
-  }, [step]);
 
   const quickAmounts = ["50,000", "100,000", "200,000", "500,000"];
 
@@ -75,10 +140,6 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
                   placeholder="0.00"
                   className="w-full bg-gray-50/50 border border-gray-100 text-gray-900 font-bold text-lg rounded-xl py-4 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-[#0F3D2E]/20"
                 />
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center justify-center text-gray-400">
-                  <span className="text-[10px] leading-[8px] cursor-pointer hover:text-gray-600">▲</span>
-                  <span className="text-[10px] leading-[8px] cursor-pointer hover:text-gray-600 focus:text-gray-600">▼</span>
-                </div>
               </div>
 
               <div className="flex gap-2 mt-4 justify-between">
@@ -178,12 +239,12 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
 
             <button 
               onClick={handleContinueToPay}
-              disabled={!amount}
+              disabled={!amount || isLoading}
               className={`w-full py-4 rounded-xl font-bold transition-colors ${
-                amount ? "bg-[#0F3D2E] text-white hover:bg-[#185541]" : "bg-[#8DAAA0] text-white cursor-not-allowed text-opacity-90"
+                amount && !isLoading ? "bg-[#0F3D2E] text-white hover:bg-[#185541]" : "bg-[#8DAAA0] text-white cursor-not-allowed text-opacity-90"
               }`}
             >
-              Continue to Pay
+              {isLoading ? "Processing..." : "Continue to Pay"}
             </button>
           </div>
         )}
@@ -244,9 +305,9 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
 
             <button 
               onClick={handlePaySubmit}
-              disabled={!cardNumber || !expiry || !cvv}
+              disabled={!cardNumber || !expiry || !cvv || isLoading}
               className={`w-full py-4 rounded-xl font-bold transition-colors mb-6 ${
-                (cardNumber && expiry && cvv) ? "bg-[#0F3D2E] text-white hover:bg-[#185541]" : "bg-[#8DAAA0] text-white cursor-not-allowed text-opacity-90"
+                (cardNumber && expiry && cvv && !isLoading) ? "bg-[#0F3D2E] text-white hover:bg-[#185541]" : "bg-[#8DAAA0] text-white cursor-not-allowed text-opacity-90"
               }`}
             >
               Pay ₦{amount || "0.00"}
@@ -256,6 +317,40 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
               <ShieldCheck size={14} />
               <span className="text-[10px] font-bold uppercase tracking-wider">PCI-DSS COMPLIANT SECURE PAYMENT</span>
             </div>
+          </div>
+        )}
+
+        {/* Step 7: OTP Step */}
+        {step === 7 && (
+          <div className="flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300">
+             <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Verify Payment</h2>
+              <p className="text-gray-500 text-sm">Enter the OTP sent to your registered phone or email</p>
+            </div>
+
+            <div className="mb-8">
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2 text-center">
+                ONE TIME PASSWORD
+              </label>
+              <input 
+                type="text" 
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="Enter 6-digit OTP"
+                maxLength={6}
+                className="w-full text-center bg-gray-50/70 border border-gray-100 text-gray-900 text-2xl font-bold tracking-widest rounded-xl py-4 px-4 focus:outline-none focus:ring-2 focus:ring-[#0F3D2E]/20"
+              />
+            </div>
+
+            <button 
+              onClick={handleVerifyOtp}
+              disabled={otp.length < 4 || isLoading}
+              className={`w-full py-4 rounded-xl font-bold transition-colors mb-4 ${
+                (otp.length >= 4 && !isLoading) ? "bg-[#0F3D2E] text-white hover:bg-[#185541]" : "bg-[#8DAAA0] text-white cursor-not-allowed text-opacity-90"
+              }`}
+            >
+              Verify & Complete
+            </button>
           </div>
         )}
 
@@ -283,17 +378,6 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
               Your wallet has been funded successfully.
             </p>
 
-            <div className="w-full bg-gray-50 rounded-xl p-5 mb-8">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm text-gray-500">Amount added</span>
-                <span className="text-sm font-bold text-emerald-600">+₦{amount || "100,000"}.00</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">New Balance</span>
-                <span className="text-sm font-bold text-emerald-600">+₦{amount ? (400200 + parseInt(amount.replace(/,/g, ''))).toLocaleString() : "150,000"}.00</span>
-              </div>
-            </div>
-
             <button 
               onClick={onComplete}
               className="w-full bg-[#0F3D2E] text-white hover:bg-[#185541] py-4 rounded-xl font-bold transition-colors"
@@ -319,15 +403,15 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
               <div className="flex flex-col gap-5 text-sm">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400 font-medium text-xs">Bank Name</span>
-                  <span className="font-bold text-gray-900">Medals Microfinance Bank</span>
+                  <span className="font-bold text-gray-900">{paymentDetails?.bankName || "Medals Microfinance Bank"}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400 font-medium text-xs">Account Number</span>
-                  <span className="font-bold text-gray-900">0123456789</span>
+                  <span className="font-bold text-gray-900">{paymentDetails?.accountNumber || "0123456789"}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400 font-medium text-xs">Account Name</span>
-                  <span className="font-bold text-gray-900">LEINE_ANAGHA_WALLET</span>
+                  <span className="font-bold text-gray-900">{paymentDetails?.accountName || "LEINE_ANAGHA_WALLET"}</span>
                 </div>
               </div>
             </div>
@@ -340,7 +424,7 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
             </div>
 
             <button 
-              onClick={() => setStep(3)}
+              onClick={onComplete}
               className="w-full bg-[#0F3D2E] text-white hover:bg-[#185541] py-4 rounded-xl font-bold transition-colors"
             >
               I've Made the Transfer
@@ -361,7 +445,7 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
                 DIAL THIS CODE
               </p>
               <p className="text-4xl sm:text-5xl font-bold text-[#0F3D2E] mb-6 tracking-tight">
-                *737*50*700*1#
+                {paymentDetails?.ussdCode || "*737*50*700*1#"}
               </p>
               <button className="flex items-center gap-2 text-sm font-bold text-[#0F3D2E] hover:text-[#185541] transition-colors">
                 Copy Code <Copy size={16} />
@@ -374,10 +458,10 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
             </p>
 
             <button 
-              onClick={() => setStep(3)} // Route to Processing
+              onClick={onComplete} 
               className="w-full bg-[#0F3D2E] text-white hover:bg-[#185541] py-4 rounded-xl font-bold transition-colors"
             >
-              Check Payment Status
+              Done
             </button>
           </div>
         )}
