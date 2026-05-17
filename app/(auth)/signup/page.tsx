@@ -1,8 +1,8 @@
 "use client";
-import {useForm} from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import  type SignUpData  from "@/components/Interface";
+import type SignUpData from "@/components/Interface";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Image from "next/image";
@@ -12,32 +12,33 @@ import { useAuthStore } from "@/store/authStore";
 
 export default function Signup() {
   const router = useRouter()
-  const registerUser = useAuthStore((state)=>state.register);
-const loading = useAuthStore((state)=>state.loading);
+  const registerUser = useAuthStore((state) => state.register);
+  const loading = useAuthStore((state) => state.loading);
 
   const {
-  register,
-  handleSubmit,
-  formState:{errors,isSubmitting}
-} = useForm<SignUpData>();
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting }
+  } = useForm<SignUpData>();
 
-const onSubmit = async (data:SignUpData)=>{
+  const onSubmit = async (data: SignUpData) => {
 
- try{
+    try {
 
-   await registerUser(data)
+      await registerUser(data)
 
-   toast.success("Account created")
+      toast.success("Account created")
 
-   router.push(`/verify?email=${data.email}`)
+      //  router.push(`/verify?email=${data.email}`)
+      router.push('/login')
 
- }catch(error){
+    } catch (error) {
 
-   toast.error("Signup failed")
+      toast.error("Signup failed")
 
- }
+    }
 
-}
+  }
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md border border-[#767676] rounded-2xl p-6 sm:p-10">
@@ -54,64 +55,64 @@ const onSubmit = async (data:SignUpData)=>{
             <div className="flex gap-4 mt-3">
               <div className="w-full">
                 <label htmlFor="fullName" className="tracking-[0.4em]" >FULL NAME</label>
-                <Input type="text" placeholder="enter your full name" {...register("fullName",{
-   required:"Full name required"
- })} />
- {errors.fullName && (
- <p className="text-red-500 text-sm">
-  {errors.fullName.message}
- </p>
-)}
+                <Input type="text" placeholder="enter your full name" {...register("fullName", {
+                  required: "Full name required"
+                })} />
+                {errors.fullName && (
+                  <p className="text-red-500 text-sm">
+                    {errors.fullName.message}
+                  </p>
+                )}
               </div>
 
               <div className="w-full">
                 <label htmlFor="phone" className="tracking-[0.4em]" >PHONE</label>
-                <Input type="tel" placeholder="enter your phone"  {...register("phone",{
-   required:"Phone number required"
- })}/>{errors.phone && (
- <p className="text-red-500 text-sm">
-  {errors.phone.message}
- </p>
-)}
+                <Input type="tel" placeholder="enter your phone"  {...register("phone", {
+                  required: "Phone number required"
+                })} />{errors.phone && (
+                  <p className="text-red-500 text-sm">
+                    {errors.phone.message}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="mt-5">
               <label htmlFor="whatsappPhone" className="tracking-[0.4em]" >WHATSAPP PHONE</label>
-              <Input type="tel" placeholder="enter your whatsapp phone"  {...register("whatsappPhone",{
-   required:"WhatsApp phone number required"
- })}/>{errors.whatsappPhone && (
- <p className="text-red-500 text-sm">
-  {errors.whatsappPhone.message}
- </p>
-)}
+              <Input type="tel" placeholder="enter your whatsapp phone"  {...register("whatsappPhone", {
+                required: "WhatsApp phone number required"
+              })} />{errors.whatsappPhone && (
+                <p className="text-red-500 text-sm">
+                  {errors.whatsappPhone.message}
+                </p>
+              )}
             </div>
 
             <div className="mt-5">
               <label htmlFor="email" className="tracking-[0.4em]" >EMAIL</label>
-              <Input type="email" placeholder="enter your email" {...register("email",{
-   required:"Email required"
- })} />{errors.email && (
- <p className="text-red-500 text-sm">
-  {errors.email.message}
- </p>
-)}
+              <Input type="email" placeholder="enter your email" {...register("email", {
+                required: "Email required"
+              })} />{errors.email && (
+                <p className="text-red-500 text-sm">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
             <div className="mt-3">
               <label htmlFor="password" className="tracking-[0.4em]">PASSWORD</label>
-              <Input type="password" placeholder="enter your password" {...register("password",{
-   required:"Password required",
-   minLength:{
-     value:6,
-     message:"Minimum 6 characters"
-   }
- })} />{errors.password && (
- <p className="text-red-500 text-sm">
-  {errors.password.message}
- </p>
-)}
-                
+              <Input type="password" placeholder="enter your password" {...register("password", {
+                required: "Password required",
+                minLength: {
+                  value: 6,
+                  message: "Minimum 6 characters"
+                }
+              })} />{errors.password && (
+                <p className="text-red-500 text-sm">
+                  {errors.password.message}
+                </p>
+              )}
+
             </div>
 
             <Button type="submit" disabled={isSubmitting || loading}>{isSubmitting ? "Creating..." : "CREATE PROFILE"}</Button>
@@ -119,9 +120,9 @@ const onSubmit = async (data:SignUpData)=>{
 
           </form>
           <p className="text-center tracking-[0.4em] text-xs">HAVE AN ACCOUNT? <Link href="/login">
- LOGIN
-</Link>
-</p>
+            LOGIN
+          </Link>
+          </p>
 
         </main>
       </div>

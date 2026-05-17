@@ -2,34 +2,55 @@ import { api } from "./axios";
 
 export const authApi = {
 
-signup: async (payload:any) => {
-  const response = await api.post("/auth/register", payload);
-  return response.data;
-},
+  signup: async (payload: any) => {
+    try {
 
-login: async (payload:any) => {
-  const response = await api.post("/auth/login", payload);
-  return response.data;
-},
-requestOtp: async (data:any)=>{
+      const response = await api.post("/auth/register", payload);
+      console.log(response.data);
+      return response.data;
+    } catch (error: any) {
+      console.log(error);
+    }
+  },
 
-const response = await api.post("/auth/request-otp",data);
+  login: async (payload: any) => {
 
-return response.data;
+    try {
+      const response = await api.post("/auth/login", payload);
+      return response.data;
+    } catch (error: any) {
+      console.log(error);
+    }
+  },
+  requestOtp: async (data: any) => {
 
-},
+    try {
+      const response = await api.post("/auth/request-otp", data);
+      return response.data;
+    } catch (error: any) {
+      console.log(error);
+    }
+
+  },
 
 
-verifyPassword: async (payload:any) => {
-  const response = await api.post("/auth/verify-otp", payload);
-  return response.data;
-},
+  verifyPassword: async (payload: any) => {
+    try {
+      const response = await api.post("/auth/verify-otp", payload);
+      return response.data;
+    } catch (error: any) {
+      console.log(error);
+    }
+  },
 
-resetPassword: async (data:any)=>{
+  resetPassword: async (data: any) => {
 
-const response = await api.post("/auth/reset-password",data);
+    try {
+      const response = await api.post("/auth/reset-password", data);
+      return response.data;
+    } catch (error: any) {
+      console.log(error);
+    }
 
-return response.data;
-
-}
+  }
 };
