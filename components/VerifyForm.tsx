@@ -58,200 +58,208 @@ import Image from "next/image";
 import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import SuccessModal from "@/components/SuccessModal";
 import { useAuthStore } from "@/store/authStore";
 
-export default function VerifyPage(){
+export default function VerifyPage() {
 
-const [otp,setOtp] = useState("");
+    const [otp, setOtp] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-const router = useRouter();
+    const router = useRouter();
 
-const searchParams = useSearchParams();
+    const searchParams = useSearchParams();
 
-const email = searchParams.get("email");
+    const email = searchParams.get("email");
 
-const verifyOtp = useAuthStore((state)=>state.verifyOtp);
-const requestOtp = useAuthStore((state)=>state.requestOtp);
-const loading = useAuthStore((state)=>state.loading);
+    const verifyOtp = useAuthStore((state) => state.verifyOtp);
+    const requestOtp = useAuthStore((state) => state.requestOtp);
+    const loading = useAuthStore((state) => state.loading);
 
 
-const handleSubmit = async(e:React.FormEvent)=>{
+    const handleSubmit = async (e: React.FormEvent) => {
 
-e.preventDefault();
+        e.preventDefault();
 
-if(otp.length !== 6){
+        if (otp.length !== 6) {
 
-toast.error("Enter valid OTP");
+            toast.error("Enter valid OTP");
 
-return;
+            return;
 
-}
+        }
 
-try{
+        try {
 
-await verifyOtp({
+            await verifyOtp({
+                email,
+                otp: Number(otp)
+            });
 
-email,
-otp
+            toast.success("Verification successful");
 
-});
+            setShowSuccessModal(true);
 
-toast.success("Verification successful");
+        } catch (error: any) {
 
-router.push("/select-role"); // change if needed
+            toast.error(
+                error?.response?.data?.message || "Invalid OTP"
+            );
 
-}catch(error:any){
+        }
 
-toast.error(
-error?.response?.data?.message || "Invalid OTP"
-);
+    };
 
-}
 
-};
+    const resendOtp = async () => {
 
+        try {
 
-const resendOtp = async()=>{
+            await requestOtp({ email });
 
-try{
+            toast.success("OTP resent");
 
-await requestOtp({email});
+        } catch {
 
-toast.success("OTP resent");
+            toast.error("Failed to resend");
 
-}catch{
+        }
 
-toast.error("Failed to resend");
+    };
 
-}
 
-};
 
+    return (
 
+        <div className="min-h-screen flex items-center justify-center px-4">
 
-return(
+            <div className="p-6 sm:p-8 w-full max-w-md border border-[#767676] rounded-2xl text-center">
 
-<div className="min-h-screen flex items-center justify-center px-4">
+                <div className="flex items-center justify-center">
 
-<div className="p-6 sm:p-8 w-full max-w-md border border-[#767676] rounded-2xl text-center">
+                    <Image
+                        src="/bell.png"
+                        alt="Logo"
+                        width={50}
+                        height={50}
+                    />
 
-<div className="flex items-center justify-center">
+                </div>
 
-<Image 
-src="/bell.png" 
-alt="Logo" 
-width={50} 
-height={50} 
-/>
 
-</div>
+                <div className="flex gap-2 justify-center my-3">
 
+                    <h1 className="font-bold text-3xl sm:text-4xl">
+                        VERIFY
+                    </h1>
 
-<div className="flex gap-2 justify-center my-3">
+                    <span className="text-[#F3B659] font-bold text-3xl sm:text-4xl">
+                        ACCESS
+                    </span>
 
-<h1 className="font-bold text-3xl sm:text-4xl">
-VERIFY
-</h1>
+                </div>
 
-<span className="text-[#F3B659] font-bold text-3xl sm:text-4xl">
-ACCESS
-</span>
 
-</div>
+                <p className="text-[#767676] text-xs w-[90%] sm:w-3/4 mx-auto pb-4">
 
+                    We sent a 6-digit code to your phone or email.
 
-<p className="text-[#767676] text-xs w-[90%] sm:w-3/4 mx-auto pb-4">
+                </p>
 
-We sent a 6-digit code to your phone or email.
 
-</p>
+                <form onSubmit={handleSubmit}>
 
+                    <div className="w-full">
 
-<form onSubmit={handleSubmit}>
+                        <OTPInput
 
-<div className="w-full">
+                            maxLength={6}
 
-<OTPInput
+                            value={otp}
 
-maxLength={6}
+                            onChange={(value) => setOtp(value)}
 
-value={otp}
+                            render={({ slots }) => (
 
-onChange={(value)=>setOtp(value)}
+                                <div className="flex gap-1 sm:gap-2 justify-center">
 
-render={({ slots }) => (
+                                    {slots.map((slot, idx) => (
 
-<div className="flex gap-1 sm:gap-2 justify-center">
+                                        <div
 
-{slots.map((slot, idx) => (
+                                            key={idx}
 
-<div
+                                            className={`relative w-9 h-12 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center text-lg sm:text-xl font-bold transition-all 
 
-key={idx}
+${slot.isActive
 
-className={`relative w-9 h-12 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center text-lg sm:text-xl font-bold transition-all 
+                                                    ? 'border-[#F3B659] ring-1 ring-[#F3B659]'
 
-${slot.isActive 
-
-? 'border-[#F3B659] ring-1 ring-[#F3B659]' 
-
-: 'border-[#767676]'}
+                                                    : 'border-[#767676]'}
 
 bg-black text-white`}
 
->
+                                        >
 
-{slot.char !== null ? slot.char : ""}
+                                            {slot.char !== null ? slot.char : ""}
 
-{slot.hasFakeCaret && (
+                                            {slot.hasFakeCaret && (
 
-<div className="absolute pointer-events-none inset-0 flex items-center justify-center animate-pulse">
+                                                <div className="absolute pointer-events-none inset-0 flex items-center justify-center animate-pulse">
 
-<div className="w-px h-6 bg-white"/>
+                                                    <div className="w-px h-6 bg-white" />
 
-</div>
+                                                </div>
 
-)}
+                                            )}
 
-</div>
+                                        </div>
 
-))}
+                                    ))}
 
-</div>
+                                </div>
 
-)}
+                            )}
 
-/>
+                        />
 
-</div>
-
-
-<Button
-type="submit"
-disabled={loading}
->
-
-{loading ? "VERIFYING..." : "VERIFY CODE"}
-
-</Button>
-
-</form>
+                    </div>
 
 
-<p
-onClick={resendOtp}
-className="text-[#767676] text-xs tracking-[0.4em] cursor-pointer mt-3"
->
+                    <Button
+                        type="submit"
+                        disabled={loading}
+                    >
 
-RESEND CODE
+                        {loading ? "VERIFYING..." : "VERIFY CODE"}
 
-</p>
+                    </Button>
+
+                </form>
 
 
-</div>
+                <p
+                    onClick={resendOtp}
+                    className="text-[#767676] text-xs tracking-[0.4em] cursor-pointer mt-3"
+                >
 
-</div>
+                    RESEND CODE
 
-);
+                </p>
+
+
+            </div>
+
+            <SuccessModal
+                isOpen={showSuccessModal}
+                onClose={() => {
+                    setShowSuccessModal(false);
+                    router.push("/dashboard");
+                }}
+            />
+
+        </div>
+
+    );
 
 }

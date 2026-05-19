@@ -81,15 +81,35 @@ throw error;
 },
 
 requestOtp: async(data)=>{
-
-await authApi.requestOtp(data);
-
+  set({ loading: true, error: null });
+  try {
+    await authApi.requestOtp(data);
+    set({ loading: false });
+  } catch (error: any) {
+    set({
+      error: error.response?.data?.message || "Failed to request OTP",
+      loading: false
+    });
+    throw error;
+  }
 },
 
 verifyOtp: async(data)=>{
-
-await authApi.verifyPassword(data);
-
+  set({ loading: true, error: null });
+  try {
+    const response = await authApi.verifyPassword(data);
+    if (typeof window !== "undefined" && response) {
+      const token = response.accessToken || response.token;
+      if (token) setTokenCookie(token);
+    }
+    set({ loading: false });
+  } catch (error: any) {
+    set({
+      error: error.response?.data?.message || "Invalid OTP",
+      loading: false
+    });
+    throw error;
+  }
 },
 
 resetPassword: async(data)=>{

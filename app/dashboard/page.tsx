@@ -38,9 +38,10 @@ export default function DashboardPage() {
         const payload = token.split(".")[1];
         const decoded = JSON.parse(atob(payload));
         // Extract name from common JWT fields
-        const name = decoded.fullName || decoded.name || decoded.username || decoded.email?.split('@')[0];
-        if (name) {
-          setUserName(name);
+        const fullName = decoded.fullName || decoded.name || decoded.username || decoded.email?.split('@')[0];
+        if (fullName) {
+          const firstName = fullName.split(' ')[0];
+          setUserName(firstName);
         }
       } catch (e) {}
     }

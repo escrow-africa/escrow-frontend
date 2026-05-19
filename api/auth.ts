@@ -29,6 +29,7 @@ export const authApi = {
       return response.data;
     } catch (error: any) {
       console.log(error);
+      throw error;
     }
 
   },
@@ -40,6 +41,7 @@ export const authApi = {
       return response.data;
     } catch (error: any) {
       console.log(error);
+      throw error;
     }
   },
 

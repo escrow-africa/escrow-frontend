@@ -8,13 +8,11 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Image from "next/image";
 import Link from "next/link";
-import SuccessModal from "@/components/SuccessModal";
 
 import { useAuthStore } from "@/store/authStore";
 
 export default function Signup() {
   const router = useRouter()
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const registerUser = useAuthStore((state) => state.register);
   const loading = useAuthStore((state) => state.loading);
 
@@ -30,10 +28,7 @@ export default function Signup() {
 
       await registerUser(data)
 
-      setShowSuccessModal(true);
-
-      //  router.push(`/verify?email=${data.email}`)
-      // router.push('/dashboard')
+      router.push(`/verify?email=${data.email}`)
 
     } catch (error) {
 
@@ -129,7 +124,6 @@ export default function Signup() {
 
         </main>
       </div>
-      <SuccessModal isOpen={showSuccessModal} onClose={() => setShowSuccessModal(false)} />
     </div>
   );
 }
