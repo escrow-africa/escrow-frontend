@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, use, useEffect } from "react";
+import toast from "react-hot-toast";
+import { escrowApi } from "../../../../api/escrow";
 import { Download, ShieldCheck, CheckCircle2, MessageSquare, FileText, AlertCircle, ChevronRight, HelpCircle, Lock, Truck } from "lucide-react";
 import EscrowTimeline, { TimelineStep } from "../../../../components/dashboard/escrow/EscrowTimeline";
 import MarkDeliveredModal from "../../../../components/dashboard/escrow/MarkDeliveredModal";
@@ -108,6 +110,8 @@ const escrowDataMap: Record<string, EscrowDetail> = {
 
 export default function EscrowDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
+  const [fetchedEscrow, setFetchedEscrow] = useState<any | null>(null);
+  const [stats, setStats] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isExtendModalOpen, setIsExtendModalOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
@@ -119,9 +123,48 @@ export default function EscrowDetailsPage({ params }: { params: Promise<{ id: st
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
 
-  // Get escrow data from mock map (replace with API call later)
-  const escrow = escrowDataMap[unwrappedParams.id] || escrowDataMap["ESC-102"];
+  // Start with mock data, then replace with API response when available
+  const escrow = fetchedEscrow || escrowDataMap[unwrappedParams.id] || escrowDataMap["ESC-102"];
   const timelineSteps = escrow.timelineSteps;
+
+  useEffect(() => {
+    let mounted = true;
+    const id = unwrappedParams.id;
+    (async () => {
+      try {
+        const [detailRes, statsRes] = await Promise.all([
+          escrowApi.getById(id),
+          escrowApi.getStats(id),
+        ]);
+
+        if (!mounted) return;
+
+        // Map backend response to UI shape defensively
+        const mapped: any = {
+          id: detailRes.escrowId || detailRes.id || detailRes._id || id,
+          status: detailRes.status || detailRes.state || escrow.status,
+          customerName: detailRes.buyerName || detailRes.customerName || detailRes.buyerEmail || escrow.customerName,
+          customerInitial: (detailRes.buyerName || detailRes.customerName || detailRes.buyerEmail || "\").charAt(0).toUpperCase(),
+          lockedFunds: detailRes.lockedFunds || detailRes.locked_amount || detailRes.baseAmount || escrow.lockedFunds,
+          milestone: (detailRes.milestones && detailRes.milestones[0]?.title) || detailRes.milestone || escrow.milestone,
+          baseAmount: detailRes.baseAmount || detailRes.amount || escrow.baseAmount,
+          platformFee: detailRes.platformFee || detailRes.fee || escrow.platformFee,
+          payout: detailRes.payout || detailRes.netPayout || escrow.payout,
+          timelineSteps: detailRes.timeline || detailRes.timelineSteps || escrow.timelineSteps,
+          managementType: escrow.managementType,
+        };
+
+        setFetchedEscrow(mapped);
+        setStats(statsRes || null);
+      } catch (err: any) {
+        console.error("Failed to fetch escrow details/stats", err);
+        toast.error(err?.response?.data?.message || "Unable to load escrow details");
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [unwrappedParams]);
 
   return (
     <div className="flex flex-col h-full fade-in pb-12 max-w-6xl mx-auto">

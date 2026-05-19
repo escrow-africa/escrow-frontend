@@ -53,4 +53,15 @@ export const authApi = {
     }
 
   }
+  ,
+
+  logout: async () => {
+    try {
+      const response = await api.post("/auth/logout");
+      return response.data;
+    } catch (error: any) {
+      console.log("logout error", error);
+      throw error;
+    }
+  }
 };
