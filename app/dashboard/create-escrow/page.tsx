@@ -2,6 +2,9 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { escrowApi } from "../../../api/escrow";
 import { Calendar, ChevronRight, Copy, FileMinus, Lock, Search, ShieldCheck } from "lucide-react";
 
 const inspectionOptions = ["1 Day Review", "3 Days Review", "5 Days Review", "7 Days Review"];
@@ -38,10 +41,32 @@ export default function CreateEscrowPage() {
 
   const canInitialize = Boolean(buyer.trim() && parsedAmount > 0 && milestones.some((m) => m.trim()) && deadline);
 
-  const handleInitialize = () => {
+  const router = useRouter();
+
+  const handleInitialize = async () => {
     if (!canInitialize) return;
     setStep("submitting");
-    window.setTimeout(() => setStep("success"), 900);
+
+    // Build payload matching backend CreateEscrowDto
+    const payload = {
+      buyerEmail: buyer.trim(),
+      milestones: milestones.filter((m) => m.trim()).map((m) => m.trim()),
+      amount: parsedAmount,
+      deliveryDeadline: deadline,
+      inspectionPeriodDays: Number(inspectionPeriod.match(/\d+/)?.[0] || 0),
+      description: details || undefined,
+    };
+
+    try {
+      await escrowApi.create(payload);
+      toast.success("Escrow initialized");
+      router.push("/dashboard/escrows");
+    } catch (error: any) {
+      console.error("create escrow failed", error);
+      const message = error?.response?.data?.message || "Failed to initialize escrow";
+      toast.error(message);
+      setStep("form");
+    }
   };
 
   const updateMilestone = (index: number, value: string) => {
