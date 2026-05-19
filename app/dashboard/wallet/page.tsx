@@ -66,6 +66,10 @@ export default function WalletPage() {
   const handleBackToOverview = () => {
     setSelectedTransaction(null);
     setViewState("overview");
+    const userId = getUserIdFromToken();
+    if (userId) {
+      fetchWalletDetails(userId);
+    }
   };
 
   // Safe fallbacks if wallet details are missing or loading

@@ -12,7 +12,7 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
   const [step, setStep] = useState<number>(1);
   const [amount, setAmount] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<string>("debit_card");
-  
+
   // Step 2 Form
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
@@ -34,17 +34,17 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
 
   const handleContinueToPay = async () => {
     if (!amount) return;
-    
+
     if (paymentMethod === "bank" || paymentMethod === "ussd") {
       try {
         const numAmount = parseFloat(amount.replace(/,/g, ''));
-        const response = await fundWallet({ 
+        const response = await fundWallet({
           userId,
-          amount: numAmount, 
-          method: paymentMethod 
+          amount: numAmount,
+          method: paymentMethod
         });
         setPaymentDetails(response.data || response);
-        
+
         if (paymentMethod === "bank") {
           setStep(5);
         } else if (paymentMethod === "ussd") {
@@ -66,7 +66,7 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
         const numAmount = parseFloat(amount.replace(/,/g, ''));
         const [expiryMonth, expiryYearRaw] = expiry.split('/');
         const expiryYear = expiryYearRaw?.trim().length === 2 ? `20${expiryYearRaw.trim()}` : expiryYearRaw?.trim();
-        
+
         const response = await fundWallet({
           userId,
           amount: numAmount,
@@ -78,11 +78,15 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
             expiryYear
           }
         });
-        
-        // Assume API returns reference for OTP if needed, or success
-        if (response?.requiresOtp || response?.data?.requiresOtp || response?.transactionReference || response?.data?.transactionReference) {
-          setTransactionReference(response.transactionReference || response.data?.transactionReference || "");
-          setTokenId(response.tokenId || response.data?.tokenId || "");
+
+        console.log("Backend Response for Card Payment:", response);
+
+        const rawData = response?.raw || response?.data?.raw;
+        const isOtpRequired = response?.requiresOtp || response?.data?.requiresOtp || rawData?.status === "OTP_AUTHORIZATION_REQUIRED";
+
+        if (isOtpRequired) {
+          setTransactionReference(rawData?.transactionReference || response?.transactionReference || response?.data?.transactionReference || "");
+          setTokenId(rawData?.otpData?.id || response?.otpData?.id || response?.data?.otpData?.id || "");
           setStep(7); // Move to OTP step
         } else {
           setStep(4); // Success
@@ -99,7 +103,8 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
     if (otp) {
       setStep(3); // Processing
       try {
-        await verifyCardOtp({ 
+        console.log("Sending OTP Payload:", { transactionReference, tokenId, token: otp });
+        await verifyCardOtp({
           transactionReference,
           tokenId,
           token: otp
@@ -118,7 +123,7 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
     <div className="w-full max-w-md mx-auto pt-8">
       {/* Container Card */}
       <div className="bg-white border text-black border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[32px] p-8 md:p-10 animation-fade-in">
-        
+
         {/* Step 1: Selection */}
         {step === 1 && (
           <div className="flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -133,8 +138,8 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">₦</span>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
@@ -144,7 +149,7 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
 
               <div className="flex gap-2 mt-4 justify-between">
                 {quickAmounts.map((val) => (
-                  <button 
+                  <button
                     key={val}
                     onClick={() => handleAmountSelect(val)}
                     className="flex-1 py-1.5 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-bold text-gray-700 hover:bg-gray-100 transition-colors"
@@ -161,13 +166,12 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
               </label>
               <div className="flex flex-col gap-3">
                 {/* Debit Card */}
-                <div 
+                <div
                   onClick={() => setPaymentMethod("debit_card")}
-                  className={`cursor-pointer border rounded-xl p-4 flex items-center justify-between transition-colors ${
-                    paymentMethod === "debit_card" 
-                      ? "border-[#1E4D3E] bg-[#F7F9F8]" 
+                  className={`cursor-pointer border rounded-xl p-4 flex items-center justify-between transition-colors ${paymentMethod === "debit_card"
+                      ? "border-[#1E4D3E] bg-[#F7F9F8]"
                       : "border-gray-100 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-lg bg-[#1E4D3E] flex items-center justify-center text-white">
@@ -178,21 +182,19 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
                       <p className="text-xs text-gray-500">Visa, Mastercard, Verve</p>
                     </div>
                   </div>
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                    paymentMethod === "debit_card" ? "border-emerald-500 bg-white text-emerald-500" : "border-gray-200"
-                  }`}>
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${paymentMethod === "debit_card" ? "border-emerald-500 bg-white text-emerald-500" : "border-gray-200"
+                    }`}>
                     {paymentMethod === "debit_card" ? <Check size={12} strokeWidth={3} /> : null}
                   </div>
                 </div>
 
                 {/* Bank Transfer */}
-                <div 
+                <div
                   onClick={() => setPaymentMethod("bank")}
-                  className={`cursor-pointer border rounded-xl p-4 flex items-center justify-between transition-colors ${
-                    paymentMethod === "bank" 
-                      ? "border-[#1E4D3E] bg-[#F7F9F8]" 
+                  className={`cursor-pointer border rounded-xl p-4 flex items-center justify-between transition-colors ${paymentMethod === "bank"
+                      ? "border-[#1E4D3E] bg-[#F7F9F8]"
                       : "border-gray-100 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500">
@@ -203,21 +205,19 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
                       <p className="text-xs text-gray-500">Transfer to a unique account</p>
                     </div>
                   </div>
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                    paymentMethod === "bank" ? "border-emerald-500 bg-white text-emerald-500" : "border-gray-200"
-                  }`}>
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${paymentMethod === "bank" ? "border-emerald-500 bg-white text-emerald-500" : "border-gray-200"
+                    }`}>
                     {paymentMethod === "bank" ? <Check size={12} strokeWidth={3} /> : null}
                   </div>
                 </div>
 
                 {/* USSD */}
-                <div 
+                <div
                   onClick={() => setPaymentMethod("ussd")}
-                  className={`cursor-pointer border rounded-xl p-4 flex items-center justify-between transition-colors ${
-                    paymentMethod === "ussd" 
-                      ? "border-[#1E4D3E] bg-[#F7F9F8]" 
+                  className={`cursor-pointer border rounded-xl p-4 flex items-center justify-between transition-colors ${paymentMethod === "ussd"
+                      ? "border-[#1E4D3E] bg-[#F7F9F8]"
                       : "border-gray-100 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500">
@@ -228,21 +228,19 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
                       <p className="text-xs text-gray-500">Dial a code from your phone</p>
                     </div>
                   </div>
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                    paymentMethod === "ussd" ? "border-emerald-500 bg-white text-emerald-500" : "border-gray-200"
-                  }`}>
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${paymentMethod === "ussd" ? "border-emerald-500 bg-white text-emerald-500" : "border-gray-200"
+                    }`}>
                     {paymentMethod === "ussd" ? <Check size={12} strokeWidth={3} /> : null}
                   </div>
                 </div>
               </div>
             </div>
 
-            <button 
+            <button
               onClick={handleContinueToPay}
               disabled={!amount || isLoading}
-              className={`w-full py-4 rounded-xl font-bold transition-colors ${
-                amount && !isLoading ? "bg-[#0F3D2E] text-white hover:bg-[#185541]" : "bg-[#8DAAA0] text-white cursor-not-allowed text-opacity-90"
-              }`}
+              className={`w-full py-4 rounded-xl font-bold transition-colors ${amount && !isLoading ? "bg-[#0F3D2E] text-white hover:bg-[#185541]" : "bg-[#8DAAA0] text-white cursor-not-allowed text-opacity-90"
+                }`}
             >
               {isLoading ? "Processing..." : "Continue to Pay"}
             </button>
@@ -252,7 +250,7 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
         {/* Step 2: Card Details Form */}
         {step === 2 && (
           <div className="flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300">
-             <div className="text-center mb-8">
+            <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Card Details</h2>
               <p className="text-gray-500 text-sm">Enter your debit card information</p>
             </div>
@@ -265,8 +263,8 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                   <CreditCard size={18} />
                 </span>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={cardNumber}
                   onChange={(e) => setCardNumber(e.target.value)}
                   placeholder="0000 0000 0000 0000"
@@ -280,8 +278,8 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
                 <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2">
                   EXPIRY DATE
                 </label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={expiry}
                   onChange={(e) => setExpiry(e.target.value)}
                   placeholder="MM/YY"
@@ -292,8 +290,8 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
                 <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2">
                   CVV
                 </label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   value={cvv}
                   onChange={(e) => setCvv(e.target.value)}
                   placeholder="***"
@@ -303,12 +301,11 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
               </div>
             </div>
 
-            <button 
+            <button
               onClick={handlePaySubmit}
               disabled={!cardNumber || !expiry || !cvv || isLoading}
-              className={`w-full py-4 rounded-xl font-bold transition-colors mb-6 ${
-                (cardNumber && expiry && cvv && !isLoading) ? "bg-[#0F3D2E] text-white hover:bg-[#185541]" : "bg-[#8DAAA0] text-white cursor-not-allowed text-opacity-90"
-              }`}
+              className={`w-full py-4 rounded-xl font-bold transition-colors mb-6 ${(cardNumber && expiry && cvv && !isLoading) ? "bg-[#0F3D2E] text-white hover:bg-[#185541]" : "bg-[#8DAAA0] text-white cursor-not-allowed text-opacity-90"
+                }`}
             >
               Pay ₦{amount || "0.00"}
             </button>
@@ -323,7 +320,7 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
         {/* Step 7: OTP Step */}
         {step === 7 && (
           <div className="flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300">
-             <div className="text-center mb-8">
+            <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Verify Payment</h2>
               <p className="text-gray-500 text-sm">Enter the OTP sent to your registered phone or email</p>
             </div>
@@ -332,8 +329,8 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
               <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2 text-center">
                 ONE TIME PASSWORD
               </label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
                 placeholder="Enter 6-digit OTP"
@@ -342,12 +339,11 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
               />
             </div>
 
-            <button 
+            <button
               onClick={handleVerifyOtp}
               disabled={otp.length < 4 || isLoading}
-              className={`w-full py-4 rounded-xl font-bold transition-colors mb-4 ${
-                (otp.length >= 4 && !isLoading) ? "bg-[#0F3D2E] text-white hover:bg-[#185541]" : "bg-[#8DAAA0] text-white cursor-not-allowed text-opacity-90"
-              }`}
+              className={`w-full py-4 rounded-xl font-bold transition-colors mb-4 ${(otp.length >= 4 && !isLoading) ? "bg-[#0F3D2E] text-white hover:bg-[#185541]" : "bg-[#8DAAA0] text-white cursor-not-allowed text-opacity-90"
+                }`}
             >
               Verify & Complete
             </button>
@@ -370,7 +366,7 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
         {/* Step 4: Success */}
         {step === 4 && (
           <div className="flex flex-col items-center animate-in fade-in scale-in duration-300">
-             <div className="w-16 h-16 rounded-full bg-emerald-50 border-2 border-emerald-400 flex items-center justify-center text-emerald-500 mb-6">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 border-2 border-emerald-400 flex items-center justify-center text-emerald-500 mb-6">
               <Check strokeWidth={3} size={28} />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">Payment Successful!</h2>
@@ -378,7 +374,7 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
               Your wallet has been funded successfully.
             </p>
 
-            <button 
+            <button
               onClick={onComplete}
               className="w-full bg-[#0F3D2E] text-white hover:bg-[#185541] py-4 rounded-xl font-bold transition-colors"
             >
@@ -390,7 +386,7 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
         {/* Step 5: Bank Transfer Details */}
         {step === 5 && (
           <div className="flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300">
-             <div className="text-center mb-8">
+            <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Bank Transfer</h2>
               <p className="text-gray-500 text-sm">Transfer the exact amount to the account below</p>
             </div>
@@ -423,7 +419,7 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
               </p>
             </div>
 
-            <button 
+            <button
               onClick={onComplete}
               className="w-full bg-[#0F3D2E] text-white hover:bg-[#185541] py-4 rounded-xl font-bold transition-colors"
             >
@@ -435,7 +431,7 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
         {/* Step 6: USSD Payment */}
         {step === 6 && (
           <div className="flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300">
-             <div className="text-center mb-8">
+            <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">USSD Payment</h2>
               <p className="text-gray-500 text-sm">Dial the code below on your registered phone</p>
             </div>
@@ -453,12 +449,12 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
             </div>
 
             <p className="text-center text-sm text-gray-500 mb-8 max-w-[280px] mx-auto leading-relaxed">
-              Follow the prompts on your phone to complete the payment of <br/>
+              Follow the prompts on your phone to complete the payment of <br />
               <strong className="text-gray-900 font-bold">₦{amount ? amount : "100,000"}.00</strong>
             </p>
 
-            <button 
-              onClick={onComplete} 
+            <button
+              onClick={onComplete}
               className="w-full bg-[#0F3D2E] text-white hover:bg-[#185541] py-4 rounded-xl font-bold transition-colors"
             >
               Done

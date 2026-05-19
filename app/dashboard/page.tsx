@@ -8,6 +8,7 @@ import ActiveEscrowsList, { ActiveEscrow } from "../../components/dashboard/escr
 import PremiumReminderModal from "../../components/dashboard/shared/PremiumReminderModal";
 import { TrendingUp, Wallet, ShieldCheck, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { getTokenFromCookie } from "../../utils/token";
 
 // Mock Data for UI presentation. 
 // Replace with actual API fetches in the future.
@@ -26,9 +27,24 @@ const MOCK_ESCROWS: ActiveEscrow[] = [
 ];
 
 export default function DashboardPage() {
-  const [userName] = useState("Madeleine");
+  const [userName, setUserName] = useState("User");
   const [isReminderOpen, setIsReminderOpen] = useState(false);
   const router = useRouter();
+
+  React.useEffect(() => {
+    const token = getTokenFromCookie();
+    if (token) {
+      try {
+        const payload = token.split(".")[1];
+        const decoded = JSON.parse(atob(payload));
+        // Extract name from common JWT fields
+        const name = decoded.fullName || decoded.name || decoded.username || decoded.email?.split('@')[0];
+        if (name) {
+          setUserName(name);
+        }
+      } catch (e) {}
+    }
+  }, []);
 
 
 
