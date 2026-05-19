@@ -8,6 +8,7 @@ import TransactionDetail from "../../../components/dashboard/transaction/Transac
 import FundWalletFlow from "../../../components/dashboard/wallet/FundWalletFlow";
 import WithdrawFundsFlow from "../../../components/dashboard/wallet/WithdrawFundsFlow";
 import { useWalletStore } from "../../../store/walletStore";
+import { getTokenFromCookie } from "../../../utils/token";
 
 export default function WalletPage() {
   const [viewState, setViewState] = useState<"overview" | "transaction_detail" | "fund_wallet" | "withdraw_funds">("overview");
@@ -17,7 +18,7 @@ export default function WalletPage() {
 
   const getUserIdFromToken = () => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
+      const token = getTokenFromCookie();
       if (token) {
         try {
           const payload = token.split(".")[1];

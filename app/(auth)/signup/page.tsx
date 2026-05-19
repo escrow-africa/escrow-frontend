@@ -30,7 +30,7 @@ export default function Signup() {
       toast.success("Account created")
 
       //  router.push(`/verify?email=${data.email}`)
-      router.push('/login')
+      router.push('/dashboard')
 
     } catch (error) {
 

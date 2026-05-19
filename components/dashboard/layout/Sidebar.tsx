@@ -2,6 +2,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
 import {
   LayoutDashboard,
   Wallet,
@@ -37,6 +39,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: "Help", href: "/dashboard/help", icon: HelpCircle },
     { name: "Logout", href: "#", icon: LogOut, textClass: "text-red-400" },
   ];
+
+  const router = useRouter();
+  const logout = useAuthStore((s) => s.logout);
 
   return (
     <>
@@ -107,6 +112,23 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="pt-4 border-t border-[#185541] space-y-1">
             {bottomItems.map((item) => {
               const Icon = item.icon;
+              if (item.name === "Logout") {
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => {
+                      logout();
+                      onClose();
+                      router.push('/login');
+                    }}
+                    className={`w-full text-left flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-[#185541] hover:text-white ${item.textClass || "text-gray-300"}`}
+                  >
+                    <Icon size={18} className={item.textClass ? "text-red-400" : "text-gray-400"} />
+                    {item.name}
+                  </button>
+                );
+              }
+
               return (
                 <Link
                   key={item.name}

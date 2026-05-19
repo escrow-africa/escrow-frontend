@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { authApi } from "../api/auth";
+import { setTokenCookie, removeTokenCookie } from "../utils/token";
 
 interface AuthState{
 
@@ -11,6 +12,7 @@ login:(data:any)=>Promise<void>;
 requestOtp:(data:any)=>Promise<void>;
 verifyOtp:(data:any)=>Promise<void>;
 resetPassword:(data:any)=>Promise<void>;
+	logout:()=>void;
 
 }
 
@@ -25,7 +27,12 @@ set({loading:true,error:null});
 
 try{
 
-await authApi.signup(data);
+const response = await authApi.signup(data);
+
+			if (typeof window !== "undefined" && response) {
+				const token = response.accessToken || response.token;
+				if (token) setTokenCookie(token);
+			}
 
 set({loading:false});
 
@@ -37,6 +44,7 @@ error:error.response?.data?.message,
 loading:false
 
 });
+throw error;
 
 }
 
@@ -48,9 +56,13 @@ set({loading:true,error:null});
 
 try{
 
+
 const response = await authApi.login(data);
 
-localStorage.setItem("token",response.token);
+			if (typeof window !== "undefined" && response) {
+				const token = response.accessToken || response.token;
+				if (token) setTokenCookie(token);
+			}
 
 set({loading:false});
 
@@ -62,6 +74,7 @@ error:error.response?.data?.message,
 loading:false
 
 });
+throw error;
 
 }
 
@@ -84,5 +97,15 @@ resetPassword: async(data)=>{
 await authApi.resetPassword(data);
 
 }
+
+ ,logout: ()=>{
+
+		if (typeof window !== "undefined") {
+			removeTokenCookie();
+		}
+
+		set({ loading:false, error:null });
+
+	}
 
 }));
