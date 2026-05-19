@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     
     <html lang="en">
       <body
-        className="bg-(--bg) text-(--text) font-sans"
+        className="font-sans antialiased"
       >
         <ThemeProvider >
         {children}

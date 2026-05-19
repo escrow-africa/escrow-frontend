@@ -55,7 +55,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Sidebar */}
       <aside 
-        className={`fixed inset-y-0 left-0 z-50 w-72 h-screen bg-[#0F3D2E] text-white flex flex-col font-sans overflow-y-auto scrollbar-hide transform transition-transform duration-300 lg:relative lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 h-screen bg-primary text-white flex flex-col font-sans overflow-y-auto scrollbar-hide transform transition-transform duration-300 lg:relative lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -78,7 +78,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Total Earnings Block */}
         <div className="px-6 py-2 mb-6 shrink-0">
-          <div className="bg-[#185541] rounded-lg p-4 border border-[#236b53] shadow-inner">
+          <div className="bg-primary-hover rounded-lg p-4 border border-[var(--primary-hover)] shadow-inner">
             <p className="text-xs text-gray-300 uppercase font-semibold mb-1 tracking-wider text-[10px]">Total Earnings</p>
             <p className="text-2xl font-bold">₦120,500.50</p>
           </div>
@@ -96,11 +96,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 href={item.href}
                 onClick={onClose}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive
-                  ? "bg-[#F3B659] text-[#0F3D2E]"
-                  : "text-gray-300 hover:bg-[#185541] hover:text-white"
+                  ? "bg-accent text-primary"
+                  : "text-gray-300 hover:bg-primary-hover hover:text-white"
                   }`}
               >
-                <Icon size={18} className={isActive ? "text-[#0F3D2E]" : "text-gray-400"} />
+                <Icon size={18} className={isActive ? "text-primary" : "text-gray-400"} />
                 {item.name}
               </Link>
             );
@@ -109,7 +109,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Bottom Navigation */}
         <div className="px-4 shrink-0 pb-8 mt-auto">
-          <div className="pt-4 border-t border-[#185541] space-y-1">
+          <div className="pt-4 border-t border-primary-hover space-y-1">
             {bottomItems.map((item) => {
               const Icon = item.icon;
               if (item.name === "Logout") {
@@ -134,7 +134,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   key={item.name}
                   href={item.href}
                   onClick={onClose}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-[#185541] hover:text-white ${item.textClass || "text-gray-300"}`}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors hover:bg-primary-hover hover:text-white ${item.textClass || "text-gray-300"}`}
                 >
                   <Icon size={18} className={item.textClass ? "text-red-400" : "text-gray-400"} />
                   {item.name}

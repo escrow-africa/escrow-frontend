@@ -18,7 +18,7 @@ export default function StatCard({
   topRightContent,
 }: StatCardProps) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow">
+    <div className="bg-surface rounded-2xl border border-border p-5 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-6">
         <div className={`p-2 rounded-lg ${iconBgClass} ${iconColorClass}`}>
           {icon}
@@ -30,8 +30,8 @@ export default function StatCard({
         )}
       </div>
       <div>
-        <h3 className="text-sm text-gray-500 font-medium mb-1">{title}</h3>
-        <div className="text-2xl font-bold text-gray-900">{value}</div>
+        <h3 className="text-sm text-muted-foreground font-medium mb-1">{title}</h3>
+        <div className="text-2xl font-bold text-foreground">{value}</div>
       </div>
     </div>
   );

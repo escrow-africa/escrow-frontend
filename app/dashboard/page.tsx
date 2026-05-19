@@ -37,10 +37,10 @@ export default function DashboardPage() {
       {/* Welcome Section */}
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-[#0F3D2E] mb-2">
+          <h1 className="text-3xl font-bold text-primary mb-2">
             Welcome back, {userName}
           </h1>
-          <p className="text-gray-500 text-sm">
+          <p className="text-muted-foreground text-sm">
             Here's what's happening with your account today.
           </p>
         </div>
@@ -48,14 +48,14 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full md:w-auto mt-4 md:mt-0">
           <button
             onClick={() => router.push('/dashboard/wallet?action=fund')}
-            className="w-full sm:w-auto px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 shadow-sm"
+            className="w-full sm:w-auto px-6 py-2.5 bg-surface border border-border rounded-xl text-sm font-semibold text-foreground hover:bg-surface-hover transition-colors flex items-center justify-center gap-2 shadow-sm"
           >
             <span className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-current pb-0.5">+</span>
             Fund Wallet
           </button>
           <button
             onClick={() => router.push('/dashboard/create-escrow')}
-            className="w-full sm:w-auto px-6 py-2.5 bg-[#0F3D2E] hover:bg-[#185541] rounded-xl text-sm font-semibold text-white transition-colors flex items-center justify-center gap-2 shadow-md"
+            className="w-full sm:w-auto px-6 py-2.5 bg-primary hover:bg-primary-hover rounded-xl text-sm font-semibold text-white transition-colors flex items-center justify-center gap-2 shadow-md"
           >
             <ShieldCheck size={18} />
             Create Escrow
@@ -69,7 +69,7 @@ export default function DashboardPage() {
           title="Total Earnings"
           value={<>₦12,500.50</>}
           icon={<TrendingUp size={20} />}
-          iconBgClass="bg-emerald-50"
+          iconBgClass="bg-emerald-500/10"
           iconColorClass="text-emerald-500"
           topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +2.5%</span>}
         />
@@ -77,7 +77,7 @@ export default function DashboardPage() {
           title="Available Balance"
           value={<>₦4,200.50</>}
           icon={<Wallet size={20} />}
-          iconBgClass="bg-teal-50"
+          iconBgClass="bg-teal-500/10"
           iconColorClass="text-teal-600"
           topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +2.5%</span>}
         />
@@ -85,7 +85,7 @@ export default function DashboardPage() {
           title="Escrow-held Funds"
           value={<>₦3,150.00</>}
           icon={<ShieldCheck size={20} />}
-          iconBgClass="bg-orange-50"
+          iconBgClass="bg-orange-500/10"
           iconColorClass="text-orange-500"
           topRightContent={<span className="text-orange-500 flex items-center gap-1"><Clock size={14} /> 2 Items</span>}
         />
@@ -93,7 +93,7 @@ export default function DashboardPage() {
           title="Incoming Escrows"
           value={<>5 Active</>}
           icon={<Clock size={20} />}
-          iconBgClass="bg-blue-50"
+          iconBgClass="bg-blue-500/10"
           iconColorClass="text-blue-500"
           topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +2.5%</span>}
         />

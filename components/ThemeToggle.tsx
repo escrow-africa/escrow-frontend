@@ -19,8 +19,8 @@ onClick={toggleTheme}
 className="
 relative flex items-center
 w-16 h-8 rounded-full
-bg-(--card)
-border border-(--input-border)
+bg-surface
+border border-border
 transition
 "
 >
@@ -29,7 +29,7 @@ transition
 <div
 className={`
 absolute w-6 h-6 rounded-full
-bg-(--button-bg)
+bg-primary text-accent
 transition-all duration-300
 flex items-center justify-center
 ${theme === "dark" ? "translate-x-8" : "translate-x-1"}
