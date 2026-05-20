@@ -8,7 +8,6 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import Image from "next/image";
 import Link from "next/link";
-
 import { useAuthStore } from "@/store/authStore";
 
 export default function Signup() {
@@ -65,8 +64,8 @@ export default function Signup() {
 
               <div className="w-full">
                 <label htmlFor="phone" className="tracking-[0.4em]" >PHONE</label>
-                <Input type="tel" placeholder="enter your phone"  {...register("phone", {
-                  required: "Phone number required"
+                <Input type="tel" placeholder="enter whatsapp number"  {...register("phone", {
+                  required: "WhatsApp phone number required"
                 })} />{errors.phone && (
                   <p className="text-red-500 text-sm">
                     {errors.phone.message}
@@ -75,7 +74,7 @@ export default function Signup() {
               </div>
             </div>
 
-            <div className="mt-5">
+            {/* <div className="mt-5">
               <label htmlFor="whatsappPhone" className="tracking-[0.4em]" >WHATSAPP PHONE</label>
               <Input type="tel" placeholder="enter your whatsapp phone"  {...register("whatsappPhone", {
                 required: "WhatsApp phone number required"
@@ -84,7 +83,7 @@ export default function Signup() {
                   {errors.whatsappPhone.message}
                 </p>
               )}
-            </div>
+            </div> */}
 
             <div className="mt-5">
               <label htmlFor="email" className="tracking-[0.4em]" >EMAIL</label>
