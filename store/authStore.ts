@@ -32,6 +32,9 @@ const response = await authApi.signup(data);
 			if (typeof window !== "undefined" && response) {
 				const token = response.accessToken || response.token;
 				if (token) setTokenCookie(token);
+				if (data.fullName) {
+					localStorage.setItem("user_fullName", data.fullName);
+				}
 			}
 
 set({loading:false});
@@ -62,6 +65,12 @@ const response = await authApi.login(data);
 			if (typeof window !== "undefined" && response) {
 				const token = response.accessToken || response.token;
 				if (token) setTokenCookie(token);
+				
+				const user = response.user || response.data?.user;
+				const fullName = user?.fullName || user?.name || response.fullName || response.name;
+				if (fullName) {
+					localStorage.setItem("user_fullName", fullName);
+				}
 			}
 
 set({loading:false});
@@ -122,6 +131,7 @@ await authApi.resetPassword(data);
 
 		if (typeof window !== "undefined") {
 			removeTokenCookie();
+			localStorage.removeItem("user_fullName");
 		}
 
 		set({ loading:false, error:null });

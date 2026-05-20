@@ -32,18 +32,31 @@ export default function DashboardPage() {
   const router = useRouter();
 
   React.useEffect(() => {
-    const token = getTokenFromCookie();
-    if (token) {
-      try {
-        const payload = token.split(".")[1];
-        const decoded = JSON.parse(atob(payload));
-        // Extract name from common JWT fields
-        const fullName = decoded.fullName || decoded.name || decoded.username || decoded.email?.split('@')[0];
-        if (fullName) {
-          const firstName = fullName.split(' ')[0];
-          setUserName(firstName);
+    const getSavedName = () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("user_fullName");
+        if (saved) return saved;
+      }
+      const token = getTokenFromCookie();
+      if (token) {
+        try {
+          const payload = token.split(".")[1];
+          const decoded = JSON.parse(atob(payload));
+          return decoded.fullName || decoded.name || decoded.username || decoded.email || "";
+        } catch (e) {
+          return "";
         }
-      } catch (e) {}
+      }
+      return "";
+    };
+
+    const fullName = getSavedName();
+    if (fullName) {
+      let name = fullName.includes("@") ? fullName.split("@")[0] : fullName;
+      name = name.replace(/[._-]/g, " ");
+      const firstWord = name.trim().split(" ")[0];
+      const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
+      setUserName(capitalized);
     }
   }, []);
 
