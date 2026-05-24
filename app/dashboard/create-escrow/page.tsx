@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { escrowApi } from "../../../api/escrow";
 import { Calendar, ChevronRight, Copy, FileMinus, Lock, Search, ShieldCheck } from "lucide-react";
+import EscrowProtectionModal from "../../../components/dashboard/escrow/EscrowProtectionModal";
 
 const inspectionOptions = ["1 Day Review", "3 Days Review", "5 Days Review", "7 Days Review"];
 
@@ -26,6 +27,7 @@ export default function CreateEscrowPage() {
   const [inspectionPeriod, setInspectionPeriod] = useState(inspectionOptions[0]);
   const [details, setDetails] = useState("");
   const [step, setStep] = useState<"form" | "submitting" | "success">("form");
+  const [isProtectionModalOpen, setIsProtectionModalOpen] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -271,7 +273,10 @@ export default function CreateEscrowPage() {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 w-full max-w-2xl">
-            <button className="flex-1 rounded-2xl border border-gray-200 bg-white py-4 text-sm font-semibold text-[#0F3D2E] hover:bg-gray-50 transition-colors">
+            <button 
+              onClick={() => setIsProtectionModalOpen(true)}
+              className="flex-1 rounded-2xl border border-gray-200 bg-white py-4 text-sm font-semibold text-[#0F3D2E] hover:bg-gray-50 transition-colors"
+            >
               Agreement PDF
             </button>
             <Link href="/dashboard/escrows" className="flex-1 rounded-2xl bg-[#0F3D2E] py-4 text-sm font-semibold text-white text-center hover:bg-[#185541] transition-colors">
@@ -280,6 +285,10 @@ export default function CreateEscrowPage() {
           </div>
         </div>
       )}
+      <EscrowProtectionModal 
+        isOpen={isProtectionModalOpen} 
+        onClose={() => setIsProtectionModalOpen(false)} 
+      />
     </div>
   );
 }

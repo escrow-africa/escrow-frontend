@@ -144,7 +144,7 @@ export default function EscrowDetailsPage({ params }: { params: Promise<{ id: st
           id: detailRes.escrowId || detailRes.id || detailRes._id || id,
           status: detailRes.status || detailRes.state || escrow.status,
           customerName: detailRes.buyerName || detailRes.customerName || detailRes.buyerEmail || escrow.customerName,
-          customerInitial: (detailRes.buyerName || detailRes.customerName || detailRes.buyerEmail || "\").charAt(0).toUpperCase(),
+          customerInitial: (detailRes.buyerName || detailRes.customerName || detailRes.buyerEmail || "").charAt(0).toUpperCase(),
           lockedFunds: detailRes.lockedFunds || detailRes.locked_amount || detailRes.baseAmount || escrow.lockedFunds,
           milestone: (detailRes.milestones && detailRes.milestones[0]?.title) || detailRes.milestone || escrow.milestone,
           baseAmount: detailRes.baseAmount || detailRes.amount || escrow.baseAmount,
