@@ -106,7 +106,7 @@ requestOtp: async(data)=>{
 verifyOtp: async(data)=>{
   set({ loading: true, error: null });
   try {
-    const response = await authApi.verifyPassword(data);
+    const response = await authApi.verifyEmail(data);
     if (typeof window !== "undefined" && response) {
       const token = response.accessToken || response.token;
       if (token) setTokenCookie(token);
@@ -122,9 +122,18 @@ verifyOtp: async(data)=>{
 },
 
 resetPassword: async(data)=>{
-
-await authApi.resetPassword(data);
-
+  set({ loading: true, error: null });
+  try {
+    const response = await authApi.resetPassword(data);
+    set({ loading: false });
+    return response;
+  } catch (error: any) {
+    set({
+      error: error.response?.data?.message || "Failed to reset password",
+      loading: false
+    });
+    throw error;
+  }
 }
 
  ,logout: ()=>{

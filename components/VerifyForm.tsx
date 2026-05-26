@@ -93,7 +93,7 @@ export default function VerifyPage() {
 
             await verifyOtp({
                 email,
-                otp: Number(otp)
+                otp: otp
             });
 
             toast.success("Verification successful");

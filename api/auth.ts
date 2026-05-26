@@ -35,7 +35,7 @@ export const authApi = {
   },
 
 
-  verifyPassword: async (payload: any) => {
+  verifyEmail: async (payload: any) => {
     try {
       const response = await api.post("/auth/verify-otp", payload);
       return response.data;
@@ -46,14 +46,13 @@ export const authApi = {
   },
 
   resetPassword: async (data: any) => {
-
     try {
       const response = await api.post("/auth/reset-password", data);
       return response.data;
     } catch (error: any) {
       console.log(error);
+      throw error;
     }
-
   }
   ,
 
