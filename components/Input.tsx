@@ -15,7 +15,7 @@ const Input = ({ type, className, ...props }: InputProps) => {
       <input
         type={currentType}
         {...props}
-        className={`border border-[#767676] p-2 rounded-md w-full ${isPassword ? "pr-10" : ""} ${className || ""}`}
+        className={`border border-[#E4E3E3CC] bg-[#E4E3E3CC] p-2 rounded-md w-full ${isPassword ? "pr-10" : ""} ${className || ""}`}
       />
       {isPassword && (
         <button

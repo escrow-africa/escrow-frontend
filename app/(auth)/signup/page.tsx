@@ -38,18 +38,19 @@ export default function Signup() {
   }
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md border border-[#767676] rounded-2xl p-6 sm:p-10">
+      <div className="w-full max-w-md border border-[#E4E3E3CC] rounded-2xl p-6 sm:p-10">
         <main className="flex flex-col">
 
           <Image src="/logo.png" alt="Logo" width={70} height={65} />
-          <h1 className="font-bold text-4xl mt-3">
+          <h1 className="font-bold text-4xl mt-3  text-[#0B493A]">
             CREATE </h1>
-          <h1 className=" text-[#F3B659] font-bold text-4xl mb-5">PROFILE</h1>
+            <h1 className="font-bold text-4xl text-[#0B493A]"> PROFILE</h1>
+          
 
 
-          <form onSubmit={handleSubmit(onSubmit)} className=" w-full text-[#767676]">
-            <p >Create your profile to start using the app.</p>
-            <div className="flex gap-4 mt-3">
+          <form onSubmit={handleSubmit(onSubmit)} className=" w-full text-[#686767]">
+            <p className="font-semibold">Create your profile to start using the app.</p>
+            <div className="flex gap-4 mt-7">
               <div className="w-full">
                 <label htmlFor="fullName" className="tracking-[0.4em]" >FULL NAME</label>
                 <Input type="text" placeholder="enter your full name" {...register("fullName", {
@@ -74,16 +75,7 @@ export default function Signup() {
               </div>
             </div>
 
-            {/* <div className="mt-5">
-              <label htmlFor="whatsappPhone" className="tracking-[0.4em]" >WHATSAPP PHONE</label>
-              <Input type="tel" placeholder="enter your whatsapp phone"  {...register("whatsappPhone", {
-                required: "WhatsApp phone number required"
-              })} />{errors.whatsappPhone && (
-                <p className="text-red-500 text-sm">
-                  {errors.whatsappPhone.message}
-                </p>
-              )}
-            </div> */}
+    
 
             <div className="mt-5">
               <label htmlFor="email" className="tracking-[0.4em]" >EMAIL</label>
@@ -112,12 +104,12 @@ export default function Signup() {
 
             </div>
 
-            <Button type="submit" disabled={isSubmitting || loading}>{isSubmitting ? "Creating..." : "CREATE PROFILE"}</Button>
+            <Button type="submit" disabled={isSubmitting || loading}>{isSubmitting ? "Creating..." : "Create Profile"}</Button>
 
 
           </form>
           <p className="text-center tracking-[0.4em] text-xs">HAVE AN ACCOUNT? <Link href="/login">
-            LOGIN
+            <span className="text-[#0B493A] font-bold">LOGIN</span>
           </Link>
           </p>
 

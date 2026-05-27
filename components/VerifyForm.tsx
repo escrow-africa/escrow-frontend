@@ -133,12 +133,12 @@ export default function VerifyPage() {
 
         <div className="min-h-screen flex items-center justify-center px-4">
 
-            <div className="p-6 sm:p-8 w-full max-w-md border border-[#767676] rounded-2xl text-center">
+            <div className="p-6 sm:p-8 w-full max-w-md border border-[#E4E3E3CC] rounded-2xl text-center">
 
-                <div className="flex items-center justify-center">
+                <div className="flex items-center justify-center  bg-[#0B493A]/15 rounded-full w-16 h-16 mx-auto border border-[#0B493A]/40">
 
                     <Image
-                        src="/bell.png"
+                        src="/bell2.png"
                         alt="Logo"
                         width={50}
                         height={50}
@@ -149,18 +149,16 @@ export default function VerifyPage() {
 
                 <div className="flex gap-2 justify-center my-3">
 
-                    <h1 className="font-bold text-3xl sm:text-4xl">
-                        VERIFY
+                    <h1 className="font-bold text-3xl sm:text-4xl text-[#0B493A]">
+                        VERIFY ACCESS
                     </h1>
 
-                    <span className="text-[#F3B659] font-bold text-3xl sm:text-4xl">
-                        ACCESS
-                    </span>
+        
 
                 </div>
 
 
-                <p className="text-[#767676] text-xs w-[90%] sm:w-3/4 mx-auto pb-4">
+                <p className="text-[#767676] font-semibold  w-[90%] sm:w-3/4 mx-auto pb-4">
 
                     We sent a 6-digit code to your phone or email.
 
@@ -189,15 +187,13 @@ export default function VerifyPage() {
 
                                             key={idx}
 
-                                            className={`relative w-9 h-12 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center text-lg sm:text-xl font-bold transition-all 
+                                            className={`relative w-9 h-12 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center text-lg sm:text-xl  transition-all 
 
 ${slot.isActive
 
                                                     ? 'border-[#F3B659] ring-1 ring-[#F3B659]'
 
-                                                    : 'border-[#767676]'}
-
-bg-black text-white`}
+                                                    : 'border-[#E4E3E3CC]'}`}
 
                                         >
 
@@ -231,7 +227,7 @@ bg-black text-white`}
                         disabled={loading}
                     >
 
-                        {loading ? "VERIFYING..." : "VERIFY CODE"}
+                        {loading ? "Verifying..." : "Verify Now"}
 
                     </Button>
 
@@ -240,7 +236,7 @@ bg-black text-white`}
 
                 <p
                     onClick={resendOtp}
-                    className="text-[#767676] text-xs tracking-[0.4em] cursor-pointer mt-3"
+                    className="text-[#0B493A] hover:text-[#F3B659] text-xs tracking-[0.4em] cursor-pointer mt-3"
                 >
 
                     RESEND CODE
