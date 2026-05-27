@@ -142,6 +142,7 @@ export default function VerifyPage() {
                         alt="Logo"
                         width={50}
                         height={50}
+                        className="animate-swing"
                     />
 
                 </div>
