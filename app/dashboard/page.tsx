@@ -28,7 +28,6 @@ const MOCK_ESCROWS: ActiveEscrow[] = [
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState("User");
-  const [isReminderOpen, setIsReminderOpen] = useState(false);
   const router = useRouter();
 
   React.useEffect(() => {
@@ -137,27 +136,13 @@ export default function DashboardPage() {
           <TransactionList transactions={MOCK_TRANSACTIONS} />
         </div>
 
-        {/* Right Column (Active Escrows & Ads/Pro spaces) */}
+        {/* Right Column (Active Escrows & Ads/Promo) */}
         <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-8">
+          <PremiumReminderModal />
           <ActiveEscrowsList escrows={MOCK_ESCROWS} />
         </div>
       </div>
 
-      {/* Periodic Reminder Modal */}
-      <PremiumReminderModal
-        isOpen={isReminderOpen}
-        onClose={() => setIsReminderOpen(false)}
-      />
-
-      {/* Dev Tool: Button to toggle modal for testing purposes */}
-      {process.env.NODE_ENV === 'development' && (
-        <button
-          onClick={() => setIsReminderOpen(true)}
-          className="fixed bottom-4 right-4 bg-gray-900 text-white p-3 rounded-full shadow-lg opacity-50 hover:opacity-100 transition-opacity text-xs z-50"
-        >
-          Test Premium Reminder
-        </button>
-      )}
     </div>
   );
 }
