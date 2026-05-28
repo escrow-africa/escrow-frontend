@@ -8,7 +8,7 @@ import {
   LayoutDashboard,
   Wallet,
   Briefcase,
-  Plus,
+  Megaphone,
   AlertCircle,
   Bell,
   Settings,
@@ -29,7 +29,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Wallet", href: "/dashboard/wallet", icon: Wallet },
     { name: "Escrows", href: "/dashboard/escrows", icon: Briefcase },
-    { name: "Create Escrow", href: "/dashboard/create-escrow", icon: Plus },
+    { name: "Ads", href: "/dashboard/ads", icon: Megaphone },
     { name: "Disputes", href: "/dashboard/disputes", icon: AlertCircle },
     { name: "Notifications", href: "/dashboard/notifications", icon: Bell },
   ];

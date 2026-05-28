@@ -105,29 +105,29 @@ export default function Login() {
       case "forgot":
         return (
           <>
-            <h1 className="font-bold text-4xl mt-3">FORGOT</h1>
-            <h1 className="text-[#F3B659] font-bold text-4xl mb-5">PASSWORD</h1>
+            <h1 className="font-bold text-4xl mt-3 text-[#0B493A]">FORGOT</h1>
+            <h1 className="text-[#0B493A] font-bold text-4xl mb-3">PASSWORD</h1>
           </>
         );
       case "verify-reset":
         return (
           <>
-            <h1 className="font-bold text-4xl mt-3">VERIFY</h1>
-            <h1 className="text-[#F3B659] font-bold text-4xl mb-5">CODE</h1>
+            <h1 className="font-bold text-4xl mt-3 text-[#0B493A]">VERIFY</h1>
+            <h1 className="text-[#0B493A] font-bold text-4xl mb-5">CODE</h1>
           </>
         );
       case "new-password":
         return (
           <>
-            <h1 className="font-bold text-4xl mt-3">NEW</h1>
-            <h1 className="text-[#F3B659] font-bold text-4xl mb-5">PASSWORD</h1>
+            <h1 className="font-bold text-4xl mt-3 text-[#0B493A]">NEW</h1>
+            <h1 className="text-[#0B493A] font-bold text-4xl mb-5">PASSWORD</h1>
           </>
         );
       default:
         return (
           <>
-            <h1 className="font-bold text-4xl mt-3">LOGIN</h1>
-            <h1 className="text-[#F3B659] font-bold text-4xl mb-5">ACCOUNT</h1>
+            <h1 className="font-bold text-4xl mt-3 text-[#0B493A]">LOGIN</h1>
+            <h1 className="text-[#0B493A] font-bold text-4xl mb-3">ACCOUNT</h1>
           </>
         );
     }
@@ -135,7 +135,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md border border-[#767676] rounded-2xl p-6 sm:p-10">
+      <div className="w-full max-w-md border border-[#E4E3E3CC] rounded-2xl p-6 sm:p-10">
         <main className="flex flex-col">
           <Image
             src="/logo.png"
@@ -148,7 +148,7 @@ export default function Login() {
 
           {view === "login" && (
             <form onSubmit={handleSubmit(onSubmit)} className="w-full text-[#767676]">
-              <p>Enter your details to log in.</p>
+              <p className="font-semibold">Enter your details to log in.</p>
 
               <div className="mt-5">
                 <label className="tracking-[0.4em]">EMAIL ADDRESS</label>
@@ -186,7 +186,7 @@ export default function Login() {
                       }
                       setView("forgot");
                     }}
-                    className="text-xs text-[#F3B659] hover:underline tracking-wider"
+                    className="text-xs text-[#0B493A] hover:underline tracking-wider"
                   >
                     Forgot Password?
                   </button>
@@ -194,17 +194,17 @@ export default function Login() {
               </div>
 
               <Button type="submit" disabled={isSubmitting || loading}>
-                {isSubmitting || loading ? "Logging in..." : "LOGIN"}
+                {isSubmitting || loading ? "Logging in..." : "Login"}
               </Button>
             </form>
           )}
 
           {view === "forgot" && (
-            <form onSubmit={handleRequestReset} className="w-full text-[#767676]">
-              <p>Enter your email address to receive a password reset code.</p>
+            <form onSubmit={handleRequestReset} className="w-full font-semibold text-[#767676]">
+              <p>Enter your email address to receive a reset code.</p>
 
               <div className="mt-5">
-                <label className="tracking-[0.4em]">EMAIL ADDRESS</label>
+                <label className="tracking-[0.4em]">EMAIL</label>
                 <Input
                   type="email"
                   placeholder="enter your email"
@@ -215,14 +215,14 @@ export default function Login() {
               </div>
 
               <Button type="submit" disabled={loading}>
-                {loading ? "Sending..." : "SEND RESET CODE"}
+                {loading ? "Sending..." : "Send Code"}
               </Button>
 
               <p className="text-center tracking-[0.4em] text-xs mt-4">
                 <button
                   type="button"
                   onClick={() => setView("login")}
-                  className="text-[#F3B659] hover:underline"
+                  className="text-[#0B493A] hover:underline"
                 >
                   BACK TO LOGIN
                 </button>
@@ -313,11 +313,11 @@ export default function Login() {
           )}
 
           {view === "login" && (
-            <p className="text-center tracking-[0.4em] text-xs mt-5">
+            <p className="text-center tracking-[0.4em] text-[#686767] text-xs mt-5">
               NEW HERE?
               <Link
                 href="/signup"
-                className="text-[#F3B659] ml-1"
+                className="text-[#0B493A] ml-1"
               >
                 CREATE AN ACCOUNT
               </Link>

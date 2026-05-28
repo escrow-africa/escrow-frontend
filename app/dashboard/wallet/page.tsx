@@ -42,8 +42,15 @@ export default function WalletPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get("action") === "fund") {
+      const action = urlParams.get("action");
+
+      if (action === "fund") {
         setViewState("fund_wallet");
+      } else if (action === "withdraw") {
+        setViewState("withdraw_funds");
+      }
+
+      if (action) {
         // Clear param so subsequent back-navigations behave normally
         window.history.replaceState({}, '', window.location.pathname);
       }
