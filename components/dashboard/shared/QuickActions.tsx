@@ -14,10 +14,13 @@ export default function QuickActions() {
           <ArrowUpRight size={18} />
           Withdraw Money
         </Link>
-        <button className="w-full sm:flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-surface border border-border rounded-xl text-sm font-semibold text-foreground hover:bg-surface-hover hover:border-muted-foreground transition-all shadow-sm">
+        <Link
+          href="/dashboard/ads"
+          className="w-full sm:flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-surface border border-border rounded-xl text-sm font-semibold text-foreground hover:bg-surface-hover hover:border-muted-foreground transition-all shadow-sm"
+        >
           <Plus size={18} />
           Create Ad
-        </button>
+        </Link>
       </div>
     </div>
   );

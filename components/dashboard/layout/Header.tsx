@@ -24,6 +24,7 @@ export default function Header({
   let title = "Dashboard";
   if (pathname.includes("/dashboard/escrows")) title = "Escrows";
   else if (pathname.includes("/dashboard/wallet")) title = "Wallet";
+  else if (pathname.includes("/dashboard/ads")) title = "Ads";
   else if (pathname.includes("/dashboard/create-escrow")) title = "Create Escrow";
   else if (pathname.includes("/dashboard/disputes")) title = "Disputes";
   else if (pathname.includes("/dashboard/notifications")) title = "Notifications";
