@@ -28,3 +28,28 @@ export async function fetchAds(): Promise<Ad[]> {
     setTimeout(() => resolve(MOCK_ADS), 120);
   });
 }
+
+export interface CreateAdPayload {
+  title: string;
+  description: string;
+  price: number;
+}
+
+export async function createAd(payload: CreateAdPayload): Promise<Ad> {
+  return new Promise((resolve) => {
+    setTimeout(
+      () =>
+        resolve({
+          id: `${Date.now()}`,
+          title: payload.title,
+          description: payload.description,
+          price: payload.price,
+          image: "/ad1.png",
+          status: "ACTIVE",
+          views: 0,
+          clicks: 0,
+        }),
+      200,
+    );
+  });
+}
