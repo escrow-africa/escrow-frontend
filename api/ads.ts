@@ -33,23 +33,25 @@ export interface CreateAdPayload {
   title: string;
   description: string;
   price: number;
+  image?: string;
 }
 
 export async function createAd(payload: CreateAdPayload): Promise<Ad> {
   return new Promise((resolve) => {
-    setTimeout(
-      () =>
-        resolve({
-          id: `${Date.now()}`,
-          title: payload.title,
-          description: payload.description,
-          price: payload.price,
-          image: "/ad1.png",
-          status: "ACTIVE",
-          views: 0,
-          clicks: 0,
-        }),
-      200,
-    );
+    setTimeout(() => {
+      const ad: Ad = {
+        id: `${Date.now()}`,
+        title: payload.title,
+        description: payload.description,
+        price: payload.price,
+        image: payload.image || "/ad1.png",
+        status: "ACTIVE",
+        views: 0,
+        clicks: 0,
+      };
+
+      MOCK_ADS.unshift(ad);
+      resolve(ad);
+    }, 200);
   });
 }

@@ -1,21 +1,22 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Image as ImageIcon, Loader2, Megaphone } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Image as ImageIcon, Loader2, Megaphone, Check } from "lucide-react";
+import NextImage from "next/image";
 import toast from "react-hot-toast";
 import { createAd } from "@/api/ads";
+import SuccessModal from "@/components/SuccessModal";
 
 export default function CreateAdPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("0.00");
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageDataUrl, setImageDataUrl] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
   const [showPreview, setShowPreview] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     return () => {
@@ -37,16 +38,32 @@ export default function CreateAdPage() {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
-    setImageFile(file);
 
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-    } else {
+    if (!file) {
       setPreviewUrl("");
+      setImageDataUrl("");
+      return;
     }
+
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+        } else {
+          reject(new Error("Unable to read image file."));
+        }
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+
+    setImageDataUrl(dataUrl);
   };
 
   const handlePublish = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -59,10 +76,11 @@ export default function CreateAdPage() {
         title: title.trim(),
         description: description.trim(),
         price: parsedPrice,
+        image: imageDataUrl || previewUrl || "/ad1.png",
       });
 
-      toast.success("Advertisement published successfully.");
-      router.push("/dashboard/ads");
+      setIsSubmitting(false);
+      setShowSuccessModal(true);
     } catch (error) {
       console.error(error);
       toast.error("Unable to publish advert. Please try again.");
@@ -141,6 +159,12 @@ export default function CreateAdPage() {
                   className="hidden"
                   onChange={handleFileChange}
                 />
+                {imageDataUrl && (
+                  <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                    <Check size={16} />
+                    <span>Image uploaded successfully</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -172,9 +196,15 @@ export default function CreateAdPage() {
           {showPreview && (
             <div className="mt-8 rounded-xl border border-[#E4E8E6] bg-[#F8FAF9] p-6">
               <div className="flex flex-col gap-4 md:flex-row md:items-start">
-                <div className="h-32 w-full overflow-hidden rounded-3xl bg-[#E7ECEA] md:h-32 md:w-40">
+                <div className="relative h-32 w-full overflow-hidden rounded-3xl bg-[#E7ECEA] md:h-32 md:w-40">
                   {previewUrl ? (
-                    <img src={previewUrl} alt="Ad preview" className="h-full w-full object-cover" />
+                    <NextImage
+                      src={previewUrl}
+                      alt="Ad preview"
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
                   ) : (
                     <div className="flex h-full items-center justify-center text-sm text-[#5D6D69]">
                       No image selected
@@ -193,13 +223,13 @@ export default function CreateAdPage() {
 
           {isSubmitting && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-              <div className="w-full max-w-md rounded-[2rem] bg-white p-8 text-center shadow-[0_25px_70px_rgba(15,61,46,0.12)]">
+              <div className="w-full max-w-md rounded-4xl bg-white p-8 text-center shadow-[0_25px_70px_rgba(15,61,46,0.12)]">
                 <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#E5F7F0] text-[#0F3D2E]">
                   <Megaphone className="h-8 w-8" />
                 </div>
                 <h2 className="text-2xl font-semibold text-[#0F3D2E]">Publishing Advertisement</h2>
                 <p className="mt-3 text-sm text-[#4A5550]">
-                  We're setting up your advertisement on the marketplace.
+                  We&apos;re setting up your advertisement on the marketplace.
                 </p>
                 <div className="mt-6 flex items-center justify-center gap-2 text-[#0F3D2E]">
                   <Loader2 className="h-5 w-5 animate-spin" />
@@ -208,6 +238,15 @@ export default function CreateAdPage() {
               </div>
             </div>
           )}
+
+          <SuccessModal
+            isOpen={showSuccessModal}
+            onClose={() => setShowSuccessModal(false)}
+            title="Advertisement Published"
+            description="Your ad is now live on the marketplace."
+            buttonText="View Ads"
+            redirectTo="/dashboard/ads"
+          />
         </div>
       </div>
     </div>
