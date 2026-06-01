@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Image as ImageIcon } from "lucide-react";
+import { Image as ImageIcon, Loader2, Megaphone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { createAd } from "@/api/ads";
@@ -148,7 +148,10 @@ export default function CreateAdPage() {
               <button
                 type="button"
                 onClick={handlePreview}
-                className="rounded-xl border border-[#E4E8E6] bg-white px-6 py-4 text-sm font-semibold text-[#0F3D2E] transition hover:bg-[#F7F8F9]"
+                disabled={isSubmitting}
+                className={`rounded-xl border border-[#E4E8E6] bg-white px-6 py-4 text-sm font-semibold text-[#0F3D2E] transition ${
+                  isSubmitting ? "cursor-not-allowed opacity-60" : "hover:bg-[#F7F8F9]"
+                }`}
               >
                 Preview Ad
               </button>
@@ -156,7 +159,7 @@ export default function CreateAdPage() {
                 type="submit"
                 disabled={!canPublish || isSubmitting}
                 className={`rounded-xl px-6 py-4 text-sm font-semibold text-white transition ${
-                  canPublish
+                  canPublish && !isSubmitting
                     ? "bg-[#0F3D2E] hover:bg-[#123f30]"
                     : "bg-[#BCC7C3] cursor-not-allowed"
                 }`}
@@ -183,6 +186,24 @@ export default function CreateAdPage() {
                   <h2 className="mt-3 text-xl font-semibold text-[#0F3D2E]">{title || "Your ad title"}</h2>
                   <p className="mt-2 text-sm leading-6 text-[#4A5550]">{description || "Your ad description will appear here."}</p>
                   <p className="mt-4 text-lg font-semibold text-[#0F3D2E]">₦{parsedPrice.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isSubmitting && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+              <div className="w-full max-w-md rounded-[2rem] bg-white p-8 text-center shadow-[0_25px_70px_rgba(15,61,46,0.12)]">
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#E5F7F0] text-[#0F3D2E]">
+                  <Megaphone className="h-8 w-8" />
+                </div>
+                <h2 className="text-2xl font-semibold text-[#0F3D2E]">Publishing Advertisement</h2>
+                <p className="mt-3 text-sm text-[#4A5550]">
+                  We're setting up your advertisement on the marketplace.
+                </p>
+                <div className="mt-6 flex items-center justify-center gap-2 text-[#0F3D2E]">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Working on it...</span>
                 </div>
               </div>
             </div>
