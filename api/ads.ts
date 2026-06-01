@@ -29,6 +29,15 @@ export async function fetchAds(): Promise<Ad[]> {
   });
 }
 
+export async function fetchAd(id: string): Promise<Ad | null> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const ad = MOCK_ADS.find((item) => item.id === id) ?? null;
+      resolve(ad);
+    }, 120);
+  });
+}
+
 export interface CreateAdPayload {
   title: string;
   description: string;
