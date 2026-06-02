@@ -89,6 +89,7 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
           setTokenId(rawData?.otpData?.id || response?.otpData?.id || response?.data?.otpData?.id || "");
           setStep(7); // Move to OTP step
         } else {
+          toast.success("Wallet funded successfully!");
           setStep(4); // Success
         }
       } catch (error: any) {
@@ -109,9 +110,10 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
           tokenId,
           token: otp
         });
+        toast.success("Wallet funded successfully!");
         setStep(4); // Success
-      } catch (error) {
-        toast.error("Invalid OTP or verification failed.");
+      } catch (error: any) {
+        toast.error(error?.response?.data?.message || error?.message || "Invalid OTP or verification failed.");
         setStep(7); // Go back to OTP
       }
     }

@@ -9,7 +9,7 @@ export const walletApi = {
       return response.data;
     } catch (error) {
       console.error("Failed to fetch wallet details:", error);
-      alert("Failed to fetch wallet details. Please try again.");
+      throw error;
     }
   },
 
@@ -19,7 +19,7 @@ export const walletApi = {
       return response.data;
     } catch (error) {
       console.error("Failed to fetch bank list:", error);
-      alert("Failed to fetch bank list. Please try again.");
+      throw error;
     }
   },
 
@@ -29,7 +29,7 @@ export const walletApi = {
       return response.data;
     } catch (error) {
       console.error("Top-up request failed:", error);
-      alert("Failed to initiate top-up. Please try again.");
+      throw error;
     }
   },
 
@@ -39,7 +39,7 @@ export const walletApi = {
       return response.data;
     } catch (error) {
       console.error("OTP Verification error:", error);
-      alert("An error occurred during verification.");
+      throw error;
     }
   }
 };
