@@ -3,7 +3,7 @@ import { api } from "./axios";
 
 export const walletApi = {
   getWalletDetails: async (userId: string) => {
-    // 
+     
     try {
       const response = await api.get(`/wallet/${userId}`);
       return response.data;
