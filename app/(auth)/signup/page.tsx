@@ -52,7 +52,7 @@ export default function Signup() {
             <p className="font-semibold">Create your profile to start using the app.</p>
             <div className="flex gap-4 mt-7">
               <div className="w-full">
-                <label htmlFor="fullName" className="tracking-[0.4em]" >FULL NAME</label>
+                <label htmlFor="fullName" className="tracking-[0.4em] text-xs" >FULL NAME</label>
                 <Input type="text" placeholder="enter your full name" {...register("fullName", {
                   required: "Full name required"
                 })} />
@@ -64,7 +64,7 @@ export default function Signup() {
               </div>
 
               <div className="w-full">
-                <label htmlFor="phone" className="tracking-[0.4em]" >PHONE</label>
+                <label htmlFor="phone" className="tracking-[0.4em] text-xs" >PHONE</label>
                 <Input type="tel" placeholder="enter whatsapp number"  {...register("phone", {
                   required: "WhatsApp phone number required"
                 })} />{errors.phone && (
@@ -78,7 +78,7 @@ export default function Signup() {
     
 
             <div className="mt-5">
-              <label htmlFor="email" className="tracking-[0.4em]" >EMAIL</label>
+              <label htmlFor="email" className="tracking-[0.4em] text-xs" >EMAIL</label>
               <Input type="email" placeholder="enter your email" {...register("email", {
                 required: "Email required"
               })} />{errors.email && (
@@ -89,7 +89,7 @@ export default function Signup() {
             </div>
 
             <div className="mt-3">
-              <label htmlFor="password" className="tracking-[0.4em]">PASSWORD</label>
+              <label htmlFor="password" className="tracking-[0.4em] text-xs" >PASSWORD</label>
               <Input type="password" placeholder="enter your password" {...register("password", {
                 required: "Password required",
                 minLength: {
@@ -109,7 +109,7 @@ export default function Signup() {
 
           </form>
           <p className="text-center tracking-[0.4em] text-xs">HAVE AN ACCOUNT? <Link href="/login">
-            <span className="text-[#0B493A] font-bold">LOGIN</span>
+            <span className="text-[#0B493A] font-bold text-xs">LOGIN</span>
           </Link>
           </p>
 
