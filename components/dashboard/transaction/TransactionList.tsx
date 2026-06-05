@@ -17,9 +17,9 @@ interface TransactionListProps {
 
 export default function TransactionList({ transactions }: TransactionListProps) {
   return (
-    <div className="bg-surface rounded-2xl border border-border shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] overflow-hidden">
+    <div className="bg-surface rounded-2xl border border-[#E4E3E3CC] shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 md:p-6 border-b border-muted">
+      <div className="flex items-center justify-between p-4 md:p-6 border-b border-[#E4E3E3CC]">
         <h2 className="text-lg font-bold text-foreground">Recent Transactions</h2>
         <Link href="/dashboard/transactions" className="text-sm font-semibold text-primary flex items-center gap-1 hover:underline">
           View All <ArrowRight size={16} />
@@ -35,8 +35,8 @@ export default function TransactionList({ transactions }: TransactionListProps) 
           return (
             <div 
               key={tx.id} 
-              className={`flex items-center justify-between p-4 md:p-6 hover:bg-surface-hover transition-colors gap-4 ${
-                index !== transactions.length - 1 ? "border-b border-muted" : ""
+              className={`flex items-center justify-between p-3 md:p-4 hover:bg-surface-hover transition-colors gap-3 ${
+                index !== transactions.length - 1 ? "border-b border-[#E4E3E3CC]" : ""
               }`}
             >
               {/* Left Side: Icon & Details */}

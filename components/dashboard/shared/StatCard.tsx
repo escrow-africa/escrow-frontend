@@ -18,7 +18,7 @@ export default function StatCard({
   topRightContent,
 }: StatCardProps) {
   return (
-    <div className="bg-surface rounded-2xl border border-border p-3 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow">
+    <div className="bg-surface rounded-2xl border border-[#E4E3E3CC] p-3 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-4">
         <div className={`p-2 rounded-lg ${iconBgClass} ${iconColorClass}`}>
           {icon}
