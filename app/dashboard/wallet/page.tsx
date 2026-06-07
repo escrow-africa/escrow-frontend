@@ -91,10 +91,7 @@ export default function WalletPage() {
   const transactions = walletDetails?.transactions || [];
 
   return (
-    <div className="flex flex-col h-full fade-in pb-12 w-full pt-2">
-      <div className="mb-8 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-[#0F3D2E]">Wallet</h1>
-      </div>
+    <div className="flex flex-col h-full fade-in w-full my-8">
 
       {error && (
         <div className="mb-4 p-4 bg-red-50 text-red-500 rounded-xl">
@@ -110,11 +107,11 @@ export default function WalletPage() {
           />
         </div>
       ) : viewState === "fund_wallet" ? (
-        <div className="flex h-full items-center justify-center mt-8 pb-12">
+        <div className="flex items-start justify-center mt-8 pb-12">
           <FundWalletFlow onComplete={handleBackToOverview} userId={getUserIdFromToken()} />
         </div>
       ) : viewState === "withdraw_funds" ? (
-        <div className="flex h-full items-center justify-center mt-8 pb-12">
+        <div className="flex items-start justify-center mt-8 pb-12">
           <WithdrawFundsFlow onComplete={handleBackToOverview} />
         </div>
       ) : (

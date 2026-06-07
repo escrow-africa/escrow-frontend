@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import StatCard from "../../components/dashboard/shared/StatCard";
 import QuickActions from "../../components/dashboard/shared/QuickActions";
 import TransactionList, { Transaction } from "../../components/dashboard/transaction/TransactionList";
@@ -9,47 +9,59 @@ import PremiumReminderModal from "../../components/dashboard/shared/PremiumRemin
 import { TrendingUp, Wallet, ShieldCheck, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getTokenFromCookie } from "../../utils/token";
+import { useWalletStore } from "../../store/walletStore";
+import { escrowApi } from "../../api/escrow";
 
-// Mock Data for UI presentation. 
-// Replace with actual API fetches in the future.
-const MOCK_TRANSACTIONS: Transaction[] = [
-  { id: "1", title: "Escrow payout from John Doe", date: "3/20/2026", amount: "₦700,000", type: "in", status: "COMPLETED" },
-  { id: "2", title: "Withdrawal to GTBank", date: "3/20/2026", amount: "₦400,000", type: "out", status: "PENDING" },
-  { id: "3", title: "Ad Promotion: Premium UI Kit", date: "3/20/2026", amount: "₦200,000", type: "in", status: "COMPLETED" },
-  { id: "4", title: "Ad Promotion: Premium UI Kit", date: "3/20/2026", amount: "₦200,000", type: "in", status: "COMPLETED" },
-  { id: "5", title: "Ad Promotion: Premium UI Kit", date: "3/20/2026", amount: "₦200,000", type: "in", status: "COMPLETED" },
+const dotColorClasses = [
+  "bg-blue-500",
+  "bg-yellow-500",
+  "bg-emerald-500",
+  "bg-purple-500",
+  "bg-pink-500",
 ];
 
-const MOCK_ESCROWS: ActiveEscrow[] = [
-  { id: "1", title: "MacBook ProM3 Max", partnerName: "TechStore NG", amount: "₦700,000", dotColorClass: "bg-blue-500" },
-  { id: "2", title: "UI/UX Design Retainer", partnerName: "FinTech Solutions", amount: "₦800,000", dotColorClass: "bg-yellow-500" },
-  { id: "3", title: "Logo Design Package", partnerName: "Creative Studio", amount: "₦500,000", dotColorClass: "bg-emerald-500" },
-];
+type RawEscrowItem = Record<string, any>;
+
+function normalizeEscrowItem(item: RawEscrowItem, index: number): ActiveEscrow {
+  const amountValue = item.amount || item.baseAmount || item.escrowAmount || item.totalAmount || item.payoutAmount || "0";
+  const formattedAmount = typeof amountValue === "number"
+    ? `₦${amountValue.toLocaleString()}`
+    : typeof amountValue === "string"
+      ? amountValue.startsWith("₦") ? amountValue : `₦${amountValue}`
+      : "₦0";
+
+  return {
+    id: item.id || item._id || item.escrowId || `escrow-${index}`,
+    title: item.title || item.description || item.mainDeliverable || item.service || "Escrow Transaction",
+    partnerName: item.partnerName || item.buyerName || item.sellerName || item.customerName || item.counterparty || "Partner",
+    amount: formattedAmount,
+    dotColorClass: dotColorClasses[index % dotColorClasses.length],
+  };
+}
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState("User");
+  const [activeEscrows, setActiveEscrows] = useState<ActiveEscrow[]>([]);
+  const { walletDetails, fetchWalletDetails } = useWalletStore();
   const router = useRouter();
 
-  React.useEffect(() => {
-    const getSavedName = () => {
-      if (typeof window !== "undefined") {
-        const saved = localStorage.getItem("user_fullName");
-        if (saved) return saved;
-      }
-      const token = getTokenFromCookie();
-      if (token) {
-        try {
-          const payload = token.split(".")[1];
-          const decoded = JSON.parse(atob(payload));
-          return decoded.fullName || decoded.name || decoded.username || decoded.email || "";
-        } catch (e) {
-          return "";
-        }
-      }
-      return "";
-    };
+  const getTokenPayload = () => {
+    if (typeof window === "undefined") return null;
+    const token = getTokenFromCookie();
+    if (!token) return null;
+    try {
+      const payload = token.split(".")[1];
+      return JSON.parse(atob(payload));
+    } catch (error) {
+      return null;
+    }
+  };
 
-    const fullName = getSavedName();
+  useEffect(() => {
+    const payload = getTokenPayload();
+    if (!payload) return;
+
+    const fullName = payload.fullName || payload.name || payload.username || payload.email || "";
     if (fullName) {
       let name = fullName.includes("@") ? fullName.split("@")[0] : fullName;
       name = name.replace(/[._-]/g, " ");
@@ -57,9 +69,31 @@ export default function DashboardPage() {
       const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
       setUserName(capitalized);
     }
-  }, []);
 
+    const userId = payload.userId || payload.id || payload.sub;
+    if (userId) {
+      fetchWalletDetails(userId.toString());
+    }
 
+    const loadActiveEscrows = async () => {
+      try {
+        const response = await escrowApi.getActive();
+        const rawEscrows = Array.isArray(response)
+          ? response
+          : response?.active || response?.escrows || response?.data || [];
+
+        if (!Array.isArray(rawEscrows)) return;
+
+        setActiveEscrows(rawEscrows.map(normalizeEscrowItem));
+      } catch (error) {
+        console.error("Failed to load active escrows", error);
+      }
+    };
+
+    loadActiveEscrows();
+  }, [fetchWalletDetails]);
+
+  const transactions = walletDetails?.transactions || [];
 
   return (
     <div className="flex flex-col h-full fade-in pb-24 scrollbar-hide">
@@ -133,13 +167,13 @@ export default function DashboardPage() {
         {/* Left Column (Transactions & Quick Actions) */}
         <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-4 mb-0">
           <QuickActions />
-          <TransactionList transactions={MOCK_TRANSACTIONS} />
+          <TransactionList transactions={transactions} />
         </div>
 
         {/* Right Column (Active Escrows & Ads/Promo) */}
         <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4">
           <PremiumReminderModal />
-          <ActiveEscrowsList escrows={MOCK_ESCROWS} />
+          <ActiveEscrowsList escrows={activeEscrows} />
         </div>
       </div>
 
