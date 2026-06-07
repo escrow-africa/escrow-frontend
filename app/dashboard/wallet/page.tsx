@@ -91,7 +91,7 @@ export default function WalletPage() {
   const transactions = walletDetails?.transactions || [];
 
   return (
-    <div className="flex flex-col h-full fade-in w-full my-8">
+    <div className="flex flex-col h-full fade-in w-full ">
 
       {error && (
         <div className="mb-4 p-4 bg-red-50 text-red-500 rounded-xl">
