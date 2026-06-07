@@ -25,7 +25,7 @@ interface WalletState {
   isLoading: boolean;
   error: string | null;
 
-  fetchWalletDetails: (userId: string) => Promise<void>;
+  fetchWalletDetails: (userId?: string) => Promise<void>;
   fetchBankList: () => Promise<void>;
   fundWallet: (payload: any) => Promise<any>;
   verifyCardOtp: (payload: any) => Promise<any>;
@@ -38,7 +38,7 @@ export const useWalletStore = create<WalletState>((set) => ({
   isLoading: false,
   error: null,
 
-  fetchWalletDetails: async (userId: string) => {
+  fetchWalletDetails: async (userId?: string) => {
     set({ isLoading: true, error: null });
     try {
       const response = await walletApi.getWalletDetails(userId);

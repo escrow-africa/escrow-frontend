@@ -1,17 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import WalletCard from "../../../components/dashboard/wallet/WalletCard";
 import PendingFundsCard from "../../../components/dashboard/wallet/PendingFundsCard";
 import TransactionHistory, { TransactionItem } from "../../../components/dashboard/transaction/TransactionHistory";
 import TransactionDetail from "../../../components/dashboard/transaction/TransactionDetail";
-import FundWalletFlow from "../../../components/dashboard/wallet/FundWalletFlow";
 import WithdrawFundsFlow from "../../../components/dashboard/wallet/WithdrawFundsFlow";
 import { useWalletStore } from "../../../store/walletStore";
 import { getTokenFromCookie } from "../../../utils/token";
 
 export default function WalletPage() {
-  const [viewState, setViewState] = useState<"overview" | "transaction_detail" | "fund_wallet" | "withdraw_funds">("overview");
+  const router = useRouter();
+  const [viewState, setViewState] = useState<"overview" | "transaction_detail" | "withdraw_funds">("overview");
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionItem | null>(null);
 
   const { walletDetails, isLoading, error, fetchWalletDetails } = useWalletStore();
@@ -33,32 +34,14 @@ export default function WalletPage() {
   };
 
   useEffect(() => {
-    const userId = getUserIdFromToken();
-    if (userId) {
-      fetchWalletDetails(userId);
+    const token = getTokenFromCookie();
+    if (token) {
+      fetchWalletDetails();
     }
   }, [fetchWalletDetails]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(window.location.search);
-      const action = urlParams.get("action");
-
-      if (action === "fund") {
-        setViewState("fund_wallet");
-      } else if (action === "withdraw") {
-        setViewState("withdraw_funds");
-      }
-
-      if (action) {
-        // Clear param so subsequent back-navigations behave normally
-        window.history.replaceState({}, '', window.location.pathname);
-      }
-    }
-  }, []);
-
   const handleFundWallet = () => {
-    setViewState("fund_wallet");
+    router.push("/dashboard/wallet/fund");
   };
 
   const handleWithdrawFunds = () => {
@@ -105,10 +88,6 @@ export default function WalletPage() {
             transaction={selectedTransaction} 
             onBack={handleBackToOverview} 
           />
-        </div>
-      ) : viewState === "fund_wallet" ? (
-        <div className="flex items-center justify-center mt-8 py-8">
-          <FundWalletFlow onComplete={handleBackToOverview} userId={getUserIdFromToken()} />
         </div>
       ) : viewState === "withdraw_funds" ? (
         <div className="flex items-center justify-center mt-8 py-8">

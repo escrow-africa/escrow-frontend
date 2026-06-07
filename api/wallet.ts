@@ -2,12 +2,17 @@ import { api } from "./axios";
 
 
 export const walletApi = {
-  getWalletDetails: async (userId: string) => {
-     
+  getWalletDetails: async (userId?: string) => {
     try {
-      const response = await api.get(`/wallet/${userId}`);
+      const endpoint = userId ? `/wallet/${userId}` : "/wallet";
+      const response = await api.get(endpoint);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      if (userId && error?.response?.status === 403) {
+        console.warn("Wallet detail fetch forbidden for /wallet/${userId}, retrying /wallet");
+        const fallbackResponse = await api.get("/wallet");
+        return fallbackResponse.data;
+      }
       console.error("Failed to fetch wallet details:", error);
       throw error;
     }
