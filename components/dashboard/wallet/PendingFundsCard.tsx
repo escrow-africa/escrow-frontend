@@ -17,11 +17,11 @@ export default function PendingFundsCard({
   const isProcessing = type === "processing";
 
   return (
-    <div className="bg-white border text-black border-[#E4E3E3CC] shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] rounded-2xl p-5 flex flex-col">
+    <div className="bg-white border text-black border-[#E4E3E3CC] shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] rounded-2xl p-4 flex flex-col h-full justify-between flex-1">
       <div className="flex justify-between items-start">
         <div>
           <p className="text-[9px] text-gray-500 font-medium ">Pending Funds</p>
-          <h3 className="text-xl font-bold text-gray-900">₦{amount}</h3>
+          <h3 className="text-lg font-bold text-gray-900">₦{amount}</h3>
         </div>
         <div
           className={`w-9 h-9 rounded-xl flex items-center justify-center ${

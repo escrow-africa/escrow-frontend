@@ -19,20 +19,20 @@ export default function WalletCard({
   onWithdrawFunds,
 }: WalletCardProps) {
   return (
-    <div className="bg-[#0F3D2E] rounded-2xl p-5 text-white relative overflow-hidden flex flex-col shadow-lg">
+    <div className="bg-[#0F3D2E] rounded-2xl p-4 text-white relative overflow-hidden flex flex-col shadow-lg">
       {/* Background decoration */}
       <div className="absolute -right-5 top-5 opacity-10 transform rotate-12">
         <CreditCard size={160} />
       </div>
 
-      <div className="relative z-10 flex flex-col gap-4">
+      <div className="relative z-10 flex flex-col gap-3">
         {/* Top specific section */}
         <div className="flex justify-between items-start">
           <div>
             <p className="text-[9px] text-gray-300 uppercase tracking-widest font-semibold mb-0.5">
               Available Balance
             </p>
-            <h2 className="text-3xl font-bold mb-1">₦{balance}</h2>
+            <h2 className="text-2xl font-bold mb-1">₦{balance}</h2>
             <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium tracking-wide">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
               ACTIVE & SECURED
@@ -51,7 +51,7 @@ export default function WalletCard({
         </div>
 
         {/* Account Details */}
-        <div className="flex gap-8 mt-2">
+        <div className="flex gap-6 mt-2">
           <div>
             <p className="text-[9px] text-gray-300 uppercase tracking-widest font-semibold mb-0.5">
               Account Number
