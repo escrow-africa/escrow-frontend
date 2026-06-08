@@ -46,11 +46,23 @@ body {
   @apply bg-background text-foreground transition-colors duration-300;
 }
 
-input,
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="file"]),
 textarea,
 select {
-  border-color: var(--border);
-  background-color: var(--surface);
+  border-color: #E4E3E3CC !important;
+  background-color: #E4E3E3CC !important;
+  color: #111827 !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="file"])::placeholder,
+textarea::placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+select option {
+  background-color: #ffffff !important;
+  color: #111827 !important;
 }
 
 .border-gray-100,

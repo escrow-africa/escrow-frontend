@@ -188,7 +188,7 @@ export default function VerifyPage() {
 
                                             key={idx}
 
-                                            className={`relative w-9 h-12 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center text-lg sm:text-xl  transition-all 
+                                            className={`relative w-9 h-12 sm:w-14 sm:h-14 rounded-lg border flex items-center justify-center text-lg sm:text-xl bg-[#E4E3E3CC] text-gray-900 transition-all 
 
 ${slot.isActive
 
