@@ -1,16 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import WalletCard from "../../../components/dashboard/wallet/WalletCard";
 import PendingFundsCard from "../../../components/dashboard/wallet/PendingFundsCard";
 import TransactionHistory, { TransactionItem } from "../../../components/dashboard/transaction/TransactionHistory";
 import TransactionDetail from "../../../components/dashboard/transaction/TransactionDetail";
-import FundWalletFlow from "../../../components/dashboard/wallet/FundWalletFlow";
 import WithdrawFundsFlow from "../../../components/dashboard/wallet/WithdrawFundsFlow";
 import { useWalletStore } from "../../../store/walletStore";
+import FundWalletFlow from "@/components/dashboard/wallet/FundWalletFlow";
 
 export default function WalletPage() {
-  const [viewState, setViewState] = useState<"overview" | "transaction_detail" | "fund_wallet" | "withdraw_funds">("overview");
+  const router = useRouter();
+  const [viewState, setViewState] = useState<"overview" | "transaction_detail" | "withdraw_funds" | "fund_wallet">("overview");
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionItem | null>(null);
 
   const { walletDetails, error, fetchWalletDetails } = useWalletStore();
@@ -38,7 +40,7 @@ export default function WalletPage() {
   }, []);
 
   const handleFundWallet = () => {
-    setViewState("fund_wallet");
+    router.push("/dashboard/wallet/fund");
   };
 
   const handleWithdrawFunds = () => {
@@ -68,10 +70,7 @@ export default function WalletPage() {
   const transactions = walletDetails?.transactions || [];
 
   return (
-    <div className="flex flex-col h-full fade-in pb-12 w-full pt-2">
-      <div className="mb-8 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-[#0F3D2E]">Wallet</h1>
-      </div>
+    <div className="flex flex-col h-full fade-in w-full py-8">
 
       {error && (
         <div className="mb-4 p-4 bg-red-50 text-red-500 rounded-xl">
@@ -91,16 +90,16 @@ export default function WalletPage() {
           <FundWalletFlow onComplete={handleBackToOverview} />
         </div>
       ) : viewState === "withdraw_funds" ? (
-        <div className="flex h-full items-center justify-center mt-8 pb-12">
+        <div className="flex items-center justify-center mt-8 py-8">
           <WithdrawFundsFlow onComplete={handleBackToOverview} />
         </div>
       ) : (
         <div className="flex flex-col gap-8 w-full">
           {/* Top Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full items-stretch">
             {/* Main Green Card */}
-            <div className="lg:col-span-8 flex">
-              <div className="w-full">
+            <div className="lg:col-span-8 flex h-full">
+              <div className="w-full h-full">
                 <WalletCard
                   balance={balance}
                   accountNumber={virtualAccount.accountNumber}
@@ -112,7 +111,7 @@ export default function WalletPage() {
             </div>
 
             {/* Pending Cards Stack */}
-            <div className="lg:col-span-4 flex flex-col gap-6">
+            <div className="lg:col-span-4 flex flex-col gap-4 h-full">
               <PendingFundsCard
                 amount={pendingProcessing}
                 statusText="PROCESSING (24-48H)"

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import StatCard from "../../components/dashboard/shared/StatCard";
 import QuickActions from "../../components/dashboard/shared/QuickActions";
-import TransactionList, { Transaction } from "../../components/dashboard/transaction/TransactionList";
+import TransactionList from "../../components/dashboard/transaction/TransactionList";
 import ActiveEscrowsList, { ActiveEscrow } from "../../components/dashboard/escrow/ActiveEscrowsList";
 import PremiumReminderModal from "../../components/dashboard/shared/PremiumReminderModal";
 import { TrendingUp, Wallet, ShieldCheck, Clock } from "lucide-react";
@@ -59,7 +59,7 @@ export default function DashboardPage() {
         });
 
         if (mounted) setActiveEscrows(mapped.length ? mapped : []);
-      } catch (err) {
+      } catch {
         if (mounted) setActiveEscrows([]);
       } finally {
         if (mounted) setLoadingActiveEscrows(false);

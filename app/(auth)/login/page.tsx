@@ -151,7 +151,7 @@ export default function Login() {
               <p className="font-semibold">Enter your details to log in.</p>
 
               <div className="mt-5">
-                <label className="tracking-[0.4em]">EMAIL ADDRESS</label>
+                <label className="tracking-[0.4em] text-xs">EMAIL ADDRESS</label>
                 <Input
                   type="email"
                   placeholder="enter your email"
@@ -165,7 +165,7 @@ export default function Login() {
               </div>
 
               <div className="mt-3">
-                <label className="tracking-[0.4em]">PASSWORD</label>
+                <label className="tracking-[0.4em] text-xs">PASSWORD</label>
                 <Input
                   type="password"
                   placeholder="enter your password"
@@ -200,11 +200,11 @@ export default function Login() {
           )}
 
           {view === "forgot" && (
-            <form onSubmit={handleRequestReset} className="w-full font-semibold text-[#767676]">
-              <p>Enter your email address to receive a reset code.</p>
+            <form onSubmit={handleRequestReset} className="w-full text-[#767676]">
+              
 
               <div className="mt-5">
-                <label className="tracking-[0.4em]">EMAIL</label>
+                <label className="tracking-[0.4em] text-xs">EMAIL ADDRESS</label>
                 <Input
                   type="email"
                   placeholder="enter your email"
