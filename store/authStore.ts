@@ -17,134 +17,96 @@ resetPassword:(data:any)=>Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set)=>({
+  loading:false,
+  error:null,
 
-loading:false,
-error:null,
+  register: async(data)=>{
+    set({ loading:true, error:null });
 
-register: async(data)=>{
+    try{
+      const response = await authApi.signup(data);
+      set({loading:false});
+      return response;
+    } catch(error:any) {
+      set({
+        error:error.response?.data?.message,
+        loading:false,
+      });
 
-set({loading:true,error:null});
-
-try{
-
-const response = await authApi.signup(data);
-
-			if (typeof window !== "undefined" && response) {
-				const token = response.accessToken || response.token;
-				if (token) setTokenCookie(token);
-				if (data.fullName) {
-					localStorage.setItem("user_fullName", data.fullName);
-				}
-			}
-
-set({loading:false});
-
-}catch(error:any){
-
-set({
-
-error:error.response?.data?.message,
-loading:false
-
-});
-throw error;
-
-}
-
-},
-
-login: async(data)=>{
-
-set({loading:true,error:null});
-
-try{
-
-
-const response = await authApi.login(data);
-
-			if (typeof window !== "undefined" && response) {
-				const token = response.accessToken || response.token;
-				if (token) setTokenCookie(token);
-				
-				const user = response.user || response.data?.user;
-				const fullName = user?.fullName || user?.name || response.fullName || response.name;
-				if (fullName) {
-					localStorage.setItem("user_fullName", fullName);
-				}
-			}
-
-set({loading:false});
-
-}catch(error:any){
-
-set({
-
-error:error.response?.data?.message,
-loading:false
-
-});
-throw error;
-
-}
-
-},
-
-requestOtp: async(data)=>{
-  set({ loading: true, error: null });
-  try {
-    await authApi.requestOtp(data);
-    set({ loading: false });
-  } catch (error: any) {
-    set({
-      error: error.response?.data?.message || "Failed to request OTP",
-      loading: false
-    });
-    throw error;
-  }
-},
-
-verifyOtp: async(data)=>{
-  set({ loading: true, error: null });
-  try {
-    const response = await authApi.verifyEmail(data);
-    if (typeof window !== "undefined" && response) {
-      const token = response.accessToken || response.token;
-      if (token) setTokenCookie(token);
+      throw error;
     }
-    set({ loading: false });
-  } catch (error: any) {
-    set({
-      error: error.response?.data?.message || "Invalid OTP",
-      loading: false
-    });
-    throw error;
+  },
+
+  login: async(data) => {
+    set({loading:true,error:null});
+
+    try {
+      const response = await authApi.login(data);
+
+      if (typeof window !== "undefined" && response) {
+        const token = response.accessToken || response.token;
+        if (token) setTokenCookie(token);
+      }
+
+      set({loading:false});
+    } catch(error:any) {
+      set({
+        error:error.response?.data?.message,
+        loading:false,
+      });
+
+      throw error;
+    }
+  },
+
+  requestOtp: async(data)=>{
+    set({ loading: true, error: null });
+    try {
+      await authApi.requestOtp(data);
+      set({ loading: false });
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.message || "Failed to request OTP",
+        loading: false
+      });
+      throw error;
+    }
+  },
+
+  verifyOtp: async(data)=>{
+    set({ loading: true, error: null });
+    try {
+      const response = await authApi.verifyEmail(data);
+      return response;
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.message || "Invalid OTP",
+        loading: false
+      });
+      throw error;
+    }
+  },
+
+  resetPassword: async(data)=>{
+    set({ loading: true, error: null });
+    try {
+      const response = await authApi.resetPassword(data);
+      set({ loading: false });
+      return response;
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.message || "Failed to reset password",
+        loading: false
+      });
+      throw error;
+    }
+  },
+  
+  logout: () => {
+    if (typeof window !== "undefined") {
+      removeTokenCookie();
+    }
+
+    set({ loading:false, error:null });
   }
-},
-
-resetPassword: async(data)=>{
-  set({ loading: true, error: null });
-  try {
-    const response = await authApi.resetPassword(data);
-    set({ loading: false });
-    return response;
-  } catch (error: any) {
-    set({
-      error: error.response?.data?.message || "Failed to reset password",
-      loading: false
-    });
-    throw error;
-  }
-}
-
- ,logout: ()=>{
-
-		if (typeof window !== "undefined") {
-			removeTokenCookie();
-			localStorage.removeItem("user_fullName");
-		}
-
-		set({ loading:false, error:null });
-
-	}
-
 }));

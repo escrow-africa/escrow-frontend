@@ -1,67 +1,117 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import StatCard from "../../components/dashboard/shared/StatCard";
 import QuickActions from "../../components/dashboard/shared/QuickActions";
-import TransactionList, { Transaction } from "../../components/dashboard/transaction/TransactionList";
+import TransactionList from "../../components/dashboard/transaction/TransactionList";
 import ActiveEscrowsList, { ActiveEscrow } from "../../components/dashboard/escrow/ActiveEscrowsList";
 import PremiumReminderModal from "../../components/dashboard/shared/PremiumReminderModal";
 import { TrendingUp, Wallet, ShieldCheck, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getTokenFromCookie } from "../../utils/token";
-import { useWalletStore } from "../../store/walletStore";
 import { escrowApi } from "../../api/escrow";
-
-const dotColorClasses = [
-  "bg-blue-500",
-  "bg-yellow-500",
-  "bg-emerald-500",
-  "bg-purple-500",
-  "bg-pink-500",
-];
-
-type RawEscrowItem = Record<string, any>;
-
-function normalizeEscrowItem(item: RawEscrowItem, index: number): ActiveEscrow {
-  const amountValue = item.amount || item.baseAmount || item.escrowAmount || item.totalAmount || item.payoutAmount || "0";
-  const formattedAmount = typeof amountValue === "number"
-    ? `₦${amountValue.toLocaleString()}`
-    : typeof amountValue === "string"
-      ? amountValue.startsWith("₦") ? amountValue : `₦${amountValue}`
-      : "₦0";
-
-  return {
-    id: item.id || item._id || item.escrowId || `escrow-${index}`,
-    title: item.title || item.description || item.mainDeliverable || item.service || "Escrow Transaction",
-    partnerName: item.partnerName || item.buyerName || item.sellerName || item.customerName || item.counterparty || "Partner",
-    amount: formattedAmount,
-    dotColorClass: dotColorClasses[index % dotColorClasses.length],
-  };
-}
+import { useWalletStore } from "../../store/walletStore";
+import { authApi } from "../../api/auth";
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState("User");
   const [activeEscrows, setActiveEscrows] = useState<ActiveEscrow[]>([]);
+  const [loadingActiveEscrows, setLoadingActiveEscrows] = useState(false);
   const { walletDetails, fetchWalletDetails } = useWalletStore();
-  const router = useRouter();
+  const [stats, setStats] = useState<{ totalEarnings?: any; availableBalance?: any; escrowHeldFunds?: any; activeEscrows?: any } | null>(null);
 
-  const getTokenPayload = () => {
-    if (typeof window === "undefined") return null;
-    const token = getTokenFromCookie();
-    if (!token) return null;
+  const formatCurrency = (val: any) => {
     try {
-      const payload = token.split(".")[1];
-      return JSON.parse(atob(payload));
-    } catch (error) {
-      return null;
+      const n = Number(val);
+      if (Number.isNaN(n)) return String(val ?? "");
+      return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 2 }).format(n);
+    } catch {
+      return String(val ?? "");
     }
   };
 
   useEffect(() => {
-    const payload = getTokenPayload();
-    if (!payload) return;
+    let mounted = true;
+    const fetchActive = async () => {
+      setLoadingActiveEscrows(true);
+      try {
+        let data: any = await escrowApi.getActive();
+        if (!Array.isArray(data)) {
+          data = data?.results || data?.items || (data?.data && Array.isArray(data.data) ? data.data : [data]);
+        }
 
-    const fullName = payload.fullName || payload.name || payload.username || payload.email || "";
+        const mapped: ActiveEscrow[] = (data || []).map((it: any) => {
+          const status = (it.status || it.state || '').toString().toUpperCase();
+          const id = it.id;
+          const title = it.description;
+          const partnerName = it.user?.name;
+          const amountRaw = it.escrowAmount ?? it.amount ?? it.value ?? it.baseAmount ?? 0;
+          const amount = typeof amountRaw === 'number' ? formatCurrency(amountRaw) : (String(amountRaw).startsWith('₦') ? String(amountRaw) : formatCurrency(amountRaw));
+          const dotColorClass = status.includes('DISPUTE') ? 'bg-red-500' : status.includes('RELEASE') ? 'bg-emerald-500' : status.includes('REVIEW') ? 'bg-yellow-500' : 'bg-blue-500';
+
+          return {
+            id: String(id),
+            title,
+            partnerName,
+            amount,
+            dotColorClass,
+          };
+        });
+
+        if (mounted) setActiveEscrows(mapped.length ? mapped : []);
+      } catch {
+        if (mounted) setActiveEscrows([]);
+      } finally {
+        if (mounted) setLoadingActiveEscrows(false);
+      }
+    };
+
+    fetchActive();
+    return () => { mounted = false; };
+  }, []);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        await fetchWalletDetails();
+      } catch (e) {
+        console.error('Failed to fetch wallet details for dashboard', e);
+      }
+    })();
+
+    (async () => {
+      try {
+        const s = await authApi.getStats();
+        console.log({ s });
+        setStats(s || null);
+      } catch (e) {
+        console.error('Failed to fetch auth stats', e);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    const getSavedName = () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("user_fullName");
+        if (saved) return saved;
+      }
+      const token = getTokenFromCookie();
+      if (token) {
+        try {
+          const payload = token.split(".")[1];
+          const decoded = JSON.parse(atob(payload));
+          return decoded.fullName || decoded.name || decoded.username || decoded.email || "";
+        } catch {
+          return "";
+        }
+      }
+      return "";
+    };
+
+    const fullName = getSavedName();
     if (fullName) {
       let name = fullName.includes("@") ? fullName.split("@")[0] : fullName;
       name = name.replace(/[._-]/g, " ");
@@ -69,56 +119,34 @@ export default function DashboardPage() {
       const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
       setUserName(capitalized);
     }
+  }, []);
 
-    const userId = payload.userId || payload.id || payload.sub;
-    if (userId) {
-      fetchWalletDetails(userId.toString());
-    }
 
-    const loadActiveEscrows = async () => {
-      try {
-        const response = await escrowApi.getActive();
-        const rawEscrows = Array.isArray(response)
-          ? response
-          : response?.active || response?.escrows || response?.data || [];
-
-        if (!Array.isArray(rawEscrows)) return;
-
-        setActiveEscrows(rawEscrows.map(normalizeEscrowItem));
-      } catch (error) {
-        console.error("Failed to load active escrows", error);
-      }
-    };
-
-    loadActiveEscrows();
-  }, [fetchWalletDetails]);
-
-  const transactions = walletDetails?.transactions || [];
 
   return (
-    <div className="flex flex-col h-full fade-in pb-24 scrollbar-hide">
+    <div className="flex flex-col h-full fade-in pb-24">
       {/* Welcome Section */}
-      <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-primary mb-1">
+          <h1 className="text-3xl font-bold text-primary mb-2">
             Welcome back, {userName}
           </h1>
-          <p className="text-muted-foreground text-xs">
-            Here's what's happening with your account today.
+          <p className="text-muted-foreground text-sm">
+            Here&rsquo;s what&rsquo;s happening with your account today.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full md:w-auto mt-2 md:mt-0">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full md:w-auto mt-4 md:mt-0">
           <button
             onClick={() => router.push('/dashboard/wallet?action=fund')}
-            className="w-full sm:w-auto px-4 py-2 bg-surface border border-border rounded-xl text-xs font-semibold text-foreground hover:bg-surface-hover transition-colors flex items-center justify-center gap-2 shadow-sm"
+            className="w-full sm:w-auto px-6 py-2.5 bg-surface border border-border rounded-xl text-sm font-semibold text-foreground hover:bg-surface-hover transition-colors flex items-center justify-center gap-2 shadow-sm"
           >
             <span className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-current pb-0.5">+</span>
             Fund Wallet
           </button>
           <button
             onClick={() => router.push('/dashboard/create-escrow')}
-            className="w-full sm:w-auto px-4 py-2 bg-primary hover:bg-primary-hover rounded-xl text-xs font-semibold text-white transition-colors flex items-center justify-center gap-2 shadow-md"
+            className="w-full sm:w-auto px-6 py-2.5 bg-primary hover:bg-primary-hover rounded-xl text-sm font-semibold text-white transition-colors flex items-center justify-center gap-2 shadow-md"
           >
             <ShieldCheck size={18} />
             Create Escrow
@@ -127,56 +155,51 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Total Earnings"
-          value={<>₦12,500.50</>}
-          icon={<TrendingUp size={20} />}
-          iconBgClass="bg-emerald-500/10"
+          value={<> {stats?.totalEarnings ? formatCurrency(stats.totalEarnings) : <>₦0.00</>} </>}
+          icon={<TrendingUp size={20} />}iconBgClass="bg-emerald-500/10"
           iconColorClass="text-emerald-500"
-          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +2.5%</span>}
+          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +0%</span>}
         />
         <StatCard
           title="Available Balance"
-          value={<>₦4,200.50</>}
-          icon={<Wallet size={20} />}
-          iconBgClass="bg-teal-500/10"
+          value={<> {stats?.availableBalance ? formatCurrency(stats.availableBalance) : <>₦0.00</>} </>}
+          icon={<Wallet size={20} />}iconBgClass="bg-teal-500/10"
           iconColorClass="text-teal-600"
-          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +2.5%</span>}
+          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +0%</span>}
         />
         <StatCard
           title="Escrow-held Funds"
-          value={<>₦3,150.00</>}
-          icon={<ShieldCheck size={20} />}
-          iconBgClass="bg-orange-500/10"
+          value={<> {stats?.escrowHeldFunds ? formatCurrency(stats.escrowHeldFunds) : <>₦0.00</>} </>}
+          icon={<ShieldCheck size={20} />}iconBgClass="bg-orange-500/10"
           iconColorClass="text-orange-500"
-          topRightContent={<span className="text-orange-500 flex items-center gap-1"><Clock size={14} /> 2 Items</span>}
+          topRightContent={<span className="text-orange-500 flex items-center gap-1"><Clock size={14} /> 0 Items</span>}
         />
         <StatCard
           title="Incoming Escrows"
-          value={<>5 Active</>}
-          icon={<Clock size={20} />}
-          iconBgClass="bg-blue-500/10"
+          value={<> {stats?.activeEscrows ? `${stats.activeEscrows} Active` : <>0 Active</>} </>}
+          icon={<Clock size={20} />}iconBgClass="bg-blue-500/10"
           iconColorClass="text-blue-500"
-          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +2.5%</span>}
+          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +0%</span>}
         />
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column (Transactions & Quick Actions) */}
-        <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-4 mb-0">
+        <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-8 mb-8">
           <QuickActions />
-          <TransactionList transactions={transactions} />
+          <TransactionList transactions={walletDetails?.transactions} />
         </div>
 
         {/* Right Column (Active Escrows & Ads/Promo) */}
-        <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4">
+        <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-8">
           <PremiumReminderModal />
           <ActiveEscrowsList escrows={activeEscrows} />
         </div>
       </div>
-
     </div>
   );
 }

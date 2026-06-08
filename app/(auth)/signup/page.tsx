@@ -22,20 +22,14 @@ export default function Signup() {
   } = useForm<SignUpData>();
 
   const onSubmit = async (data: SignUpData) => {
-
     try {
-
-      await registerUser(data)
-
-      router.push(`/verify?email=${data.email}`)
-
-    } catch (error) {
-
-      toast.error("Signup failed")
-
+      await registerUser(data);
+      router.push(`/verify?email=${data.email}`);
+    } catch {
+      toast.error("Signup failed");
     }
-
   }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md border border-[#E4E3E3CC] rounded-2xl p-6 sm:p-10">
@@ -45,8 +39,6 @@ export default function Signup() {
           <h1 className="font-bold text-4xl mt-3  text-[#0B493A]">
             CREATE </h1>
             <h1 className="font-bold text-4xl text-[#0B493A]"> PROFILE</h1>
-          
-
 
           <form onSubmit={handleSubmit(onSubmit)} className=" w-full text-[#686767]">
             <p className="font-semibold">Create your profile to start using the app.</p>

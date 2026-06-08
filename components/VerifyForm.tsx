@@ -62,9 +62,9 @@ import SuccessModal from "@/components/SuccessModal";
 import { useAuthStore } from "@/store/authStore";
 
 export default function VerifyPage() {
-
     const [otp, setOtp] = useState("");
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const router = useRouter();
 
@@ -74,40 +74,31 @@ export default function VerifyPage() {
 
     const verifyOtp = useAuthStore((state) => state.verifyOtp);
     const requestOtp = useAuthStore((state) => state.requestOtp);
-    const loading = useAuthStore((state) => state.loading);
+    // const loading = useAuthStore((state) => state.loading);
 
 
     const handleSubmit = async (e: React.FormEvent) => {
-
         e.preventDefault();
-
+        setIsLoading(true);
         if (otp.length !== 6) {
-
-            toast.error("Enter valid OTP");
-
-            return;
-
+            return toast.error("Enter valid OTP");
         }
 
         try {
-
             await verifyOtp({
                 email,
-                otp: otp
+                otp: Number(otp),
             });
-
-            toast.success("Verification successful");
-
-            setShowSuccessModal(true);
-
+            router.push("/login");
         } catch (error: any) {
-
             toast.error(
                 error?.response?.data?.message || "Invalid OTP"
             );
-
+        } finally {
+            setIsLoading(false);
+            toast.success("Verification successful");
+            setShowSuccessModal(true);
         }
-
     };
 
 
@@ -225,10 +216,10 @@ ${slot.isActive
 
                     <Button
                         type="submit"
-                        disabled={loading}
+                        disabled={isLoading}
                     >
 
-                        {loading ? "Verifying..." : "Verify Now"}
+                        {isLoading ? "Verifying..." : "Verify Now"}
 
                     </Button>
 
@@ -251,7 +242,7 @@ ${slot.isActive
                 isOpen={showSuccessModal}
                 onClose={() => {
                     setShowSuccessModal(false);
-                    router.push("/dashboard");
+                    router.push("/login");
                 }}
             />
 

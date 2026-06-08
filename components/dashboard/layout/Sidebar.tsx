@@ -20,9 +20,10 @@ import {
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  totalEarnings?: string;
 }
 
-export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose, totalEarnings }: SidebarProps) {
   const pathname = usePathname();
 
   const navItems = [
@@ -77,10 +78,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Total Earnings Block */}
-        <div className="px-4 py-1 mb-3 shrink-0">
-          <div className="bg-[#185541] rounded-lg p-2 border border-[#236b53] shadow-inner">
-            <p className="text-xs text-gray-300 uppercase font-semibold mb-0.5 tracking-wider text-[9px]">Total Earnings</p>
-            <p className="text-lg font-bold">₦120,500.50</p>
+        <div className="px-6 py-2 mb-6 shrink-0">
+          <div className="bg-[#185541] rounded-lg p-4 border border-[#236b53] shadow-inner">
+            <p className="text-xs text-gray-300 uppercase font-semibold mb-1 tracking-wider text-[10px]">Total Earnings</p>
+            <p className="text-2xl font-bold">{totalEarnings ?? '₦0.00'}</p>
           </div>
         </div>
 

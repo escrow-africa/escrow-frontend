@@ -81,8 +81,7 @@ export default function CreateAdPage() {
 
       setIsSubmitting(false);
       setShowSuccessModal(true);
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.error("Unable to publish advert. Please try again.");
       setIsSubmitting(false);
     }

@@ -2,19 +2,12 @@ import { api } from "./axios";
 
 
 export const walletApi = {
-  getWalletDetails: async (userId?: string) => {
+  getWalletDetails: async () => {
     try {
-      const endpoint = userId ? `/wallet/${userId}` : "/wallet";
-      const response = await api.get(endpoint);
+      const response = await api.get(`/wallet/details`);
       return response.data;
-    } catch (error: any) {
-      if (userId && error?.response?.status === 403) {
-        console.warn("Wallet detail fetch forbidden for /wallet/${userId}, retrying /wallet");
-        const fallbackResponse = await api.get("/wallet");
-        return fallbackResponse.data;
-      }
-      console.error("Failed to fetch wallet details:", error);
-      throw error;
+    } catch {
+      alert("Failed to fetch wallet details. Please try again.");
     }
   },
 
@@ -22,9 +15,8 @@ export const walletApi = {
     try {
       const response = await api.get("/wallet/banks");
       return response.data;
-    } catch (error) {
-      console.error("Failed to fetch bank list:", error);
-      throw error;
+    } catch {
+      alert("Failed to fetch bank list. Please try again.");
     }
   },
 
@@ -32,9 +24,8 @@ export const walletApi = {
     try {
       const response = await api.post("/wallet/topup", payload);
       return response.data;
-    } catch (error) {
-      console.error("Top-up request failed:", error);
-      throw error;
+    } catch {
+      alert("Failed to initiate top-up. Please try again.");
     }
   },
 
@@ -42,9 +33,8 @@ export const walletApi = {
     try {
       const response = await api.post("/wallet/card-otp", payload);
       return response.data;
-    } catch (error) {
-      console.error("OTP Verification error:", error);
-      throw error;
+    } catch {
+      alert("An error occurred during verification.");
     }
   }
 };

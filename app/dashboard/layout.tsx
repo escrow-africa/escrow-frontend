@@ -3,11 +3,13 @@
 import React, { ReactNode, useState, useEffect } from "react";
 import Sidebar from "../../components/dashboard/layout/Sidebar";
 import Header from "../../components/dashboard/layout/Header";
+import { authApi } from "../../api/auth";
 import { getTokenFromCookie } from "../../utils/token";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [userName, setUserName] = useState("User");
+  const [userName, setUserName] = useState("");
+  const [totalEarnings, setTotalEarnings] = useState<string | null>(null);
 
   useEffect(() => {
     const getSavedName = () => {
@@ -36,6 +38,46 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
       setUserName(capitalized);
     }
+
+    // Fetch /auth/me and /auth/stats to populate name and sidebar earnings
+    let mounted = true;
+    (async () => {
+      try {
+        const me = await authApi.getMe();
+        if (!mounted) return;
+        const name = me?.fullName || me?.name || me?.username || me?.email || null;
+        if (name) {
+          let display = String(name);
+          display = display.includes("@") ? display.split("@")[0] : display;
+          display = display.replace(/[._-]/g, " ");
+          const firstWord = display.trim().split(" ")[0];
+          const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
+          setUserName(capitalized);
+        }
+      } catch (e) {
+        // fallback: keep token/localStorage method
+        console.error('Failed to fetch /auth/me', e);
+      }
+
+      try {
+        const stats = await authApi.getStats();
+        if (!mounted) return;
+        const total = stats?.totalEarnings ?? stats?.totalEarningsAmount ?? stats?.total ?? null;
+        if (total !== undefined && total !== null) {
+          try {
+            const n = Number(total);
+            if (!Number.isNaN(n)) setTotalEarnings(new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 2 }).format(n));
+            else setTotalEarnings(String(total));
+          } catch {
+            setTotalEarnings(String(total));
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch /auth/stats', e);
+      }
+
+      return () => { mounted = false; };
+    })();
   }, []);
 
   return (
@@ -44,6 +86,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <Sidebar 
         isOpen={isMobileSidebarOpen} 
         onClose={() => setIsMobileSidebarOpen(false)} 
+        totalEarnings={totalEarnings ?? undefined}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
