@@ -56,15 +56,6 @@ export default function WalletCard({
             </p>
             <p className="text-base font-medium tracking-[0.15em]">{accountNumber}</p>
           </div>
-<<<<<<< HEAD
-=======
-          <div>
-            <p className="text-[9px] text-gray-300 uppercase tracking-widest font-semibold mb-0.5">
-              Expires
-            </p>
-            <p className="text-base font-medium">{expiryDate}</p>
-          </div>
->>>>>>> joy
         </div>
 
         {/* Action Buttons */}
