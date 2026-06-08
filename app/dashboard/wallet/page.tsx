@@ -8,36 +8,16 @@ import TransactionDetail from "../../../components/dashboard/transaction/Transac
 import FundWalletFlow from "../../../components/dashboard/wallet/FundWalletFlow";
 import WithdrawFundsFlow from "../../../components/dashboard/wallet/WithdrawFundsFlow";
 import { useWalletStore } from "../../../store/walletStore";
-import { getTokenFromCookie } from "../../../utils/token";
 
 export default function WalletPage() {
   const [viewState, setViewState] = useState<"overview" | "transaction_detail" | "fund_wallet" | "withdraw_funds">("overview");
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionItem | null>(null);
 
-  const { walletDetails, isLoading, error, fetchWalletDetails } = useWalletStore();
-
-  const getUserIdFromToken = () => {
-    if (typeof window !== "undefined") {
-      const token = getTokenFromCookie();
-      if (token) {
-        try {
-          const payload = token.split(".")[1];
-          const decoded = JSON.parse(atob(payload));
-          return decoded.userId || decoded.id || decoded.sub;
-        } catch (e) {
-          return null;
-        }
-      }
-    }
-    return null;
-  };
+  const { walletDetails, error, fetchWalletDetails } = useWalletStore();
 
   useEffect(() => {
-    const userId = getUserIdFromToken();
-    if (userId) {
-      fetchWalletDetails(userId);
-    }
-  }, [fetchWalletDetails]);
+    fetchWalletDetails();
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -51,7 +31,7 @@ export default function WalletPage() {
       }
 
       if (action) {
-        // Clear param so subsequent back-navigations behave normally
+        // Clear param so subsequent back-navigation behave normally
         window.history.replaceState({}, '', window.location.pathname);
       }
     }
@@ -73,10 +53,7 @@ export default function WalletPage() {
   const handleBackToOverview = () => {
     setSelectedTransaction(null);
     setViewState("overview");
-    const userId = getUserIdFromToken();
-    if (userId) {
-      fetchWalletDetails(userId);
-    }
+    fetchWalletDetails();
   };
 
   // Safe fallbacks if wallet details are missing or loading
@@ -111,7 +88,7 @@ export default function WalletPage() {
         </div>
       ) : viewState === "fund_wallet" ? (
         <div className="flex h-full items-center justify-center mt-8 pb-12">
-          <FundWalletFlow onComplete={handleBackToOverview} userId={getUserIdFromToken()} />
+          <FundWalletFlow onComplete={handleBackToOverview} />
         </div>
       ) : viewState === "withdraw_funds" ? (
         <div className="flex h-full items-center justify-center mt-8 pb-12">
@@ -127,7 +104,6 @@ export default function WalletPage() {
                 <WalletCard
                   balance={balance}
                   accountNumber={virtualAccount.accountNumber}
-                  expiryDate=""
                   cardHolder={virtualAccount.accountName}
                   onFundWallet={handleFundWallet}
                   onWithdrawFunds={handleWithdrawFunds}

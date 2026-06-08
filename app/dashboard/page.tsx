@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import StatCard from "../../components/dashboard/shared/StatCard";
 import QuickActions from "../../components/dashboard/shared/QuickActions";
 import TransactionList, { Transaction } from "../../components/dashboard/transaction/TransactionList";
@@ -9,28 +9,90 @@ import PremiumReminderModal from "../../components/dashboard/shared/PremiumRemin
 import { TrendingUp, Wallet, ShieldCheck, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getTokenFromCookie } from "../../utils/token";
-
-// Mock Data for UI presentation. 
-// Replace with actual API fetches in the future.
-const MOCK_TRANSACTIONS: Transaction[] = [
-  { id: "1", title: "Escrow payout from John Doe", date: "3/20/2026", amount: "₦700,000", type: "in", status: "COMPLETED" },
-  { id: "2", title: "Withdrawal to GTBank", date: "3/20/2026", amount: "₦400,000", type: "out", status: "PENDING" },
-  { id: "3", title: "Ad Promotion: Premium UI Kit", date: "3/20/2026", amount: "₦200,000", type: "in", status: "COMPLETED" },
-  { id: "4", title: "Ad Promotion: Premium UI Kit", date: "3/20/2026", amount: "₦200,000", type: "in", status: "COMPLETED" },
-  { id: "5", title: "Ad Promotion: Premium UI Kit", date: "3/20/2026", amount: "₦200,000", type: "in", status: "COMPLETED" },
-];
-
-const MOCK_ESCROWS: ActiveEscrow[] = [
-  { id: "1", title: "MacBook ProM3 Max", partnerName: "TechStore NG", amount: "₦700,000", dotColorClass: "bg-blue-500" },
-  { id: "2", title: "UI/UX Design Retainer", partnerName: "FinTech Solutions", amount: "₦800,000", dotColorClass: "bg-yellow-500" },
-  { id: "3", title: "Logo Design Package", partnerName: "Creative Studio", amount: "₦500,000", dotColorClass: "bg-emerald-500" },
-];
+import { escrowApi } from "../../api/escrow";
+import { useWalletStore } from "../../store/walletStore";
+import { authApi } from "../../api/auth";
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState("User");
+  const [activeEscrows, setActiveEscrows] = useState<ActiveEscrow[]>([]);
+  const [loadingActiveEscrows, setLoadingActiveEscrows] = useState(false);
+  const { walletDetails, fetchWalletDetails } = useWalletStore();
+  const [stats, setStats] = useState<{ totalEarnings?: any; availableBalance?: any; escrowHeldFunds?: any; activeEscrows?: any } | null>(null);
+
+  const formatCurrency = (val: any) => {
+    try {
+      const n = Number(val);
+      if (Number.isNaN(n)) return String(val ?? "");
+      return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 2 }).format(n);
+    } catch {
+      return String(val ?? "");
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchActive = async () => {
+      setLoadingActiveEscrows(true);
+      try {
+        let data: any = await escrowApi.getActive();
+        if (!Array.isArray(data)) {
+          data = data?.results || data?.items || (data?.data && Array.isArray(data.data) ? data.data : [data]);
+        }
+
+        const mapped: ActiveEscrow[] = (data || []).map((it: any) => {
+          const status = (it.status || it.state || '').toString().toUpperCase();
+          const id = it.id;
+          const title = it.description;
+          const partnerName = it.user?.name;
+          const amountRaw = it.escrowAmount ?? it.amount ?? it.value ?? it.baseAmount ?? 0;
+          const amount = typeof amountRaw === 'number' ? formatCurrency(amountRaw) : (String(amountRaw).startsWith('₦') ? String(amountRaw) : formatCurrency(amountRaw));
+          const dotColorClass = status.includes('DISPUTE') ? 'bg-red-500' : status.includes('RELEASE') ? 'bg-emerald-500' : status.includes('REVIEW') ? 'bg-yellow-500' : 'bg-blue-500';
+
+          return {
+            id: String(id),
+            title,
+            partnerName,
+            amount,
+            dotColorClass,
+          };
+        });
+
+        if (mounted) setActiveEscrows(mapped.length ? mapped : []);
+      } catch (err) {
+        if (mounted) setActiveEscrows([]);
+      } finally {
+        if (mounted) setLoadingActiveEscrows(false);
+      }
+    };
+
+    fetchActive();
+    return () => { mounted = false; };
+  }, []);
+
   const router = useRouter();
 
-  React.useEffect(() => {
+  useEffect(() => {
+    (async () => {
+      try {
+        await fetchWalletDetails();
+      } catch (e) {
+        console.error('Failed to fetch wallet details for dashboard', e);
+      }
+    })();
+
+    (async () => {
+      try {
+        const s = await authApi.getStats();
+        console.log({ s });
+        setStats(s || null);
+      } catch (e) {
+        console.error('Failed to fetch auth stats', e);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
     const getSavedName = () => {
       if (typeof window !== "undefined") {
         const saved = localStorage.getItem("user_fullName");
@@ -42,7 +104,7 @@ export default function DashboardPage() {
           const payload = token.split(".")[1];
           const decoded = JSON.parse(atob(payload));
           return decoded.fullName || decoded.name || decoded.username || decoded.email || "";
-        } catch (e) {
+        } catch {
           return "";
         }
       }
@@ -70,7 +132,7 @@ export default function DashboardPage() {
             Welcome back, {userName}
           </h1>
           <p className="text-muted-foreground text-sm">
-            Here's what's happening with your account today.
+            Here&rsquo;s what&rsquo;s happening with your account today.
           </p>
         </div>
 
@@ -96,35 +158,31 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Total Earnings"
-          value={<>₦12,500.50</>}
-          icon={<TrendingUp size={20} />}
-          iconBgClass="bg-emerald-500/10"
+          value={<> {stats?.totalEarnings ? formatCurrency(stats.totalEarnings) : <>₦0.00</>} </>}
+          icon={<TrendingUp size={20} />}iconBgClass="bg-emerald-500/10"
           iconColorClass="text-emerald-500"
-          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +2.5%</span>}
+          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +0%</span>}
         />
         <StatCard
           title="Available Balance"
-          value={<>₦4,200.50</>}
-          icon={<Wallet size={20} />}
-          iconBgClass="bg-teal-500/10"
+          value={<> {stats?.availableBalance ? formatCurrency(stats.availableBalance) : <>₦0.00</>} </>}
+          icon={<Wallet size={20} />}iconBgClass="bg-teal-500/10"
           iconColorClass="text-teal-600"
-          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +2.5%</span>}
+          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +0%</span>}
         />
         <StatCard
           title="Escrow-held Funds"
-          value={<>₦3,150.00</>}
-          icon={<ShieldCheck size={20} />}
-          iconBgClass="bg-orange-500/10"
+          value={<> {stats?.escrowHeldFunds ? formatCurrency(stats.escrowHeldFunds) : <>₦0.00</>} </>}
+          icon={<ShieldCheck size={20} />}iconBgClass="bg-orange-500/10"
           iconColorClass="text-orange-500"
-          topRightContent={<span className="text-orange-500 flex items-center gap-1"><Clock size={14} /> 2 Items</span>}
+          topRightContent={<span className="text-orange-500 flex items-center gap-1"><Clock size={14} /> 0 Items</span>}
         />
         <StatCard
           title="Incoming Escrows"
-          value={<>5 Active</>}
-          icon={<Clock size={20} />}
-          iconBgClass="bg-blue-500/10"
+          value={<> {stats?.activeEscrows ? `${stats.activeEscrows} Active` : <>0 Active</>} </>}
+          icon={<Clock size={20} />}iconBgClass="bg-blue-500/10"
           iconColorClass="text-blue-500"
-          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +2.5%</span>}
+          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +0%</span>}
         />
       </div>
 
@@ -133,16 +191,15 @@ export default function DashboardPage() {
         {/* Left Column (Transactions & Quick Actions) */}
         <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-8 mb-8">
           <QuickActions />
-          <TransactionList transactions={MOCK_TRANSACTIONS} />
+          <TransactionList transactions={walletDetails?.transactions} />
         </div>
 
         {/* Right Column (Active Escrows & Ads/Promo) */}
         <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-8">
           <PremiumReminderModal />
-          <ActiveEscrowsList escrows={MOCK_ESCROWS} />
+          <ActiveEscrowsList escrows={activeEscrows} />
         </div>
       </div>
-
     </div>
   );
 }

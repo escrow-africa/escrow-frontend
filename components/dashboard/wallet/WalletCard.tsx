@@ -4,7 +4,6 @@ import { Plus, ArrowUpRight, CreditCard } from "lucide-react";
 interface WalletCardProps {
   balance: string;
   accountNumber: string;
-  expiryDate: string;
   cardHolder: string;
   onFundWallet: () => void;
   onWithdrawFunds: () => void;
@@ -13,7 +12,6 @@ interface WalletCardProps {
 export default function WalletCard({
   balance,
   accountNumber,
-  expiryDate,
   cardHolder,
   onFundWallet,
   onWithdrawFunds,
@@ -57,12 +55,6 @@ export default function WalletCard({
               Account Number
             </p>
             <p className="text-lg font-medium tracking-[0.2em]">{accountNumber}</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-gray-300 uppercase tracking-widest font-semibold mb-1">
-              Expires
-            </p>
-            <p className="text-lg font-medium">{expiryDate}</p>
           </div>
         </div>
 

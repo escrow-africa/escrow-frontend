@@ -28,7 +28,7 @@ export default function TransactionList({ transactions }: TransactionListProps) 
 
       {/* List */}
       <div className="flex flex-col">
-        {transactions.map((tx, index) => {
+        {transactions?.length > 0 ? transactions.map((tx, index) => {
           const isDeposit = tx.type === "in";
           const isCompleted = tx.status === "COMPLETED";
 
@@ -71,7 +71,9 @@ export default function TransactionList({ transactions }: TransactionListProps) 
               </div>
             </div>
           );
-        })}
+        }) : (
+          <p className="text-sm text-muted-foreground text-center py-8">No transactions found.</p>
+        )}
       </div>
     </div>
   );

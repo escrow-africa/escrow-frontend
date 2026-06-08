@@ -2,13 +2,11 @@ import { api } from "./axios";
 
 
 export const walletApi = {
-  getWalletDetails: async (userId: string) => {
-    // 
+  getWalletDetails: async () => {
     try {
-      const response = await api.get(`/wallet/${userId}`);
+      const response = await api.get(`/wallet/details`);
       return response.data;
-    } catch (error) {
-      console.error("Failed to fetch wallet details:", error);
+    } catch {
       alert("Failed to fetch wallet details. Please try again.");
     }
   },
@@ -17,8 +15,7 @@ export const walletApi = {
     try {
       const response = await api.get("/wallet/banks");
       return response.data;
-    } catch (error) {
-      console.error("Failed to fetch bank list:", error);
+    } catch {
       alert("Failed to fetch bank list. Please try again.");
     }
   },
@@ -27,8 +24,7 @@ export const walletApi = {
     try {
       const response = await api.post("/wallet/topup", payload);
       return response.data;
-    } catch (error) {
-      console.error("Top-up request failed:", error);
+    } catch {
       alert("Failed to initiate top-up. Please try again.");
     }
   },
@@ -37,8 +33,7 @@ export const walletApi = {
     try {
       const response = await api.post("/wallet/card-otp", payload);
       return response.data;
-    } catch (error) {
-      console.error("OTP Verification error:", error);
+    } catch {
       alert("An error occurred during verification.");
     }
   }

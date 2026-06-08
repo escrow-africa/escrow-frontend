@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, use, useEffect } from "react";
+import { useState, use, useEffect } from "react";
 import toast from "react-hot-toast";
 import { escrowApi } from "../../../../api/escrow";
 import { Download, ShieldCheck, CheckCircle2, MessageSquare, FileText, AlertCircle, ChevronRight, HelpCircle, Lock, Truck } from "lucide-react";
@@ -134,8 +134,10 @@ export default function EscrowDetailsPage({ params }: { params: Promise<{ id: st
       try {
         const [detailRes, statsRes] = await Promise.all([
           escrowApi.getById(id),
-          escrowApi.getStats(id),
+          escrowApi.getStats(),
         ]);
+
+        console.log({ details: detailRes });
 
         if (!mounted) return;
 
@@ -144,8 +146,8 @@ export default function EscrowDetailsPage({ params }: { params: Promise<{ id: st
           id: detailRes.escrowId || detailRes.id || detailRes._id || id,
           status: detailRes.status || detailRes.state || escrow.status,
           customerName: detailRes.buyerName || detailRes.customerName || detailRes.buyerEmail || escrow.customerName,
-          customerInitial: (detailRes.buyerName || detailRes.customerName || detailRes.buyerEmail || "").charAt(0).toUpperCase(),
-          lockedFunds: detailRes.lockedFunds || detailRes.locked_amount || detailRes.baseAmount || escrow.lockedFunds,
+          customerInitial: (detailRes.buyer.name || detailRes.customerName || detailRes.buyerEmail || "").charAt(0).toUpperCase(),
+          lockedFunds: detailRes.amount || detailRes.locked_amount || detailRes.baseAmount || escrow.lockedFunds,
           milestone: (detailRes.milestones && detailRes.milestones[0]?.title) || detailRes.milestone || escrow.milestone,
           baseAmount: detailRes.baseAmount || detailRes.amount || escrow.baseAmount,
           platformFee: detailRes.platformFee || detailRes.fee || escrow.platformFee,
@@ -157,7 +159,6 @@ export default function EscrowDetailsPage({ params }: { params: Promise<{ id: st
         setFetchedEscrow(mapped);
         setStats(statsRes || null);
       } catch (err: any) {
-        console.error("Failed to fetch escrow details/stats", err);
         toast.error(err?.response?.data?.message || "Unable to load escrow details");
       }
     })();

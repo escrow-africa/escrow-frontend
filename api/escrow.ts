@@ -6,7 +6,6 @@ export const escrowApi = {
       const response = await api.post("/escrow/create", payload);
       return response.data;
     } catch (error: any) {
-      console.log("escrow.create error", error);
       throw error;
     }
   },
@@ -16,48 +15,43 @@ export const escrowApi = {
       const response = await api.get(`/escrow/${escrowId}`);
       return response.data;
     } catch (error: any) {
-      console.log("escrow.getById error", error);
       throw error;
     }
   },
 
-  getStats: async (escrowId?: string) => {
+  getStats: async () => {
     try {
-      const url = escrowId ? `/escrow/stats?escrowId=${encodeURIComponent(escrowId)}` : "/escrow/stats";
+      const url = "/escrow/stats";
       const response = await api.get(url);
       return response.data;
     } catch (error: any) {
-      console.log("escrow.getStats error", error);
       throw error;
     }
   },
 
   getActive: async () => {
     try {
-      const response = await api.get("/escrow/active");
+      const response = await api.get("/escrow?preset=active");
       return response.data;
     } catch (error: any) {
-      console.log("escrow.getActive error", error);
       throw error;
     }
   },
 
   getDisputed: async () => {
     try {
-      const response = await api.get("/escrow/disputed");
+      const response = await api.get("/escrow?preset=disputed");
       return response.data;
     } catch (error: any) {
-      console.log("escrow.getDisputed error", error);
       throw error;
     }
   },
 
   getCompleted: async () => {
     try {
-      const response = await api.get("/escrow/completed");
+      const response = await api.get("/escrow?preset=completed");
       return response.data;
     } catch (error: any) {
-      console.log("escrow.getCompleted error", error);
       throw error;
     }
   },
