@@ -67,7 +67,7 @@ export default function TransactionHistory({ transactions, onSelectTransaction }
               {/* Right Side: Amount & Status */}
               <div className="text-right">
                 <p className={`font-bold ${isDeposit ? "text-emerald-500" : "text-gray-900"}`}>
-                  {isDeposit ? "+" : "-"}₦{tx.amount}
+                  {isDeposit ? "+" : "-"}{tx.amount}
                 </p>
                 <div 
                   className={`inline-flex mt-1 items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${

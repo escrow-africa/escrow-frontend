@@ -27,7 +27,7 @@ export default function TransactionDetail({ transaction, onBack }: TransactionDe
             Transaction Detail
           </p>
           <h2 className="text-5xl font-bold tracking-tight mb-4 text-white">
-            ₦{transaction.amount}
+            {transaction.amount}
           </h2>
           <div 
             className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border ${

@@ -1,14 +1,13 @@
 import React, { useState } from "react";
-import { CreditCard, Building2, Smartphone, Check, ShieldCheck, CheckCircle2, Clock, Copy } from "lucide-react";
+import { CreditCard, Building2, Smartphone, Check, ShieldCheck, Clock, Copy } from "lucide-react";
 import { useWalletStore } from "../../../store/walletStore";
 import toast from "react-hot-toast";
 
 interface FundWalletFlowProps {
   onComplete: () => void;
-  userId: string | null;
 }
 
-export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowProps) {
+export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
   const [step, setStep] = useState<number>(1);
   const [amount, setAmount] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<string>("debit_card");
@@ -39,7 +38,6 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
       try {
         const numAmount = parseFloat(amount.replace(/,/g, ''));
         const response = await fundWallet({
-          userId,
           amount: numAmount,
           method: paymentMethod
         });
@@ -51,7 +49,6 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
           setStep(6);
         }
       } catch (error: any) {
-        console.error("Initiate funding error:", error);
         toast.error(error?.response?.data?.message || error?.message || "Failed to initiate funding.");
       }
     } else {
@@ -68,7 +65,6 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
         const expiryYear = expiryYearRaw?.trim().length === 2 ? `20${expiryYearRaw.trim()}` : expiryYearRaw?.trim();
 
         const response = await fundWallet({
-          userId,
           amount: numAmount,
           method: "card",
           card: {
@@ -78,8 +74,6 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
             expiryYear
           }
         });
-
-        console.log("Backend Response for Card Payment:", response);
 
         const rawData = response?.raw || response?.data?.raw;
         const isOtpRequired = response?.requiresOtp || response?.data?.requiresOtp || rawData?.status === "OTP_AUTHORIZATION_REQUIRED";
@@ -93,7 +87,6 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
           setStep(4); // Success
         }
       } catch (error: any) {
-        console.error("Fund wallet API error:", error);
         toast.error(error?.response?.data?.message || error?.message || "Payment failed. Please try again.");
         setStep(2); // Go back to form
       }
@@ -104,11 +97,10 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
     if (otp) {
       setStep(3); // Processing
       try {
-        console.log("Sending OTP Payload:", { transactionReference, tokenId, token: otp });
         await verifyCardOtp({
           transactionReference,
           tokenId,
-          token: otp
+          token: Number(otp)
         });
         toast.success("Wallet funded successfully!");
         setStep(4); // Success
@@ -358,9 +350,9 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
             <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#0F3D2E] mb-3 animate-pulse">
               <CreditCard size={24} />
             </div>
-            <h2 className="text-base font-bold text-gray-900 mb-2 text-center">Payment Processing</h2>
-            <p className="text-gray-500 text-xs text-center max-w-sm leading-relaxed">
-              Please don't close this window. We're securing your transactions.
+            <h2 className="text-2xl font-bold text-gray-900 mb-3 text-center">Payment Processing</h2>
+            <p className="text-gray-500 text-sm text-center max-w-[250px] leading-relaxed">
+              Please don&rsquo;t close this window. We&rsquo;re securing your transactions.
             </p>
           </div>
         )}
@@ -425,7 +417,7 @@ export default function FundWalletFlow({ onComplete, userId }: FundWalletFlowPro
               onClick={onComplete}
               className="w-full bg-[#0F3D2E] text-white hover:bg-[#185541] py-3 rounded-xl font-bold transition-colors text-sm"
             >
-              I've Made the Transfer
+              I&rsquo;ve Made the Transfer
             </button>
           </div>
         )}

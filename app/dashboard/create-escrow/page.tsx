@@ -28,6 +28,7 @@ export default function CreateEscrowPage() {
   const [details, setDetails] = useState("");
   const [step, setStep] = useState<"form" | "submitting" | "success">("form");
   const [isProtectionModalOpen, setIsProtectionModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -60,14 +61,16 @@ export default function CreateEscrowPage() {
     };
 
     try {
+      setIsLoading(true);
       await escrowApi.create(payload);
-      toast.success("Escrow initialized");
-      router.push("/dashboard/escrows");
     } catch (error: any) {
-      console.error("create escrow failed", error);
       const message = error?.response?.data?.message || "Failed to initialize escrow";
       toast.error(message);
       setStep("form");
+    } finally {
+      setIsLoading(false);
+      toast.success("Escrow initialized");
+      router.push("/dashboard/escrows");
     }
   };
 

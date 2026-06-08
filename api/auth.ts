@@ -6,20 +6,18 @@ export const authApi = {
     try {
 
       const response = await api.post("/auth/register", payload);
-      console.log(response.data);
       return response.data;
     } catch (error: any) {
-      console.log(error);
+      throw error;
     }
   },
 
   login: async (payload: any) => {
-
     try {
       const response = await api.post("/auth/login", payload);
       return response.data;
     } catch (error: any) {
-      console.log(error);
+      throw error;
     }
   },
   requestOtp: async (data: any) => {
@@ -28,7 +26,6 @@ export const authApi = {
       const response = await api.post("/auth/request-otp", data);
       return response.data;
     } catch (error: any) {
-      console.log(error);
       throw error;
     }
 
@@ -40,7 +37,6 @@ export const authApi = {
       const response = await api.post("/auth/verify-otp", payload);
       return response.data;
     } catch (error: any) {
-      console.log(error);
       throw error;
     }
   },
@@ -50,18 +46,34 @@ export const authApi = {
       const response = await api.post("/auth/reset-password", data);
       return response.data;
     } catch (error: any) {
-      console.log(error);
       throw error;
     }
-  }
-  ,
+  },
 
   logout: async () => {
     try {
       const response = await api.post("/auth/logout");
       return response.data;
     } catch (error: any) {
-      console.log("logout error", error);
+      throw error;
+    }
+  },
+
+  getStats: async () => {
+    try {
+      const response = await api.get('/auth/stats');
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
+  }
+  ,
+
+  getMe: async () => {
+    try {
+      const response = await api.get('/auth/me');
+      return response.data;
+    } catch (error: any) {
       throw error;
     }
   }

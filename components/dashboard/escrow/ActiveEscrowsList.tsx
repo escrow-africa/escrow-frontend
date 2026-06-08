@@ -19,7 +19,7 @@ export default function ActiveEscrowsList({ escrows }: ActiveEscrowsListProps) {
       <h2 className="text-lg font-bold text-foreground mb-6">Active Escrows</h2>
       
       <div className="space-y-6 flex-1">
-        {escrows.map((escrow) => (
+        {escrows.length > 0 ? escrows.map((escrow) => (
           <div key={escrow.id} className="flex justify-between items-center group cursor-pointer gap-4">
             <div className="flex items-center gap-3 min-w-0">
               {/* Colored Dot Indicator */}
@@ -34,7 +34,9 @@ export default function ActiveEscrowsList({ escrows }: ActiveEscrowsListProps) {
               {escrow.amount}
             </div>
           </div>
-        ))}
+        )) : (
+          <p className="text-sm text-muted-foreground text-center py-8">No active escrows at the moment.</p>
+        )}
       </div>
 
       <div className="mt-8 text-center border-t border-muted pt-4">

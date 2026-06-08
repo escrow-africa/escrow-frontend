@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ShieldCheck, Clock, Search } from "lucide-react";
 import EscrowStatCard from "../../../components/dashboard/escrow/EscrowStatCard";
 import EscrowCard, { EscrowStatus } from "../../../components/dashboard/escrow/EscrowCard";
+import { escrowApi } from "../../../api/escrow";
 
 interface MockEscrow {
   id: string;
@@ -77,8 +78,122 @@ const MOCK_ESCROWS: MockEscrow[] = [
 
 export default function EscrowsPage() {
   const [activeTab, setActiveTab] = useState<"active" | "completed" | "disputed">("active");
+  const [escrows, setEscrows] = useState<MockEscrow[]>(MOCK_ESCROWS);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTotal, setActiveTotal] = useState<string>("₦102,751.32");
+  const [pendingRelease, setPendingRelease] = useState<string>("₦62,000.00");
 
-  const filteredEscrows = MOCK_ESCROWS.filter(escrow => escrow.tab === activeTab);
+  const filteredEscrows = escrows.filter(escrow => escrow.tab === activeTab);
+
+  const formatCurrency = (val: any) => {
+    try {
+      const n = Number(val);
+      if (Number.isNaN(n)) return String(val ?? "");
+      return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 2 }).format(n);
+    } catch {
+      return String(val ?? "");
+    }
+  };
+
+  const mapToCard = (item: any, tab: "active" | "completed" | "disputed"): MockEscrow => {
+    const id = item.id;
+    const displayId = item.escrowCode;
+    const partnerName = item.user.name;
+    const initials = partnerName.split(' ').map((s: string) => s[0]).slice(0,2).join('').toUpperCase() || 'U';
+    const statusRaw = (item.status || item.state || '').toString().toUpperCase();
+    const status: EscrowStatus = statusRaw.includes('RELEASE') ? 'RELEASED' : statusRaw.includes('DISPUTE') ? 'IN_DISPUTE' : statusRaw.includes('REVIEW') ? 'IN_REVIEW' : 'SECURED';
+    const mainDeliverable = item.description;
+    const escrowAmount = item.amount;
+    const payoutAmount = item.payoutAmount ?? item.payout ?? 0;
+    const updatedAt = item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : (item.updatedAtString || item.updated || '');
+
+    return {
+      id: String(id),
+      displayId,
+      partnerName,
+      avatarInitials: initials,
+      avatarBgClass: 'bg-[#E6F4EA]',
+      status,
+      mainDeliverable,
+      escrowAmount: typeof escrowAmount === 'number' || !String(escrowAmount).startsWith('₦') ? formatCurrency(escrowAmount) : String(escrowAmount),
+      payoutAmount: typeof payoutAmount === 'number' || !String(payoutAmount).startsWith('₦') ? formatCurrency(payoutAmount) : String(payoutAmount),
+      updatedAt,
+      tab,
+    };
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const fetch = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        let data: any[] = [];
+        if (activeTab === 'active') {
+          data = await escrowApi.getActive();
+        } else if (activeTab === 'completed') {
+          data = await escrowApi.getCompleted();
+        } else {
+          data = await escrowApi.getDisputed();
+        }
+
+        if (!Array.isArray(data)) {
+          // some APIs wrap results in { data: [...] }
+          data = data?.results || data?.items || (data?.data && Array.isArray(data.data) ? data.data : [data]);
+        }
+
+        const mapped = (data || []).map(d => mapToCard(d, activeTab));
+        if (mounted) setEscrows(mapped.length ? mapped : []);
+      } catch (err: any) {
+        if (mounted) setError(err?.message || 'Failed to load escrows');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetch();
+    return () => { mounted = false; };
+  }, [activeTab]);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchStats = async () => {
+      try {
+        const data: any = await escrowApi.getStats();
+
+        const extract = (obj: any, keys: string[]) => {
+          if (obj == null) return undefined;
+          for (const k of keys) {
+            if (obj[k] !== undefined && obj[k] !== null) return obj[k];
+          }
+          return undefined;
+        };
+
+        let act = extract(data, ['activeAmount','active_total','totalActiveEscrowAmount','active','total','activeAmountInK']);
+        let pending = extract(data, ['pendingRelease','pending_release','pendingAmount','pending','pendingReleaseAmount']);
+
+        // handle nested wrappers like { data: { ... } } or arrays
+        if ((act === undefined || pending === undefined) && data?.data) {
+          act = act ?? extract(data.data, ['activeAmount','active_total','totalActive','active','total']);
+          pending = pending ?? extract(data.data, ['pendingRelease','pending_release','pendingAmount','pending']);
+        }
+
+        if ((act === undefined || pending === undefined) && Array.isArray(data) && data.length > 0) {
+          act = act ?? extract(data[0], ['activeAmount','active_total','totalActive','active','total']);
+          pending = pending ?? extract(data[0], ['pendingRelease','pending_release','pendingAmount','pending']);
+        }
+
+        if (act !== undefined) setActiveTotal(formatCurrency(act));
+        if (pending !== undefined) setPendingRelease(formatCurrency(pending));
+      } catch (err: any) {
+        console.error('Failed to load escrow stats', err);
+      }
+    };
+
+    fetchStats();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <div className="flex flex-col h-full fade-in pb-12 mb-24">
@@ -98,14 +213,14 @@ export default function EscrowsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <EscrowStatCard
           title="ACTIVE ESCROWS"
-          value="₦102,751.32"
+          value={activeTotal}
           icon={<ShieldCheck size={20} />}
           iconBgClass="bg-[#E6F4EA]"
           iconColorClass="text-[#0F3D2E]"
         />
         <EscrowStatCard
           title="PENDING RELEASE"
-          value="₦62,000.00"
+          value={pendingRelease}
           icon={<Clock size={20} />}
           iconBgClass="bg-[#FFF4E5]"
           iconColorClass="text-[#FF9800]" // orange
@@ -156,7 +271,7 @@ export default function EscrowsPage() {
 
       {/* Escrows Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        {filteredEscrows.map(escrow => (
+        {filteredEscrows.length > 0 ? filteredEscrows.map(escrow => (
           <EscrowCard
             key={escrow.id}
             id={escrow.id}
@@ -170,7 +285,9 @@ export default function EscrowsPage() {
             payoutAmount={escrow.payoutAmount}
             updatedAt={escrow.updatedAt}
           />
-        ))}
+        )) : (
+          <p className="text-gray-500">No escrows found.</p>
+        )}
       </div>
     </div>
   );
