@@ -39,41 +39,42 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       setUserName(capitalized);
     }
 
-    // Fetch /auth/me and /auth/stats to populate name and sidebar earnings
+    // Fetch /auth/me and /auth/stats in parallel to populate name and sidebar earnings
     let mounted = true;
     (async () => {
       try {
-        const me = await authApi.getMe();
+        const [me, stats] = await Promise.all([
+          authApi.getMe().catch(() => null),
+          authApi.getStats().catch(() => null),
+        ]);
         if (!mounted) return;
-        const name = me?.fullName || me?.name || me?.username || me?.email || null;
-        if (name) {
-          let display = String(name);
-          display = display.includes("@") ? display.split("@")[0] : display;
-          display = display.replace(/[._-]/g, " ");
-          const firstWord = display.trim().split(" ")[0];
-          const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
-          setUserName(capitalized);
-        }
-      } catch (e) {
-        // fallback: keep token/localStorage method
-        console.error('Failed to fetch /auth/me', e);
-      }
 
-      try {
-        const stats = await authApi.getStats();
-        if (!mounted) return;
-        const total = stats?.totalEarnings ?? stats?.totalEarningsAmount ?? stats?.total ?? null;
-        if (total !== undefined && total !== null) {
-          try {
-            const n = Number(total);
-            if (!Number.isNaN(n)) setTotalEarnings(new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 2 }).format(n));
-            else setTotalEarnings(String(total));
-          } catch {
-            setTotalEarnings(String(total));
+        if (me) {
+          const name = me?.fullName || me?.name || me?.username || me?.email || null;
+          if (name) {
+            let display = String(name);
+            display = display.includes("@") ? display.split("@")[0] : display;
+            display = display.replace(/[._-]/g, " ");
+            const firstWord = display.trim().split(" ")[0];
+            const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
+            setUserName(capitalized);
           }
         }
-      } catch (e) {
-        console.error('Failed to fetch /auth/stats', e);
+
+        if (stats) {
+          const total = stats?.totalEarnings ?? stats?.totalEarningsAmount ?? stats?.total ?? null;
+          if (total !== undefined && total !== null) {
+            try {
+              const n = Number(total);
+              if (!Number.isNaN(n)) setTotalEarnings(new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 2 }).format(n));
+              else setTotalEarnings(String(total));
+            } catch {
+              setTotalEarnings(String(total));
+            }
+          }
+        }
+      } catch {
+        // silent — token/localStorage fallback already set
       }
 
       return () => { mounted = false; };

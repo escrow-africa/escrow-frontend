@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { authApi } from "../api/auth";
 import { setTokenCookie, removeTokenCookie } from "../utils/token";
+import { invalidateTokenCache } from "../api/axios";
 
 interface AuthState{
 
@@ -46,6 +47,8 @@ export const useAuthStore = create<AuthState>((set)=>({
       if (typeof window !== "undefined" && response) {
         const token = response.accessToken || response.token;
         if (token) setTokenCookie(token);
+        // Ensure axios reads the newly-set cookie immediately
+        invalidateTokenCache();
       }
 
       set({loading:false});
@@ -77,6 +80,7 @@ export const useAuthStore = create<AuthState>((set)=>({
     set({ loading: true, error: null });
     try {
       const response = await authApi.verifyEmail(data);
+      set({ loading: false });
       return response;
     } catch (error: any) {
       set({
@@ -105,6 +109,7 @@ export const useAuthStore = create<AuthState>((set)=>({
   logout: () => {
     if (typeof window !== "undefined") {
       removeTokenCookie();
+      invalidateTokenCache();
     }
 
     set({ loading:false, error:null });

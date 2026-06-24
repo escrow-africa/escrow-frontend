@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import StatCard from "../../components/dashboard/shared/StatCard";
 import QuickActions from "../../components/dashboard/shared/QuickActions";
 import TransactionList from "../../components/dashboard/transaction/TransactionList";
@@ -13,115 +13,125 @@ import { escrowApi } from "../../api/escrow";
 import { useWalletStore } from "../../store/walletStore";
 import { authApi } from "../../api/auth";
 
+const formatCurrency = (val: any) => {
+  try {
+    const n = Number(val);
+    if (Number.isNaN(n)) return String(val ?? "");
+    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 2 }).format(n);
+  } catch {
+    return String(val ?? "");
+  }
+};
+
 export default function DashboardPage() {
-  const [userName, setUserName] = useState("User");
-  const [activeEscrows, setActiveEscrows] = useState<ActiveEscrow[]>([]);
-  const [loadingActiveEscrows, setLoadingActiveEscrows] = useState(false);
-  const { walletDetails, fetchWalletDetails } = useWalletStore();
-  const [stats, setStats] = useState<{ totalEarnings?: any; availableBalance?: any; escrowHeldFunds?: any; activeEscrows?: any } | null>(null);
-
-  const formatCurrency = (val: any) => {
-    try {
-      const n = Number(val);
-      if (Number.isNaN(n)) return String(val ?? "");
-      return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 2 }).format(n);
-    } catch {
-      return String(val ?? "");
+  const [userName, setUserName] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("user_fullName");
+      if (saved) return saved.trim().split(" ")[0];
     }
-  };
+    return "User";
+  });
+  const [activeEscrows, setActiveEscrows] = useState<ActiveEscrow[]>([]);
+  const [loadingEscrows, setLoadingEscrows] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const { walletDetails, fetchWalletDetails, isLoadingDetails } = useWalletStore();
+  const [stats, setStats] = useState<{ totalEarnings?: any; availableBalance?: any; escrowHeldFunds?: any; activeEscrows?: any } | null>(null);
+  const router = useRouter();
 
+  // Derive user name from token as fallback (synchronous, no re-render)
+  useEffect(() => {
+    const token = getTokenFromCookie();
+    if (token) {
+      try {
+        const payload = token.split(".")[1];
+        const decoded = JSON.parse(atob(payload));
+        const fullName = decoded.fullName || decoded.name || decoded.username || decoded.email || "";
+        if (fullName) {
+          let name = fullName.includes("@") ? fullName.split("@")[0] : fullName;
+          name = name.replace(/[._-]/g, " ");
+          setUserName(name.trim().split(" ")[0].replace(/^\w/, (c: string) => c.toUpperCase()));
+        }
+      } catch { /* ignore */ }
+    }
+  }, []);
+
+  // Single consolidated fetch — escrows + wallet + stats in parallel
   useEffect(() => {
     let mounted = true;
-    const fetchActive = async () => {
-      setLoadingActiveEscrows(true);
-      try {
-        let data: any = await escrowApi.getActive();
+
+    const load = async () => {
+      const [activeData, , statsData] = await Promise.allSettled([
+        escrowApi.getActive(),
+        fetchWalletDetails(),
+        authApi.getStats(),
+      ]);
+
+      if (!mounted) return;
+
+      if (activeData.status === "fulfilled") {
+        let data: any = activeData.value;
         if (!Array.isArray(data)) {
           data = data?.results || data?.items || (data?.data && Array.isArray(data.data) ? data.data : [data]);
         }
-
         const mapped: ActiveEscrow[] = (data || []).map((it: any) => {
-          const status = (it.status || it.state || '').toString().toUpperCase();
-          const id = it.id;
-          const title = it.description;
-          const partnerName = it.user?.name;
-          const amountRaw = it.escrowAmount ?? it.amount ?? it.value ?? it.baseAmount ?? 0;
-          const amount = typeof amountRaw === 'number' ? formatCurrency(amountRaw) : (String(amountRaw).startsWith('₦') ? String(amountRaw) : formatCurrency(amountRaw));
-          const dotColorClass = status.includes('DISPUTE') ? 'bg-red-500' : status.includes('RELEASE') ? 'bg-emerald-500' : status.includes('REVIEW') ? 'bg-yellow-500' : 'bg-blue-500';
-
+          const status = (it.status || '').toUpperCase();
           return {
-            id: String(id),
-            title,
-            partnerName,
-            amount,
-            dotColorClass,
+            id: String(it.id),
+            title: it.description || it.title || "Escrow",
+            partnerName: it.user?.name || "—",
+            amount: formatCurrency(it.escrowAmount ?? it.amount ?? 0),
+            dotColorClass: status.includes('DISPUTE') ? 'bg-red-500' : status.includes('RELEASE') ? 'bg-emerald-500' : status.includes('REVIEW') ? 'bg-yellow-500' : 'bg-blue-500',
           };
         });
-
-        if (mounted) setActiveEscrows(mapped.length ? mapped : []);
-      } catch {
-        if (mounted) setActiveEscrows([]);
-      } finally {
-        if (mounted) setLoadingActiveEscrows(false);
+        setActiveEscrows(mapped);
       }
+      setLoadingEscrows(false);
+
+      if (statsData.status === "fulfilled") {
+        setStats(statsData.value || null);
+      }
+      setLoadingStats(false);
     };
 
-    fetchActive();
+    load();
     return () => { mounted = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const router = useRouter();
-
-  useEffect(() => {
-    (async () => {
-      try {
-        await fetchWalletDetails();
-      } catch (e) {
-        console.error('Failed to fetch wallet details for dashboard', e);
-      }
-    })();
-
-    (async () => {
-      try {
-        const s = await authApi.getStats();
-        console.log({ s });
-        setStats(s || null);
-      } catch (e) {
-        console.error('Failed to fetch auth stats', e);
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    const getSavedName = () => {
-      if (typeof window !== "undefined") {
-        const saved = localStorage.getItem("user_fullName");
-        if (saved) return saved;
-      }
-      const token = getTokenFromCookie();
-      if (token) {
-        try {
-          const payload = token.split(".")[1];
-          const decoded = JSON.parse(atob(payload));
-          return decoded.fullName || decoded.name || decoded.username || decoded.email || "";
-        } catch {
-          return "";
-        }
-      }
-      return "";
-    };
-
-    const fullName = getSavedName();
-    if (fullName) {
-      let name = fullName.includes("@") ? fullName.split("@")[0] : fullName;
-      name = name.replace(/[._-]/g, " ");
-      const firstWord = name.trim().split(" ")[0];
-      const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
-      setUserName(capitalized);
-    }
-  }, []);
-
-
+  const statCards = useMemo(() => [
+    {
+      title: "Total Earnings",
+      value: loadingStats ? "—" : formatCurrency(stats?.totalEarnings ?? 0),
+      icon: <TrendingUp size={20} />,
+      iconBgClass: "bg-emerald-500/10",
+      iconColorClass: "text-emerald-500",
+      topRight: <span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +0%</span>,
+    },
+    {
+      title: "Available Balance",
+      value: loadingStats ? "—" : formatCurrency(stats?.availableBalance ?? 0),
+      icon: <Wallet size={20} />,
+      iconBgClass: "bg-teal-500/10",
+      iconColorClass: "text-teal-600",
+      topRight: <span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +0%</span>,
+    },
+    {
+      title: "Escrow-held Funds",
+      value: loadingStats ? "—" : formatCurrency(stats?.escrowHeldFunds ?? 0),
+      icon: <ShieldCheck size={20} />,
+      iconBgClass: "bg-orange-500/10",
+      iconColorClass: "text-orange-500",
+      topRight: <span className="text-orange-500 flex items-center gap-1"><Clock size={14} /> 0 Items</span>,
+    },
+    {
+      title: "Incoming Escrows",
+      value: loadingStats ? "—" : `${stats?.activeEscrows ?? 0} Active`,
+      icon: <Clock size={20} />,
+      iconBgClass: "bg-blue-500/10",
+      iconColorClass: "text-blue-500",
+      topRight: <span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +0%</span>,
+    },
+  ], [stats, loadingStats]);
 
   return (
     <div className="flex flex-col h-full fade-in pb-24">
@@ -156,48 +166,32 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard
-          title="Total Earnings"
-          value={<> {stats?.totalEarnings ? formatCurrency(stats.totalEarnings) : <>₦0.00</>} </>}
-          icon={<TrendingUp size={20} />}iconBgClass="bg-emerald-500/10"
-          iconColorClass="text-emerald-500"
-          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +0%</span>}
-        />
-        <StatCard
-          title="Available Balance"
-          value={<> {stats?.availableBalance ? formatCurrency(stats.availableBalance) : <>₦0.00</>} </>}
-          icon={<Wallet size={20} />}iconBgClass="bg-teal-500/10"
-          iconColorClass="text-teal-600"
-          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +0%</span>}
-        />
-        <StatCard
-          title="Escrow-held Funds"
-          value={<> {stats?.escrowHeldFunds ? formatCurrency(stats.escrowHeldFunds) : <>₦0.00</>} </>}
-          icon={<ShieldCheck size={20} />}iconBgClass="bg-orange-500/10"
-          iconColorClass="text-orange-500"
-          topRightContent={<span className="text-orange-500 flex items-center gap-1"><Clock size={14} /> 0 Items</span>}
-        />
-        <StatCard
-          title="Incoming Escrows"
-          value={<> {stats?.activeEscrows ? `${stats.activeEscrows} Active` : <>0 Active</>} </>}
-          icon={<Clock size={20} />}iconBgClass="bg-blue-500/10"
-          iconColorClass="text-blue-500"
-          topRightContent={<span className="text-emerald-500 flex items-center gap-0.5"><TrendingUp size={14} /> +0%</span>}
-        />
+        {statCards.map((card) => (
+          <StatCard
+            key={card.title}
+            title={card.title}
+            value={<>{card.value}</>}
+            icon={card.icon}
+            iconBgClass={card.iconBgClass}
+            iconColorClass={card.iconColorClass}
+            topRightContent={card.topRight}
+          />
+        ))}
       </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column (Transactions & Quick Actions) */}
         <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-8 mb-8">
           <QuickActions />
-          <TransactionList transactions={walletDetails?.transactions} />
+          <TransactionList
+            transactions={walletDetails?.transactions}
+            isLoading={isLoadingDetails}
+          />
         </div>
 
-        {/* Right Column (Active Escrows & Ads/Promo) */}
         <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-8">
           <PremiumReminderModal />
-          <ActiveEscrowsList escrows={activeEscrows} />
+          <ActiveEscrowsList escrows={activeEscrows} isLoading={loadingEscrows} />
         </div>
       </div>
     </div>

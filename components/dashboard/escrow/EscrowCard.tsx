@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import Link from "next/link";
 import { Clock, ShieldCheck, CheckCircle2, AlertCircle, ChevronRight } from "lucide-react";
 
@@ -17,7 +17,7 @@ export interface EscrowCardProps {
   updatedAt: string;
 }
 
-export default function EscrowCard({
+const EscrowCard = memo(function EscrowCard({
   id,
   displayId,
   partnerName,
@@ -73,7 +73,7 @@ export default function EscrowCard({
   const statusConfig = getStatusConfig();
 
   return (
-    <Link href={`/dashboard/escrows/${id}`} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col hover:shadow-md transition-shadow group">
+    <Link href={`/dashboard/escrows/${id}`} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col hover:shadow-md transition-shadow group" prefetch={false}>
       <div className="p-5 flex-1">
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
@@ -121,4 +121,6 @@ export default function EscrowCard({
       </div>
     </Link>
   );
-}
+});
+
+export default EscrowCard;

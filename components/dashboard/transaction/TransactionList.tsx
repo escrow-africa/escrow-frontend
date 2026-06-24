@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import Link from "next/link";
 import { ArrowDownLeft, ArrowUpRight, ArrowRight } from "lucide-react";
 
@@ -12,10 +12,11 @@ export interface Transaction {
 }
 
 interface TransactionListProps {
-  transactions: Transaction[];
+  transactions?: Transaction[];
+  isLoading?: boolean;
 }
 
-export default function TransactionList({ transactions }: TransactionListProps) {
+const TransactionList = memo(function TransactionList({ transactions = [], isLoading = false }: TransactionListProps) {
   return (
     <div className="bg-surface rounded-2xl border border-[#E4E3E3CC] shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] overflow-hidden">
       {/* Header */}
@@ -28,7 +29,20 @@ export default function TransactionList({ transactions }: TransactionListProps) 
 
       {/* List */}
       <div className="flex flex-col">
-        {transactions?.length > 0 ? transactions.map((tx, index) => {
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between p-3 md:p-4 gap-3 border-b border-[#E4E3E3CC] last:border-0">
+              <div className="flex items-center gap-3 flex-1">
+                <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-gray-100 rounded animate-pulse w-2/3" />
+                  <div className="h-2.5 bg-gray-100 rounded animate-pulse w-1/3" />
+                </div>
+              </div>
+              <div className="h-4 bg-gray-100 rounded animate-pulse w-20 shrink-0" />
+            </div>
+          ))
+        ) : transactions.length > 0 ? transactions.map((tx, index) => {
           const isDeposit = tx.type === "in";
           const isCompleted = tx.status === "COMPLETED";
 
@@ -77,4 +91,6 @@ export default function TransactionList({ transactions }: TransactionListProps) 
       </div>
     </div>
   );
-}
+});
+
+export default TransactionList;

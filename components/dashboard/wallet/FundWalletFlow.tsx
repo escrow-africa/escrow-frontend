@@ -5,11 +5,13 @@ import toast from "react-hot-toast";
 
 interface FundWalletFlowProps {
   onComplete: () => void;
+  userId?: string | null;
+  defaultAmount?: string;
 }
 
-export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
+export default function FundWalletFlow({ onComplete, defaultAmount }: FundWalletFlowProps) {
   const [step, setStep] = useState<number>(1);
-  const [amount, setAmount] = useState<string>("");
+  const [amount, setAmount] = useState<string>(defaultAmount ? String(Number(defaultAmount).toLocaleString()) : "");
   const [paymentMethod, setPaymentMethod] = useState<string>("debit_card");
 
   // Step 2 Form

@@ -55,4 +55,35 @@ export const escrowApi = {
       throw error;
     }
   },
+
+  deliver: async (escrowId: string, proofFile: File) => {
+    try {
+      const formData = new FormData();
+      formData.append("proof", proofFile);
+      const response = await api.post(`/escrow/${escrowId}/deliver`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
+  },
+
+  complete: async (escrowId: string) => {
+    try {
+      const response = await api.post(`/escrow/${escrowId}/complete`);
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
+  },
+
+  nudge: async (escrowId: string) => {
+    try {
+      const response = await api.post(`/escrow/${escrowId}/nudge`);
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
+  },
 };

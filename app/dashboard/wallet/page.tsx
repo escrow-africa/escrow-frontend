@@ -15,10 +15,12 @@ export default function WalletPage() {
   const [viewState, setViewState] = useState<"overview" | "transaction_detail" | "withdraw_funds" | "fund_wallet">("overview");
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionItem | null>(null);
 
-  const { walletDetails, error, fetchWalletDetails } = useWalletStore();
+  const { walletDetails, error, fetchWalletDetails, invalidate } = useWalletStore();
 
   useEffect(() => {
+    // TTL-aware — skips if data was fetched recently
     fetchWalletDetails();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -55,7 +57,9 @@ export default function WalletPage() {
   const handleBackToOverview = () => {
     setSelectedTransaction(null);
     setViewState("overview");
-    fetchWalletDetails();
+    // Invalidate cache so the next render fetches fresh data after fund/withdraw
+    invalidate();
+    fetchWalletDetails(true);
   };
 
   // Safe fallbacks if wallet details are missing or loading
