@@ -129,7 +129,7 @@ export default function EscrowsPage() {
       setLoading(true);
       setError(null);
       try {
-        let data: any[] = [];
+        let data: any = [];
         if (activeTab === 'active') {
           data = await escrowApi.getActive();
         } else if (activeTab === 'completed') {

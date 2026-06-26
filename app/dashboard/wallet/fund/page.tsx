@@ -36,7 +36,7 @@ export default function FundWalletPage() {
             ← Back to Wallet
           </button>
         </div>
-        <FundWalletFlow onComplete={() => router.push("/dashboard/wallet")} userId={userId} />
+        <FundWalletFlow onComplete={() => router.push("/dashboard/wallet")} />
       </div>
     </div>
   );
