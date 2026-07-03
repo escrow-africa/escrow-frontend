@@ -6,6 +6,7 @@ import { Ad } from "@/types/ads";
 
 interface AdCardProps {
   ad: Ad;
+  onCardClick?: (id: string) => void;
   onToggleStatus?: (id: string) => void;
   onEdit?: (id: string) => void;
   onViewInsights?: (id: string) => void;
@@ -15,6 +16,7 @@ interface AdCardProps {
 
 export default function AdCard({
   ad,
+  onCardClick,
   onToggleStatus,
   onEdit,
   onViewInsights,
@@ -72,9 +74,24 @@ export default function AdCard({
   const spentBudget = ad.spentBudget || 0;
   const fuelPercentage = Math.min(100, Math.max(0, (spentBudget / totalBudget) * 100));
   const isOutOfFuel = ad.status === "OUT OF FUEL" || ad.status === "OUT OF BUDGET" || spentBudget <= 0;
+  const cardClasses = `bg-white border border-[#E4E3E3] rounded-3xl p-4 flex flex-col shadow-sm transition-all duration-300 ${
+    onCardClick ? "cursor-pointer hover:shadow-lg" : "hover:shadow-md"
+  }`;
 
   return (
-    <article className="bg-white border border-[#E4E3E3] rounded-3xl p-4 flex flex-col shadow-sm hover:shadow-md transition-all duration-300">
+    <article
+      role={onCardClick ? "button" : undefined}
+      tabIndex={onCardClick ? 0 : undefined}
+      onClick={() => onCardClick?.(ad.id)}
+      onKeyDown={(e) => {
+        if (!onCardClick) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onCardClick(ad.id);
+        }
+      }}
+      className={cardClasses}
+    >
       {/* Image Header */}
       <div className="relative overflow-hidden h-48 rounded-2xl mb-4 w-full bg-[#E7ECEA]">
         {ad.image ? (
@@ -152,7 +169,10 @@ export default function AdCard({
             {/* Insights button */}
             <button
               type="button"
-              onClick={() => onViewInsights?.(ad.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewInsights?.(ad.id);
+              }}
               className="flex items-center justify-center rounded-xl border border-[#E4E3E3] bg-white p-2.5 text-[#667171] hover:bg-[#FAFBFA] transition-colors w-11 h-11"
               title="View Insights"
             >
@@ -163,7 +183,10 @@ export default function AdCard({
             {isOutOfFuel ? (
               <button
                 type="button"
-                onClick={() => onFund?.(ad.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onFund?.(ad.id);
+                }}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#EF4444] text-white font-bold text-xs h-11 hover:bg-[#DC2626] transition-colors"
               >
                 <Wallet size={14} /> Fund Campaign
@@ -171,7 +194,10 @@ export default function AdCard({
             ) : (
               <button
                 type="button"
-                onClick={() => onToggleStatus?.(ad.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleStatus?.(ad.id);
+                }}
                 className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-[#E4E3E3] bg-white text-[#667171] font-bold text-xs h-11 hover:bg-[#FAFBFA] transition-colors"
               >
                 {ad.status === "ACTIVE" ? (
@@ -189,7 +215,10 @@ export default function AdCard({
             {/* Edit button */}
             <button
               type="button"
-              onClick={() => onEdit?.(ad.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit?.(ad.id);
+              }}
               className="flex items-center justify-center rounded-xl border border-[#E4E3E3] bg-white p-2.5 text-[#667171] hover:bg-[#FAFBFA] transition-colors w-11 h-11"
               title="Edit Campaign"
             >

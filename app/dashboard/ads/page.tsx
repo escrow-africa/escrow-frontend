@@ -65,6 +65,10 @@ export default function AdsPage() {
     router.push(`/dashboard/ads/${id}`);
   };
 
+  const handleCardClick = (id: string) => {
+    router.push(`/dashboard/ads/${id}`);
+  };
+
   // Filtered ads
   const filteredAds = useMemo(() => {
     return ads.filter(
@@ -216,6 +220,7 @@ export default function AdsPage() {
       ) : (
         <AdsGrid
           ads={filteredAds}
+          onCardClick={handleCardClick}
           onToggleStatus={handleToggleStatus}
           onEdit={handleEdit}
           onViewInsights={handleViewInsights}

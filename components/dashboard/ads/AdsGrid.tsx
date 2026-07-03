@@ -5,6 +5,7 @@ import AdCard from "@/components/dashboard/ads/AdCard";
 
 interface AdsGridProps {
   ads: Ad[];
+  onCardClick: (id: string) => void;
   onToggleStatus: (id: string) => void;
   onEdit: (id: string) => void;
   onViewInsights: (id: string) => void;
@@ -14,6 +15,7 @@ interface AdsGridProps {
 
 export default function AdsGrid({ 
   ads, 
+  onCardClick,
   onToggleStatus, 
   onEdit, 
   onViewInsights,
@@ -27,6 +29,7 @@ export default function AdsGrid({
           <div key={ad.id} className="w-full xl:max-w-none">
             <AdCard
               ad={ad}
+              onCardClick={onCardClick}
               onToggleStatus={onToggleStatus}
               onEdit={onEdit}
               onViewInsights={onViewInsights}
@@ -44,6 +47,7 @@ export default function AdsGrid({
         <AdCard
           key={ad.id}
           ad={ad}
+          onCardClick={onCardClick}
           onToggleStatus={onToggleStatus}
           onEdit={onEdit}
           onViewInsights={onViewInsights}

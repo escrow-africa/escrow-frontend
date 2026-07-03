@@ -143,7 +143,7 @@ export default function EscrowsPage() {
           data = data?.results || data?.items || (data?.data && Array.isArray(data.data) ? data.data : [data]);
         }
 
-        const mapped = (data || []).map(d => mapToCard(d, activeTab));
+        const mapped = (data || []).map((d: any) => mapToCard(d, activeTab));
         if (mounted) setEscrows(mapped.length ? mapped : []);
       } catch (err: any) {
         if (mounted) setError(err?.message || 'Failed to load escrows');
