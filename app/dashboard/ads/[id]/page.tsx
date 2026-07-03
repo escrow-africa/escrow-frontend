@@ -13,6 +13,7 @@ import { fetchAd, updateAd, deleteAd } from "@/api/ads";
 import { Ad } from "@/types/ads";
 import SuccessModal from "@/components/SuccessModal";
 import TopUpBudgetModal from "@/components/dashboard/ads/TopUpBudgetModal";
+import TerminateCampaignModal from "@/components/dashboard/ads/TerminateCampaignModal";
 
 interface AdDetailsPageProps {
   params: Promise<{ id: string }>;
@@ -28,6 +29,9 @@ export default function AdDetailsPage({ params }: AdDetailsPageProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isTerminateModalOpen, setIsTerminateModalOpen] = useState(false);
+  const [isTerminating, setIsTerminating] = useState(false);
+  const [isDeleteSuccessModalOpen, setIsDeleteSuccessModalOpen] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState(500000);
   const [isTopUpProcessing, setIsTopUpProcessing] = useState(false);
 
@@ -84,18 +88,23 @@ export default function AdDetailsPage({ params }: AdDetailsPageProps) {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
+    // Open confirmation modal
+    setIsTerminateModalOpen(true);
+  };
+
+  const handleConfirmTerminate = async () => {
     if (!ad) return;
-    if (confirm("Are you sure you want to delete this campaign? This action cannot be undone.")) {
-      setIsDeleting(true);
-      const success = await deleteAd(ad.id);
-      if (success) {
-        toast.success("Campaign deleted successfully.");
-        router.push("/dashboard/ads");
-      } else {
-        toast.error("Failed to delete campaign.");
-        setIsDeleting(false);
-      }
+    setIsTerminating(true);
+    const success = await deleteAd(ad.id);
+    setIsTerminating(false);
+    setIsTerminateModalOpen(false);
+
+    if (success) {
+      toast.success("Campaign terminated and funds returned.");
+      setIsDeleteSuccessModalOpen(true);
+    } else {
+      toast.error("Failed to terminate campaign.");
     }
   };
 
@@ -623,6 +632,22 @@ export default function AdDetailsPage({ params }: AdDetailsPageProps) {
         onConfirm={handleConfirmTopUp}
         defaultAmount={topUpAmount}
         isLoading={isTopUpProcessing}
+      />
+      <TerminateCampaignModal
+        isOpen={isTerminateModalOpen}
+        isLoading={isTerminating}
+        onClose={() => setIsTerminateModalOpen(false)}
+        onConfirm={handleConfirmTerminate}
+        title="Cancel Campaign?"
+        description={`Are you sure you want to terminate "${ad?.title}"? This will close all active placements and return unburned budgets back to your balance wallet.`}
+      />
+      <SuccessModal
+        isOpen={isDeleteSuccessModalOpen}
+        onClose={() => setIsDeleteSuccessModalOpen(false)}
+        title="Campaign Terminated"
+        description={`${ad?.title || 'Campaign'} has been terminated and unspent budget returned to your wallet.`}
+        buttonText="Back to campaigns"
+        redirectTo="/dashboard/ads"
       />
       <SuccessModal
         isOpen={isSuccessModalOpen}

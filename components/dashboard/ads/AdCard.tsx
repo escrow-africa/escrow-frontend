@@ -12,6 +12,7 @@ interface AdCardProps {
   onViewInsights?: (id: string) => void;
   onFund?: (id: string) => void;
   previewMode?: boolean;
+  listView?: boolean;
 }
 
 export default function AdCard({
@@ -22,6 +23,7 @@ export default function AdCard({
   onViewInsights,
   onFund,
   previewMode = false
+  , listView = false
 }: AdCardProps) {
   // Theme badge styling
   const getThemeBadgeStyles = (theme: string) => {
@@ -77,10 +79,82 @@ export default function AdCard({
   const cardClasses = `bg-white border border-[#E4E3E3] rounded-3xl p-4 flex flex-col shadow-sm transition-all duration-300 ${
     onCardClick ? "cursor-pointer hover:shadow-lg" : "hover:shadow-md"
   }`;
+  if (listView) {
+    const safeId = ad.id.replace(/[^a-zA-Z0-9]/g, "");
+    const percent = Math.min(100, (ad.spentBudget / ad.totalBudget) * 100);
+    return (
+      <article
+        tabIndex={onCardClick ? 0 : undefined}
+        onClick={() => onCardClick?.(ad.id)}
+        onKeyDown={(e) => {
+          if (!onCardClick) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onCardClick(ad.id);
+          }
+        }}
+        className={`w-full bg-white rounded-xl shadow-sm border border-[#F3F4F6] p-4 flex items-center gap-4 ${onCardClick ? 'cursor-pointer' : ''}`}
+      >
+        <div className="w-20 h-14 rounded-md overflow-hidden bg-[#E7ECEA] flex-shrink-0">
+          {ad.image ? (
+            <Image src={ad.image} alt={ad.title} width={160} height={120} className="object-cover w-full h-full" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-sm text-[#5D6D69]">No image</div>
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="text-xs text-[#667171] font-mono">ID: {ad.id}</div>
+              <h3 className="text-sm font-bold text-black line-clamp-1">{ad.title}</h3>
+            </div>
+            <div className="text-xs font-semibold text-[#0F3D2E]">₦{ad.price.toLocaleString()}</div>
+          </div>
+
+          <p className="text-xs text-[#667171] line-clamp-2">{ad.description}</p>
+        </div>
+
+        <div className="w-56 flex flex-col gap-2">
+          <div className="text-[10px] text-[#667171] font-semibold">BUDGET STATUS</div>
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-bold">₦{ad.spentBudget.toLocaleString()} / ₦{ad.totalBudget.toLocaleString()}</div>
+            <div className={`text-xs font-semibold ${ad.spentBudget <= 0 ? 'text-red-500' : 'text-[#0F3D2E]'}`}></div>
+          </div>
+          <div className="w-full bg-[#F3F4F6] rounded-full h-2 overflow-hidden">
+            <div className={`h-full rounded-full bg-[#10B981] progress-${safeId}`} />
+          </div>
+          <style jsx>{`
+            .progress-${safeId} { width: ${percent}% }
+          `}</style>
+        </div>
+
+        <div className="w-56 flex items-center justify-between">
+          <div className="text-xs text-[#667171] flex flex-col items-start">
+            <span className="flex items-center gap-2"><Eye size={14} /> {ad.views}</span>
+            <span className="flex items-center gap-2"><MousePointerClick size={14} /> {ad.clicks}</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {ad.status === 'ACTIVE' ? (
+              <button onClick={(e)=>{e.stopPropagation(); onToggleStatus?.(ad.id)}} className="px-3 py-2 rounded-xl border bg-white text-xs">Pause</button>
+            ) : (
+              <button onClick={(e)=>{e.stopPropagation(); onToggleStatus?.(ad.id)}} className="px-3 py-2 rounded-xl bg-[#10B981] text-white text-xs">Start</button>
+            )}
+
+            {ad.spentBudget <= 0 ? (
+              <button onClick={(e)=>{e.stopPropagation(); onFund?.(ad.id)}} className="px-3 py-2 rounded-xl bg-[#EF4444] text-white text-xs">Fund</button>
+            ) : (
+              <button onClick={(e)=>{e.stopPropagation(); onEdit?.(ad.id)}} className="px-3 py-2 rounded-xl border bg-white text-xs">Edit</button>
+            )}
+          </div>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article
-      role={onCardClick ? "button" : undefined}
       tabIndex={onCardClick ? 0 : undefined}
       onClick={() => onCardClick?.(ad.id)}
       onKeyDown={(e) => {
@@ -136,12 +210,12 @@ export default function AdCard({
             </span>
           </div>
           <div className="w-full bg-[#F3F4F6] rounded-full h-1.5 overflow-hidden">
-            <div 
-              className={`h-full rounded-full transition-all duration-500 ${
+            <div className={`h-full rounded-full transition-all duration-500 ${
                 isOutOfFuel ? "bg-[#EF4444]" : "bg-[#0F3D2E]"
-              }`}
-              style={{ width: `${fuelPercentage}%` }}
-            />
+              } fuel-${ad.id.replace(/[^a-zA-Z0-9]/g, "")}`} />
+            <style jsx>{`
+              .fuel-${ad.id.replace(/[^a-zA-Z0-9]/g, "")} { width: ${fuelPercentage}% }
+            `}</style>
           </div>
         </div>
 

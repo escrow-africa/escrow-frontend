@@ -26,7 +26,7 @@ export default function AdsGrid({
     return (
       <div className="flex flex-col gap-4">
         {ads.map((ad) => (
-          <div key={ad.id} className="w-full xl:max-w-none">
+            <div key={ad.id} className="w-full xl:max-w-none">
             <AdCard
               ad={ad}
               onCardClick={onCardClick}
@@ -34,6 +34,7 @@ export default function AdsGrid({
               onEdit={onEdit}
               onViewInsights={onViewInsights}
               onFund={onFund}
+              listView={viewMode === "list"}
             />
           </div>
         ))}
