@@ -245,6 +245,7 @@ export default function AdDetailsPage({ params }: AdDetailsPageProps) {
           </button>
           <button
             type="button"
+            onClick={() => router.push(`/dashboard/ads/${ad.id}/analytics`)}
             className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-[#0F3D2E] px-5 py-3 text-xs font-bold text-white shadow-sm hover:bg-[#185541] transition"
           >
             Full Analytics

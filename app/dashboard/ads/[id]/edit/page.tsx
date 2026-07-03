@@ -116,6 +116,18 @@ export default function EditAdPage({ params }: EditAdPageProps) {
     return Boolean(title.trim() && description.trim() && parsedPrice > 0 && hasImage);
   }, [title, description, parsedPrice, previewUrl, selectedPreset]);
 
+  // Date validation: if both dates provided, ensure start <= end
+  const areDatesValid = useMemo(() => {
+    if (!startDate || !endDate) return true;
+    try {
+      const s = new Date(startDate);
+      const e = new Date(endDate);
+      return s.getTime() <= e.getTime();
+    } catch {
+      return false;
+    }
+  }, [startDate, endDate]);
+
   // Daily budget circulation calculations
   const circulationStats = useMemo(() => {
     const minViews = Math.round(dailyBudget * 110);
@@ -341,6 +353,8 @@ export default function EditAdPage({ params }: EditAdPageProps) {
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
+                      aria-label="Upload cover image"
+                      title="Upload cover image"
                       className="hidden"
                       onChange={handleFileChange}
                     />
@@ -512,6 +526,9 @@ export default function EditAdPage({ params }: EditAdPageProps) {
                     />
                   </label>
                 </div>
+                {!areDatesValid && (
+                  <div className="text-sm text-red-500 mt-2">Start date must be before or equal to end date.</div>
+                )}
 
                 {/* Action buttons */}
                 <div className="flex gap-4 pt-6 border-t border-[#F3F4F6] mt-8">
@@ -525,7 +542,10 @@ export default function EditAdPage({ params }: EditAdPageProps) {
                   <button
                     type="button"
                     onClick={() => setCurrentStep(3)}
-                    className="flex-1 rounded-2xl bg-[#0F3D2E] py-3.5 text-sm font-bold text-white hover:bg-[#185541] transition"
+                    disabled={!areDatesValid}
+                    className={`flex-1 rounded-2xl py-3.5 text-sm font-bold text-white transition ${
+                      areDatesValid ? "bg-[#0F3D2E] hover:bg-[#185541]" : "bg-[#BCC7C3] cursor-not-allowed"
+                    }`}
                   >
                     Continue Campaign
                   </button>
@@ -545,6 +565,7 @@ export default function EditAdPage({ params }: EditAdPageProps) {
                     <div className="flex items-center gap-2 rounded-2xl border border-[#E4E3E3] bg-[#F7F8F9] p-1.5 h-[54px]">
                       <button
                         type="button"
+                        aria-label="Decrease daily budget"
                         onClick={() => adjustDailyBudget(-1.00)}
                         className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-[#E4E3E3] text-[#0F3D2E] hover:bg-[#FAFBFA]"
                       >
@@ -554,12 +575,14 @@ export default function EditAdPage({ params }: EditAdPageProps) {
                         type="number"
                         step="0.01"
                         min="1"
+                        aria-label="Daily budget"
                         value={dailyBudget}
                         onChange={(e) => setDailyBudget(Math.max(1, parseFloat(e.target.value) || 0))}
                         className="flex-1 text-center bg-transparent border-none text-sm text-[#0F3D2E] font-bold outline-none h-full"
                       />
                       <button
                         type="button"
+                        aria-label="Increase daily budget"
                         onClick={() => adjustDailyBudget(1.00)}
                         className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-[#E4E3E3] text-[#0F3D2E] hover:bg-[#FAFBFA]"
                       >
@@ -576,6 +599,7 @@ export default function EditAdPage({ params }: EditAdPageProps) {
                     <div className="flex items-center gap-2 rounded-2xl border border-[#E4E3E3] bg-[#F7F8F9] p-1.5 h-[54px]">
                       <button
                         type="button"
+                        aria-label="Decrease total budget"
                         onClick={() => adjustTotalBudget(-10.00)}
                         className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-[#E4E3E3] text-[#0F3D2E] hover:bg-[#FAFBFA]"
                       >
@@ -585,12 +609,14 @@ export default function EditAdPage({ params }: EditAdPageProps) {
                         type="number"
                         step="5.00"
                         min="10"
+                        aria-label="Total budget limit"
                         value={totalBudget}
                         onChange={(e) => setTotalBudget(Math.max(10, parseFloat(e.target.value) || 0))}
                         className="flex-1 text-center bg-transparent border-none text-sm text-[#0F3D2E] font-bold outline-none h-full"
                       />
                       <button
                         type="button"
+                        aria-label="Increase total budget"
                         onClick={() => adjustTotalBudget(10.00)}
                         className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-[#E4E3E3] text-[#0F3D2E] hover:bg-[#FAFBFA]"
                       >
@@ -703,9 +729,12 @@ export default function EditAdPage({ params }: EditAdPageProps) {
             <button
               type="button"
               onClick={handleUpdate}
-              className="w-full rounded-2xl bg-[#0F3D2E] py-4 text-sm font-bold text-white shadow-sm hover:bg-[#185541] transition-all hover:scale-[1.01]"
+              disabled={isSubmitting}
+              className={`w-full rounded-2xl py-4 text-sm font-bold text-white shadow-sm transition-all hover:scale-[1.01] ${
+                isSubmitting ? "bg-[#0F3D2E]/60 cursor-not-allowed" : "bg-[#0F3D2E] hover:bg-[#185541]"
+              }`}
             >
-              Save Changes
+              {isSubmitting ? "Saving changes..." : "Save Changes"}
             </button>
           </div>
         </div>
@@ -718,13 +747,13 @@ export default function EditAdPage({ params }: EditAdPageProps) {
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#E5F7F0] text-[#0F3D2E]">
               <Megaphone className="h-8 w-8 animate-bounce" />
             </div>
-            <h2 className="text-2xl font-semibold text-[#0F3D2E]">Updating Advertisement</h2>
+            <h2 className="text-2xl font-semibold text-[#0F3D2E]">Syncing Configurations…</h2>
             <p className="mt-3 text-sm text-[#667171]">
-              We&apos;re updating your advertisement parameters on the marketplace.
+              We&apos;re optimizing your adjustments across marketplaces.
             </p>
             <div className="mt-6 flex items-center justify-center gap-2 text-[#0F3D2E]">
               <Loader2 className="h-5 w-5 animate-spin" />
-              <span className="font-semibold text-xs">Working on it...</span>
+              <span className="font-semibold text-xs">Applying changes…</span>
             </div>
           </div>
         </div>
