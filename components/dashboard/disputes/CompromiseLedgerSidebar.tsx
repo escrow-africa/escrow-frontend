@@ -3,15 +3,24 @@ import { Sliders, CloudUpload, FileText, ChevronRight } from "lucide-react";
 
 interface CompromiseLedgerSidebarProps {
   hasActiveProposal?: boolean;
+  activeProposal?: {
+    type: "split" | "refund" | "release";
+    buyerAmount: number;
+    sellerAmount: number;
+    ratio: string;
+  } | null;
   onDraftOffer?: () => void;
   onSpeedUpDesk?: () => void;
 }
 
 export default function CompromiseLedgerSidebar({
   hasActiveProposal = false,
+  activeProposal = null,
   onDraftOffer,
   onSpeedUpDesk,
 }: CompromiseLedgerSidebarProps) {
+  const showProposal = activeProposal || hasActiveProposal;
+
   return (
     <div className="space-y-4">
       {/* Escrow Compromise Ledger */}
@@ -20,7 +29,7 @@ export default function CompromiseLedgerSidebar({
           Escrow Compromise Ledger
         </h3>
 
-        {!hasActiveProposal ? (
+        {!showProposal ? (
           <div className="text-center py-6 flex flex-col items-center">
             <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-3">
               <Sliders size={18} className="text-gray-400 rotate-90" />
@@ -37,15 +46,28 @@ export default function CompromiseLedgerSidebar({
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
-              <p className="text-[10px] font-bold text-blue-900 mb-1 tracking-wider uppercase">
-                PROPOSAL AMOUNT
-              </p>
-              <p className="text-lg font-bold text-blue-900">₦79,000</p>
+            <div className="flex justify-between items-center bg-gray-50/50 border border-gray-100 rounded-xl p-3 shadow-[0_1px_2px_rgba(0,0,0,0.01)]">
+              <span className="px-2 py-0.5 bg-[#FFF0F0] text-[#E53E3E] text-[10px] font-bold rounded uppercase tracking-wider">
+                OFFER: {activeProposal?.type || "SPLIT"}
+              </span>
+              <span className="px-2 py-0.5 bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] text-[10px] font-bold rounded uppercase tracking-wider">
+                ACCEPTED
+              </span>
             </div>
-            <button className="w-full px-4 py-2 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 rounded-xl font-bold text-xs shadow-sm transition-colors">
-              View Details
-            </button>
+            <div className="space-y-2 border border-gray-50 rounded-2xl p-3 bg-gray-50/20">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500 font-medium">Refund Madeleine</span>
+                <span className="text-xs font-bold text-[#E53E3E]">
+                  ₦{(activeProposal?.buyerAmount ?? 39500).toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between items-center border-t border-gray-50 pt-2 mt-2">
+                <span className="text-xs text-gray-500 font-medium">Release Louis</span>
+                <span className="text-xs font-bold text-green-600">
+                  ₦{(activeProposal?.sellerAmount ?? 39500).toLocaleString()}
+                </span>
+              </div>
+            </div>
           </div>
         )}
       </div>

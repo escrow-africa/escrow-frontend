@@ -98,6 +98,7 @@ export function useDisputeChat(disputeId: string) {
 
   return {
     messages,
+    setMessages,
     sendMessage,
     isLoading,
     isConnected,

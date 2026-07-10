@@ -16,11 +16,13 @@ export interface EvidenceItemData {
 interface EvidenceChatProps {
   evidenceItems: EvidenceItemData[];
   onSendMessage?: (message: string) => void;
+  onProposeSettlement?: () => void;
 }
 
 export default function EvidenceChat({
   evidenceItems,
   onSendMessage,
+  onProposeSettlement,
 }: EvidenceChatProps) {
   const [messageInput, setMessageInput] = useState("");
 
@@ -46,7 +48,10 @@ export default function EvidenceChat({
             Decentralized logs are signed, immutable, and broker-accessible.
           </p>
         </div>
-        <button className="px-4 py-2 bg-[#0F3D2E] hover:bg-[#185541] text-white rounded-xl font-bold text-xs transition-colors flex items-center gap-2 shadow-sm">
+        <button 
+          onClick={onProposeSettlement}
+          className="px-4 py-2 bg-[#0F3D2E] hover:bg-[#185541] text-white rounded-xl font-bold text-xs transition-colors flex items-center gap-2 shadow-sm"
+        >
           <Sliders size={14} className="text-white" />
           <span>Propose Settlement</span>
         </button>
@@ -56,7 +61,10 @@ export default function EvidenceChat({
       <div className="flex-1 overflow-y-auto space-y-5 mb-4 pr-1 scrollbar-thin">
         {evidenceItems.map((item) => {
           const isUser = item.isUserMessage;
-          const avatarBg = isUser ? "bg-[#0F3D2E] text-white" : "bg-[#FFF0F0] text-[#E53E3E] border border-[#FFE3E3]";
+          let avatarBg = isUser ? "bg-[#0F3D2E] text-white" : "bg-[#FFF0F0] text-[#E53E3E] border border-[#FFE3E3]";
+          if (item.sender === "EscrowAfrica Ledger") {
+            avatarBg = "bg-[#F3E8FF] text-[#7E22CE] border border-[#E5E7EB]";
+          }
 
           return (
             <div

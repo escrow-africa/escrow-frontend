@@ -1,10 +1,12 @@
 "use client";
 
-import React, { use } from "react";
+import React, { useState, use } from "react";
 import { useRouter } from "next/navigation";
+import { AlertCircle, X } from "lucide-react";
 import DisputeTimeline from "../../../../components/dashboard/disputes/DisputeTimeline";
 import EvidenceChat from "../../../../components/dashboard/disputes/EvidenceChat";
 import CompromiseLedgerSidebar from "../../../../components/dashboard/disputes/CompromiseLedgerSidebar";
+import CompromiseOfferModal from "../../../../components/dashboard/disputes/CompromiseOfferModal";
 import { useDisputeChat } from "../../../../hooks/useDisputeChat";
 import { Dispute } from "../../../../types/disputes";
 
@@ -60,12 +62,92 @@ export default function DisputeDetailsPage({
   const { id } = use(params);
 
   // Initialize the real-time chat mock hook
-  const { messages, sendMessage } = useDisputeChat(id);
+  const { messages, setMessages, sendMessage } = useDisputeChat(id);
 
   const dispute = mockDisputeData[id] || mockDisputeData["DSP-001"];
 
+  // Compromise offer flow states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeProposal, setActiveProposal] = useState<{
+    type: "split" | "refund" | "release";
+    buyerAmount: number;
+    sellerAmount: number;
+    ratio: string;
+  } | null>(null);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationText, setNotificationText] = useState("");
+
+  const handleSendProposal = (proposal: {
+    type: "split" | "refund" | "release";
+    buyerAmount: number;
+    sellerAmount: number;
+    ratio: string;
+  }) => {
+    // 1. Close modal
+    setIsModalOpen(false);
+
+    // 2. Set active proposal for sidebar ledger display
+    setActiveProposal(proposal);
+
+    // 3. Set notification toast details
+    let text = "";
+    if (proposal.type === "split") {
+      text = `Proposal registered: Split ₦${proposal.buyerAmount.toLocaleString()} to Madeleine / ₦${proposal.sellerAmount.toLocaleString()} to Louis`;
+    } else if (proposal.type === "refund") {
+      text = `Proposal registered: Refund ₦${proposal.buyerAmount.toLocaleString()} to Madeleine / ₦${proposal.sellerAmount.toLocaleString()} to Louis`;
+    } else if (proposal.type === "release") {
+      text = `Proposal registered: Release ₦${proposal.sellerAmount.toLocaleString()} to Louis`;
+    }
+    setNotificationText(text);
+    setShowNotification(true);
+
+    // 4. Append simulated automated system arbitrator messages to chat history
+    const systemMsg1 = {
+      id: `EV-SYS-1-${Date.now()}`,
+      type: "message" as const,
+      sender: "EscrowAfrica Ledger",
+      senderInitial: "L",
+      timestamp: "2026-06-25 • 06:00",
+      content: "Greetings counterparties. I am EscrowAfrica's Escrow's automated arbitrator. The ₦79,000.00 collateral balance for BUY-804 has been suspended. Seller has been notified to present evidence rebuttals.",
+      isUserMessage: false,
+    };
+
+    const systemMsg2 = {
+      id: `EV-SYS-2-${Date.now()}`,
+      type: "message" as const,
+      sender: "EscrowAfrica Ledger",
+      senderInitial: "L",
+      timestamp: "2026-06-25 • 06:00",
+      content: `Agreement executed. ₦${proposal.buyerAmount.toLocaleString()} refunded to Buyer wallet. ₦${proposal.sellerAmount.toLocaleString()} released to Seller. Escrow contract closed.`,
+      isUserMessage: false,
+    };
+
+    setMessages((prev) => [...prev, systemMsg1, systemMsg2]);
+  };
+
   return (
-    <div className="space-y-6 pb-12">
+    <div className="relative space-y-6 pb-12">
+      {/* Dark Dispute Security Toast Notification */}
+      {showNotification && (
+        <div className="fixed top-4 right-4 z-50 w-80 bg-[#090D16] text-white border border-gray-800 rounded-xl p-4 shadow-2xl flex items-start gap-3 transition-all duration-300 animate-in fade-in slide-in-from-top-4">
+          <AlertCircle size={16} className="text-gray-400 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+              DISPUTE SECURITY
+            </h4>
+            <p className="text-[11px] text-gray-300 font-medium leading-normal">
+              {notificationText}
+            </p>
+          </div>
+          <button 
+            onClick={() => setShowNotification(false)}
+            className="text-gray-500 hover:text-white transition-colors p-0.5"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {/* Header Back Button */}
       <div>
         <button
@@ -134,18 +216,26 @@ export default function DisputeDetailsPage({
           <EvidenceChat
             evidenceItems={messages}
             onSendMessage={sendMessage}
+            onProposeSettlement={() => setIsModalOpen(true)}
           />
         </div>
 
         {/* Right Sidebar */}
         <div className="lg:sticky lg:top-4">
           <CompromiseLedgerSidebar
-            onDraftOffer={() => console.log("Draft offer clicked")}
+            onDraftOffer={() => setIsModalOpen(true)}
             onSpeedUpDesk={() => console.log("Speed up broker desk clicked")}
-            hasActiveProposal={false}
+            activeProposal={activeProposal}
           />
         </div>
       </div>
+
+      {/* Compromise Offer Modal */}
+      <CompromiseOfferModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSendProposal={handleSendProposal}
+      />
     </div>
   );
 }
