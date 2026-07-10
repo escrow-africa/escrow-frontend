@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import DisputeCard from "./DisputeCard";
 import { DisputeCard as DisputeCardType } from "../../../types/disputes";
 
@@ -35,7 +35,7 @@ export default function DisputesList({
       {/* Header with Button */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-[#0F3D2E]">
             Security Mediation & Disputes
           </h2>
           <p className="text-sm text-gray-500 mt-1">
@@ -44,28 +44,31 @@ export default function DisputesList({
         </div>
         <Link
           href="/dashboard/disputes/create"
-          className="px-6 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+          className="px-5 py-2.5 bg-[#E53E3E] hover:bg-red-700 text-white rounded-xl font-bold text-sm transition-colors flex items-center gap-2 shadow-sm"
         >
+          <AlertCircle size={16} className="fill-white text-[#E53E3E]" />
           <span>Raise Dispute</span>
         </Link>
       </div>
 
       {/* Info Box - Security Mediation */}
-      <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex gap-3">
-        <div className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center font-bold flex-shrink-0 text-sm">
-          G
+      <div className="bg-[#FFF5F5] border border-[#FFE3E3] rounded-2xl p-5 flex items-center justify-between gap-4">
+        <div className="flex gap-4">
+          <div className="w-10 h-10 rounded-full bg-[#E53E3E] text-white flex items-center justify-center flex-shrink-0">
+            <AlertCircle size={20} className="text-white fill-[#E53E3E]" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-[#C53030] mb-1">
+              Secure Escrow Conflict Resolution
+            </h3>
+            <p className="text-xs text-[#9B4040] leading-relaxed max-w-3xl">
+              Under the EscrowAfrica Broker guidelines, disputing locking subsists automatic release countdowns. Both parties have 7 days to agree on a compromise split, or a certified arbitrator will make a definitive binding ruling.
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-sm font-bold text-red-900 mb-1">
-            Secure Escrow Conflict Resolution
-          </h3>
-          <p className="text-xs text-red-800 mb-2">
-            Under the EscrowAfrica Broker guidelines, disputing locking subsists automatic release countdowns. Both parties have 7 days to agree on a compromise split, or a certified arbitrator will make a definitive call.
-          </p>
-          <button className="text-xs font-bold text-red-600 hover:text-red-700 underline">
-            REVIEW RULEBOOK
-          </button>
-        </div>
+        <button className="px-4 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 text-xs font-bold rounded-lg shadow-sm tracking-wider shrink-0 transition-colors">
+          REVIEW RULEBOOK
+        </button>
       </div>
 
       {/* Disputes Grid */}
@@ -94,16 +97,17 @@ export default function DisputesList({
       {/* Pagination */}
       {disputes.length > 0 && (
         <div className="flex justify-between items-center py-4">
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-gray-500 font-medium">
             Showing Page {currentPage} of {totalPages} ({disputes.length} items total)
           </p>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <button
               onClick={handlePrevious}
               disabled={currentPage === 1}
-              className="px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium text-gray-600 flex items-center gap-1"
             >
-              <ChevronLeft size={18} className="text-gray-600" />
+              <ChevronLeft size={14} />
+              <span>Prev</span>
             </button>
 
             {/* Page Numbers */}
@@ -112,7 +116,7 @@ export default function DisputesList({
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`w-8 h-8 rounded-lg font-medium transition-colors ${
+                  className={`w-7 h-7 rounded-lg font-bold text-xs transition-colors ${
                     page === currentPage
                       ? "bg-[#0F3D2E] text-white"
                       : "border border-gray-200 text-gray-600 hover:bg-gray-50"
@@ -126,9 +130,10 @@ export default function DisputesList({
             <button
               onClick={handleNext}
               disabled={currentPage === totalPages}
-              className="px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium text-gray-600 flex items-center gap-1"
             >
-              <ChevronRight size={18} className="text-gray-600" />
+              <span>Next</span>
+              <ChevronRight size={14} />
             </button>
           </div>
         </div>

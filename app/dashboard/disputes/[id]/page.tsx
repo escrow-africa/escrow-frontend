@@ -1,84 +1,54 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { use } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, FileText, MessageSquare, Lock } from "lucide-react";
 import DisputeTimeline from "../../../../components/dashboard/disputes/DisputeTimeline";
-import EvidenceChat, {
-  EvidenceItemData,
-} from "../../../../components/dashboard/disputes/EvidenceChat";
+import EvidenceChat from "../../../../components/dashboard/disputes/EvidenceChat";
 import CompromiseLedgerSidebar from "../../../../components/dashboard/disputes/CompromiseLedgerSidebar";
+import { useDisputeChat } from "../../../../hooks/useDisputeChat";
 import { Dispute } from "../../../../types/disputes";
 
-// Mock dispute data
+// Mock dispute data matching details screenshot (Screen 3)
 const mockDisputeData: Record<string, Dispute> = {
   "DSP-001": {
     id: "DSP-001",
     issueId: "DIS-593",
-    orderRef: "BUY-883",
+    orderRef: "BUY-723",
     date: "2026-06-21",
     title: "Buggy Deliverables",
     description: "Figma grids are broken when imported into production tailwind components.",
     amount: "₦79,000",
     status: "INVESTIGATION_ACTIVE",
-    claimStatement:
-      "Figma grids are broken when imported into production tailwind components.",
+    claimStatement: "Figma grids are broken when imported into production tailwind components.",
     breachCategory: "Quality Issue",
     relatedContract: "BUY-723",
     timelineStage: "MEDIATION_ACTIVE",
     currentStageNumber: 3,
     totalStages: 4,
   },
+  "DSP-002": {
+    id: "DSP-002",
+    issueId: "DIS-594",
+    orderRef: "BUY-711",
+    date: "2026-06-21",
+    title: "Out of Scope",
+    description: "Figma grids are broken when imported into production tailwind components.",
+    amount: "₦102,000",
+    status: "INVESTIGATION_ACTIVE",
+    claimStatement: "Figma grids are broken when imported into production tailwind components.",
+    breachCategory: "Out of Scope Demands / Contract Violation",
+    relatedContract: "BUY-711",
+    timelineStage: "MEDIATION_ACTIVE",
+    currentStageNumber: 3,
+    totalStages: 4,
+  },
 };
 
-const MOCK_EVIDENCE: EvidenceItemData[] = [
-  {
-    id: "EV-001",
-    type: "message",
-    sender: "Louis Client",
-    senderInitial: "L",
-    timestamp: "2026-06-21 • 08:18",
-    content:
-      "Louis Client uploaded verified evidence package. Flaws-ui.png",
-    isUserMessage: false,
-  },
-  {
-    id: "EV-002",
-    type: "file",
-    sender: "Louis Client",
-    senderInitial: "L",
-    timestamp: "2026-06-21 • 08:18",
-    fileName: "Flaws-ui.png",
-    fileStatus: "ANCHORED",
-    isUserMessage: false,
-  },
-  {
-    id: "EV-003",
-    type: "message",
-    sender: "Louis Client",
-    senderInitial: "L",
-    timestamp: "2026-06-21 • 08:18",
-    content:
-      "The evidences as regards to this project has been dropped.",
-    isUserMessage: false,
-  },
-  {
-    id: "EV-004",
-    type: "message",
-    sender: "Madeleine Nkiru",
-    senderInitial: "M",
-    timestamp: "2026-06-21 • 08:30",
-    content:
-      "I have received your comment. Please let me know what exact changes",
-    isUserMessage: true,
-  },
-];
-
 const TIMELINE_STAGES = [
-  { title: "COMPLAINT RAISED", status: "completed" as const },
-  { title: "EVIDENCE LOADED", status: "completed" as const },
+  { title: "CONFLICT RAISED", status: "completed" as const },
+  { title: "EVIDENCE LOCKED", status: "completed" as const },
   { title: "MEDIATION ACTIVE", status: "current" as const },
-  { title: "SETTLEMENT SETTLED", status: "upcoming" as const },
+  { title: "AGREEMENT SETTLED", status: "upcoming" as const },
 ];
 
 export default function DisputeDetailsPage({
@@ -88,132 +58,91 @@ export default function DisputeDetailsPage({
 }) {
   const router = useRouter();
   const { id } = use(params);
-  const [activeTab, setActiveTab] = useState<"details" | "investigation">(
-    "details"
-  );
-  const [evidenceItems, setEvidenceItems] = useState<EvidenceItemData[]>(
-    MOCK_EVIDENCE
-  );
+
+  // Initialize the real-time chat mock hook
+  const { messages, sendMessage } = useDisputeChat(id);
 
   const dispute = mockDisputeData[id] || mockDisputeData["DSP-001"];
 
-  const handleSendMessage = (message: string) => {
-    const newMessage: EvidenceItemData = {
-      id: `EV-${evidenceItems.length + 1}`,
-      type: "message",
-      sender: "You",
-      senderInitial: "Y",
-      timestamp: new Date().toLocaleString(),
-      content: message,
-      isUserMessage: true,
-    };
-    setEvidenceItems([...evidenceItems, newMessage]);
-  };
-
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+    <div className="space-y-6 pb-12">
+      {/* Header Back Button */}
+      <div>
         <button
-          onClick={() => router.back()}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          onClick={() => router.push("/dashboard/disputes")}
+          className="text-gray-500 hover:text-gray-700 font-bold text-xs flex items-center gap-1 transition-colors"
         >
-          <ChevronLeft size={24} className="text-gray-700" />
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900">Disputes</h1>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-4 border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab("details")}
-          className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
-            activeTab === "details"
-              ? "text-[#0F3D2E] border-[#0F3D2E]"
-              : "text-gray-500 border-transparent hover:text-gray-700"
-          }`}
-        >
-          ACTIVE CASE DETAILS
-        </button>
-        <button
-          onClick={() => setActiveTab("investigation")}
-          className={`px-4 py-3 font-medium text-sm border-b-2 transition-colors ${
-            activeTab === "investigation"
-              ? "text-[#0F3D2E] border-[#0F3D2E]"
-              : "text-gray-500 border-transparent hover:text-gray-700"
-          }`}
-        >
-          INVESTIGATION ACTIVE
+          <span>←</span> Back to Disputes
         </button>
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-8">
-          {activeTab === "details" ? (
-            <>
-              {/* Case Header */}
-              <div className="bg-white rounded-2xl border border-gray-100 p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <span className="inline-block px-2 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-md mb-2">
-                      ACTIVE CASE DETAILS
-                    </span>
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      {dispute.title}
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Ledger ID: ARB-562 | Order: {dispute.orderRef}
-                    </p>
-                  </div>
-                  <p className="text-3xl font-bold text-red-500">
-                    {dispute.amount}
-                  </p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Left Column (Main Details & Chat) */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          {/* Case Header Details Card */}
+          <div className="bg-white rounded-2xl border border-gray-100 border-t-4 border-t-[#0F3D2E] p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
+            <div className="flex justify-between items-start gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-block px-2 py-0.5 bg-[#FFF0F0] text-[#E53E3E] text-[10px] font-bold rounded uppercase tracking-wider">
+                    ACTIVE CASE DETAIL
+                  </span>
+                  <span className="inline-block px-2 py-0.5 bg-[#FFFBEB] border border-[#FEF3C7] text-[#D97706] text-[10px] font-bold rounded uppercase tracking-wider">
+                    INVESTIGATION ACTIVE
+                  </span>
                 </div>
-
-                {/* Claim Statement */}
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                  <p className="text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
-                    Claim Statement
-                  </p>
-                  <p className="text-sm text-gray-700">
-                    "{dispute.claimStatement}"
-                  </p>
-                </div>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+                  {dispute.title}
+                </h2>
+                <p className="text-xs text-gray-400 mt-2 font-medium">
+                  Ledger ID: ARB-592 • Order: {dispute.orderRef}
+                </p>
               </div>
 
-              {/* Timeline */}
-              <DisputeTimeline
-                stages={TIMELINE_STAGES}
-                currentStage={dispute.currentStageNumber}
-                totalStages={dispute.totalStages}
-              />
+              {/* Contested Amount Card */}
+              <div className="bg-[#FFF5F5] border border-[#FFE3E3] rounded-xl px-4 py-2.5 text-center min-w-[130px] shrink-0">
+                <p className="text-[9px] font-bold text-[#C53030] tracking-wider mb-1 uppercase">
+                  CONTESTED AMOUNT
+                </p>
+                <p className="text-lg font-bold text-[#E53E3E]">
+                  {dispute.amount}
+                </p>
+              </div>
+            </div>
 
-              {/* Evidence Chat */}
-              <EvidenceChat
-                evidenceItems={evidenceItems}
-                onSendMessage={handleSendMessage}
-              />
-            </>
-          ) : (
-            /* Investigation Tab */
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                Investigation Progress
-              </h2>
-              <p className="text-sm text-gray-600">
-                Investigation details and timeline will appear here as the dispute progresses.
+            {/* Claim Statement */}
+            <div className="mt-6 p-4 bg-[#FAFBFA] border border-gray-100 rounded-xl">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                CLAIM STATEMENT
+              </p>
+              <p className="text-xs text-gray-700 leading-relaxed font-medium">
+                "{dispute.claimStatement}"
               </p>
             </div>
-          )}
+          </div>
+
+          {/* Timeline progress */}
+          <DisputeTimeline
+            stages={TIMELINE_STAGES}
+            currentStage={dispute.currentStageNumber}
+            totalStages={dispute.totalStages}
+          />
+
+          {/* Dynamic Evidence Chat */}
+          <EvidenceChat
+            evidenceItems={messages}
+            onSendMessage={sendMessage}
+          />
         </div>
 
         {/* Right Sidebar */}
-        <div>
+        <div className="lg:sticky lg:top-4">
           <CompromiseLedgerSidebar
-            onDraftOffer={() => console.log("Draft offer")}
-            onSpeedUpDesk={() => console.log("Speed up desk")}
+            onDraftOffer={() => console.log("Draft offer clicked")}
+            onSpeedUpDesk={() => console.log("Speed up broker desk clicked")}
+            hasActiveProposal={false}
           />
         </div>
       </div>
