@@ -96,6 +96,8 @@ export default function EvidenceChat({
                     className={`px-4 py-3 rounded-2xl text-xs leading-relaxed shadow-[0_1px_3px_rgba(0,0,0,0.01)] ${
                       isUser
                         ? "bg-[#0F3D2E] text-white rounded-tr-none"
+                        : item.sender === "EscrowAfrica Ledger"
+                        ? "bg-[#FAF5FF] text-[#6B21A8] border border-[#F3E8FF] rounded-tl-none"
                         : "bg-[#F3F4F6] text-gray-800 rounded-tl-none border border-gray-50"
                     }`}
                   >

@@ -46,12 +46,7 @@ const mockDisputeData: Record<string, Dispute> = {
   },
 };
 
-const TIMELINE_STAGES = [
-  { title: "CONFLICT RAISED", status: "completed" as const },
-  { title: "EVIDENCE LOCKED", status: "completed" as const },
-  { title: "MEDIATION ACTIVE", status: "current" as const },
-  { title: "AGREEMENT SETTLED", status: "upcoming" as const },
-];
+type DemoState = "INITIAL" | "RELEASE_PROPOSED" | "RELEASE_PENDING" | "REFUND_ACCEPTED";
 
 export default function DisputeDetailsPage({
   params,
@@ -66,16 +61,154 @@ export default function DisputeDetailsPage({
 
   const dispute = mockDisputeData[id] || mockDisputeData["DSP-001"];
 
+  // State management for interactive demo mockup screens
+  const [demoState, setDemoState] = useState<DemoState>("INITIAL");
+
   // Compromise offer flow states
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeProposal, setActiveProposal] = useState<{
-    type: "split" | "refund" | "release";
-    buyerAmount: number;
-    sellerAmount: number;
-    ratio: string;
-  } | null>(null);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationText, setNotificationText] = useState("");
+
+  // Handle auto-transitions for the Release Proposal flow
+  React.useEffect(() => {
+    if (demoState === "RELEASE_PROPOSED") {
+      setNotificationText("Proposal registered: Release ₦79,000 to Louis / ₦0 to Madeleine");
+      setShowNotification(true);
+
+      const timer = setTimeout(() => {
+        setDemoState("RELEASE_PENDING");
+        setShowNotification(false);
+      }, 3500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [demoState]);
+
+  // Dynamic timeline stages based on current state
+  const timelineStages = [
+    { title: "CONFLICT RAISED", status: "completed" as const },
+    { title: "EVIDENCE LOCKED", status: "completed" as const },
+    { 
+      title: "MEDIATION ACTIVE", 
+      status: (demoState === "RELEASE_PENDING" || demoState === "REFUND_ACCEPTED") ? "completed" as const : "current" as const 
+    },
+    { 
+      title: "AGREEMENT SETTLED", 
+      status: demoState === "REFUND_ACCEPTED" 
+        ? "completed" as const 
+        : demoState === "RELEASE_PENDING" 
+        ? "current" as const 
+        : "upcoming" as const 
+    },
+  ];
+
+  // Dynamic ledger proposals array matching mockups
+  const getProposals = () => {
+    switch (demoState) {
+      case "INITIAL":
+        return [];
+      case "RELEASE_PROPOSED":
+        return [
+          {
+            id: "prop-split",
+            type: "split" as const,
+            status: "ACCEPTED" as const,
+            buyerAmount: 39500,
+            sellerAmount: 39500,
+            ratio: "50% / 50%",
+          }
+        ];
+      case "RELEASE_PENDING":
+        return [
+          {
+            id: "prop-split",
+            type: "split" as const,
+            status: "ACCEPTED" as const,
+            buyerAmount: 39500,
+            sellerAmount: 39500,
+            ratio: "50% / 50%",
+          },
+          {
+            id: "prop-release",
+            type: "release" as const,
+            status: "PENDING" as const,
+            buyerAmount: 0,
+            sellerAmount: 79000,
+            ratio: "0% / 100%",
+          }
+        ];
+      case "REFUND_ACCEPTED":
+        return [
+          {
+            id: "prop-split",
+            type: "split" as const,
+            status: "ACCEPTED" as const,
+            buyerAmount: 39500,
+            sellerAmount: 39500,
+            ratio: "50% / 50%",
+          },
+          {
+            id: "prop-refund",
+            type: "refund" as const,
+            status: "ACCEPTED" as const,
+            buyerAmount: 79000,
+            sellerAmount: 0,
+            ratio: "100% / 0%",
+          }
+        ];
+    }
+  };
+
+  // Combine typed chat messages with state-specific messages
+  const getCombinedMessages = () => {
+    const base = [...messages];
+    if (demoState === "RELEASE_PENDING") {
+      return [
+        ...base,
+        {
+          id: "EV-SYS-RELEASE-PEND-1",
+          type: "message" as const,
+          sender: "EscrowAfrica Ledger",
+          senderInitial: "L",
+          timestamp: "2026-06-25 • 06:00",
+          content: "Agreement executed. ₦79,000 refunded to Buyer wallet. N0 released to Seller. Escrow contract closed.",
+          isUserMessage: false,
+        },
+        {
+          id: "EV-REBUTTAL-1",
+          type: "message" as const,
+          sender: "Louis Client",
+          senderInitial: "L",
+          timestamp: "2026-06-21 • 05:18",
+          content: "I cannot agree to a full release. The app is completely non-functional. Let's do a 50/50 split so we both cut our losses.",
+          isUserMessage: false,
+        }
+      ];
+    } else if (demoState === "REFUND_ACCEPTED") {
+      return [
+        ...base,
+        {
+          id: "EV-SYS-REFUND-ACC-1",
+          type: "message" as const,
+          sender: "EscrowAfrica Ledger",
+          senderInitial: "L",
+          timestamp: "2026-06-25 • 06:00",
+          content: "Agreement executed. ₦39,500 refunded to Buyer wallet. ₦39,500 released to Seller. Escrow contract closed.",
+          isUserMessage: false,
+        },
+        {
+          id: "EV-SYS-REFUND-ACC-2",
+          type: "message" as const,
+          sender: "EscrowAfrica Ledger",
+          senderInitial: "L",
+          timestamp: "2026-06-25 • 06:00",
+          content: "Agreement executed. ₦79,000 refunded to Buyer wallet. N0 released to Seller. Escrow contract closed.",
+          isUserMessage: false,
+        }
+      ];
+    }
+    return base;
+  };
 
   const handleSendProposal = (proposal: {
     type: "split" | "refund" | "release";
@@ -83,46 +216,25 @@ export default function DisputeDetailsPage({
     sellerAmount: number;
     ratio: string;
   }) => {
-    // 1. Close modal
     setIsModalOpen(false);
 
-    // 2. Set active proposal for sidebar ledger display
-    setActiveProposal(proposal);
-
-    // 3. Set notification toast details
-    let text = "";
-    if (proposal.type === "split") {
-      text = `Proposal registered: Split ₦${proposal.buyerAmount.toLocaleString()} to Madeleine / ₦${proposal.sellerAmount.toLocaleString()} to Louis`;
+    if (proposal.type === "release") {
+      setDemoState("RELEASE_PROPOSED");
     } else if (proposal.type === "refund") {
-      text = `Proposal registered: Refund ₦${proposal.buyerAmount.toLocaleString()} to Madeleine / ₦${proposal.sellerAmount.toLocaleString()} to Louis`;
-    } else if (proposal.type === "release") {
-      text = `Proposal registered: Release ₦${proposal.sellerAmount.toLocaleString()} to Louis`;
+      setDemoState("REFUND_ACCEPTED");
+      setNotificationText(`Proposal registered: Refund ₦${proposal.buyerAmount.toLocaleString()} to Madeleine / ₦${proposal.sellerAmount.toLocaleString()} to Louis`);
+      setShowNotification(true);
+      setTimeout(() => {
+        setShowNotification(false);
+      }, 4000);
+    } else {
+      // Split
+      setNotificationText(`Proposal registered: Split ₦${proposal.buyerAmount.toLocaleString()} to Madeleine / ₦${proposal.sellerAmount.toLocaleString()} to Louis`);
+      setShowNotification(true);
+      setTimeout(() => {
+        setShowNotification(false);
+      }, 4000);
     }
-    setNotificationText(text);
-    setShowNotification(true);
-
-    // 4. Append simulated automated system arbitrator messages to chat history
-    const systemMsg1 = {
-      id: `EV-SYS-1-${Date.now()}`,
-      type: "message" as const,
-      sender: "EscrowAfrica Ledger",
-      senderInitial: "L",
-      timestamp: "2026-06-25 • 06:00",
-      content: "Greetings counterparties. I am EscrowAfrica's Escrow's automated arbitrator. The ₦79,000.00 collateral balance for BUY-804 has been suspended. Seller has been notified to present evidence rebuttals.",
-      isUserMessage: false,
-    };
-
-    const systemMsg2 = {
-      id: `EV-SYS-2-${Date.now()}`,
-      type: "message" as const,
-      sender: "EscrowAfrica Ledger",
-      senderInitial: "L",
-      timestamp: "2026-06-25 • 06:00",
-      content: `Agreement executed. ₦${proposal.buyerAmount.toLocaleString()} refunded to Buyer wallet. ₦${proposal.sellerAmount.toLocaleString()} released to Seller. Escrow contract closed.`,
-      isUserMessage: false,
-    };
-
-    setMessages((prev) => [...prev, systemMsg1, systemMsg2]);
   };
 
   return (
@@ -207,14 +319,14 @@ export default function DisputeDetailsPage({
 
           {/* Timeline progress */}
           <DisputeTimeline
-            stages={TIMELINE_STAGES}
-            currentStage={dispute.currentStageNumber}
-            totalStages={dispute.totalStages}
+            stages={timelineStages}
+            currentStage={demoState === "RELEASE_PENDING" || demoState === "REFUND_ACCEPTED" ? 4 : 3}
+            totalStages={4}
           />
 
           {/* Dynamic Evidence Chat */}
           <EvidenceChat
-            evidenceItems={messages}
+            evidenceItems={getCombinedMessages()}
             onSendMessage={sendMessage}
             onProposeSettlement={() => setIsModalOpen(true)}
           />
@@ -225,7 +337,7 @@ export default function DisputeDetailsPage({
           <CompromiseLedgerSidebar
             onDraftOffer={() => setIsModalOpen(true)}
             onSpeedUpDesk={() => console.log("Speed up broker desk clicked")}
-            activeProposal={activeProposal}
+            proposals={getProposals()}
           />
         </div>
       </div>

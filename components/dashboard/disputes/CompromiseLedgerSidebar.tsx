@@ -1,6 +1,15 @@
 import React from "react";
 import { Sliders, CloudUpload, FileText, ChevronRight } from "lucide-react";
 
+export interface ProposalItem {
+  id: string;
+  type: "split" | "refund" | "release";
+  status: "ACCEPTED" | "PENDING" | "REJECTED";
+  buyerAmount: number;
+  sellerAmount: number;
+  ratio: string;
+}
+
 interface CompromiseLedgerSidebarProps {
   hasActiveProposal?: boolean;
   activeProposal?: {
@@ -9,6 +18,7 @@ interface CompromiseLedgerSidebarProps {
     sellerAmount: number;
     ratio: string;
   } | null;
+  proposals?: ProposalItem[];
   onDraftOffer?: () => void;
   onSpeedUpDesk?: () => void;
 }
@@ -16,10 +26,24 @@ interface CompromiseLedgerSidebarProps {
 export default function CompromiseLedgerSidebar({
   hasActiveProposal = false,
   activeProposal = null,
+  proposals = [],
   onDraftOffer,
   onSpeedUpDesk,
 }: CompromiseLedgerSidebarProps) {
-  const showProposal = activeProposal || hasActiveProposal;
+  // If proposals list is empty, but we have activeProposal from parent, format it into list
+  let displayProposals: ProposalItem[] = [...proposals];
+  if (displayProposals.length === 0 && (activeProposal || hasActiveProposal)) {
+    displayProposals.push({
+      id: "active-prop",
+      type: activeProposal?.type || "split",
+      status: "ACCEPTED",
+      buyerAmount: activeProposal?.buyerAmount ?? 39500,
+      sellerAmount: activeProposal?.sellerAmount ?? 39500,
+      ratio: activeProposal?.ratio || "50% / 50%",
+    });
+  }
+
+  const showEmptyState = displayProposals.length === 0;
 
   return (
     <div className="space-y-4">
@@ -29,7 +53,7 @@ export default function CompromiseLedgerSidebar({
           Escrow Compromise Ledger
         </h3>
 
-        {!showProposal ? (
+        {showEmptyState ? (
           <div className="text-center py-6 flex flex-col items-center">
             <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-3">
               <Sliders size={18} className="text-gray-400 rotate-90" />
@@ -45,29 +69,58 @@ export default function CompromiseLedgerSidebar({
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="flex justify-between items-center bg-gray-50/50 border border-gray-100 rounded-xl p-3 shadow-[0_1px_2px_rgba(0,0,0,0.01)]">
-              <span className="px-2 py-0.5 bg-[#FFF0F0] text-[#E53E3E] text-[10px] font-bold rounded uppercase tracking-wider">
-                OFFER: {activeProposal?.type || "SPLIT"}
-              </span>
-              <span className="px-2 py-0.5 bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] text-[10px] font-bold rounded uppercase tracking-wider">
-                ACCEPTED
-              </span>
-            </div>
-            <div className="space-y-2 border border-gray-50 rounded-2xl p-3 bg-gray-50/20">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-500 font-medium">Refund Madeleine</span>
-                <span className="text-xs font-bold text-[#E53E3E]">
-                  ₦{(activeProposal?.buyerAmount ?? 39500).toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between items-center border-t border-gray-50 pt-2 mt-2">
-                <span className="text-xs text-gray-500 font-medium">Release Louis</span>
-                <span className="text-xs font-bold text-green-600">
-                  ₦{(activeProposal?.sellerAmount ?? 39500).toLocaleString()}
-                </span>
-              </div>
-            </div>
+          <div className="space-y-4">
+            {displayProposals.map((proposal) => {
+              const isAccepted = proposal.status === "ACCEPTED";
+              // Colors for OFFER type tag (Splits and Refunds use the same violet/purple theme in mockup, Release Pending uses yellow)
+              let typeTagClass = "bg-[#FAF5FF] text-[#7E22CE]"; // Split or Refund accepted
+              if (proposal.type === "release" && proposal.status === "PENDING") {
+                typeTagClass = "bg-[#FFFBEB] text-[#D97706]";
+              }
+
+              // Heading text
+              const typeText = proposal.type === "split" 
+                ? "OFFER: SPLIT" 
+                : proposal.type === "refund" 
+                ? "OFFER: FULL REFUND" 
+                : "OFFER: FULL RELEASE";
+
+              return (
+                <div key={proposal.id} className="space-y-3 border border-gray-50 rounded-2xl p-3 bg-gray-50/10">
+                  <div className="flex justify-between items-center bg-gray-50/50 border border-gray-100 rounded-xl p-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.01)]">
+                    <span className={`px-2 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider ${typeTagClass}`}>
+                      {typeText}
+                    </span>
+                    <span className={`px-2 py-0.5 border text-[9px] font-bold rounded uppercase tracking-wider ${
+                      isAccepted
+                        ? "bg-[#ECFDF5] border-[#A7F3D0] text-[#065F46]"
+                        : "bg-[#FFFBEB] border-[#FEF3C7] text-[#D97706]"
+                    }`}>
+                      {proposal.status}
+                    </span>
+                  </div>
+                  <div className="space-y-2 px-1">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-gray-500 font-medium">Refund Madeleine</span>
+                      <span className="font-bold text-[#E53E3E]">
+                        {proposal.buyerAmount > 0 ? `₦${proposal.buyerAmount.toLocaleString()}` : "N0"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs border-t border-gray-50 pt-2 mt-2">
+                      <span className="text-gray-500 font-medium">Release Louis</span>
+                      <span className="font-bold text-green-600">
+                        {proposal.sellerAmount > 0 ? `₦${proposal.sellerAmount.toLocaleString()}` : "N0"}
+                      </span>
+                    </div>
+                    {proposal.status === "PENDING" && (
+                      <div className="text-[10px] text-gray-400 italic text-center pt-2">
+                        Awaiting Seller's Response...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
