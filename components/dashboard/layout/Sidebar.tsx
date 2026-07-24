@@ -80,15 +80,15 @@ export default function Sidebar({ isOpen, onClose, totalEarnings }: SidebarProps
         </div>
 
         {/* Total Earnings Block */}
-        <div className="px-6 py-2 mb-6 shrink-0">
-          <div className="bg-[#185541] rounded-lg p-4 border border-[#236b53] shadow-inner">
-            <p className="text-xs text-gray-300 uppercase font-semibold mb-1 tracking-wider text-[10px]">Total Earnings</p>
-            <p className="text-2xl font-bold">{totalEarnings ?? '₦0.00'}</p>
+        <div className="px-6 py-1 mb-3 shrink-0">
+          <div className="bg-[#185541] rounded-lg py-2.5 px-4 border border-[#236b53] shadow-inner">
+            <p className="text-xs text-gray-300 uppercase font-semibold mb-0.5 tracking-wider text-[10px]">Total Earnings</p>
+            <p className="text-xl font-bold">{totalEarnings ?? '₦0.00'}</p>
           </div>
         </div>
 
         {/* Main Navigation */}
-        <nav className="px-4 space-y-0.5 mb-4 flex-1 overflow-y-auto">
+        <nav className="px-4 space-y-0.5 mb-2 flex-1 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
             const Icon = item.icon;
@@ -98,7 +98,7 @@ export default function Sidebar({ isOpen, onClose, totalEarnings }: SidebarProps
                 key={item.name}
                 href={item.href}
                 onClick={onClose}
-                className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isActive
+                className={`flex items-center gap-3 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive
                   ? "bg-[#F3B659] text-[#0F3D2E]"
                   : "text-gray-300 hover:bg-[#185541] hover:text-white"
                   }`}
@@ -111,8 +111,8 @@ export default function Sidebar({ isOpen, onClose, totalEarnings }: SidebarProps
         </nav>
 
         {/* Bottom Navigation */}
-        <div className="px-4 shrink-0 pb-4 mt-auto overflow-hidden">
-          <div className="pt-4 border-t border-[#185541] space-y-1">
+        <div className="px-4 shrink-0 pb-2 mt-auto overflow-hidden">
+          <div className="pt-2 border-t border-[#185541] space-y-0.5">
             {bottomItems.map((item) => {
               const Icon = item.icon;
               if (item.name === "Logout") {
@@ -124,7 +124,7 @@ export default function Sidebar({ isOpen, onClose, totalEarnings }: SidebarProps
                       onClose();
                       router.push('/login');
                     }}
-                    className={`w-full text-left flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#185541] hover:text-white ${item.textClass || "text-gray-300"}`}
+                    className={`w-full text-left flex items-center gap-3 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-[#185541] hover:text-white ${item.textClass || "text-gray-300"}`}
                   >
                     <Icon size={18} className={item.textClass ? "text-red-400" : "text-gray-400"} />
                     {item.name}
@@ -137,7 +137,7 @@ export default function Sidebar({ isOpen, onClose, totalEarnings }: SidebarProps
                   key={item.name}
                   href={item.href}
                   onClick={onClose}
-                  className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#185541] hover:text-white ${item.textClass || "text-gray-300"}`}
+                  className={`flex items-center gap-3 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-[#185541] hover:text-white ${item.textClass || "text-gray-300"}`}
                 >
                   <Icon size={18} className={item.textClass ? "text-red-400" : "text-gray-400"} />
                   {item.name}
