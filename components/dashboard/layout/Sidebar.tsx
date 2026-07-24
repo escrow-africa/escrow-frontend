@@ -10,6 +10,7 @@ import {
   Briefcase,
   Megaphone,
   AlertCircle,
+  CreditCard,
   Bell,
   Settings,
   HelpCircle,
@@ -32,6 +33,7 @@ export default function Sidebar({ isOpen, onClose, totalEarnings }: SidebarProps
     { name: "Escrows", href: "/dashboard/escrows", icon: Briefcase },
     { name: "Ads", href: "/dashboard/ads", icon: Megaphone },
     { name: "Disputes", href: "/dashboard/disputes", icon: AlertCircle },
+    { name: "Subscription", href: "/dashboard/subscription", icon: CreditCard },
     { name: "Notifications", href: "/dashboard/notifications", icon: Bell },
   ];
 
@@ -86,7 +88,7 @@ export default function Sidebar({ isOpen, onClose, totalEarnings }: SidebarProps
         </div>
 
         {/* Main Navigation */}
-        <nav className="px-4 space-y-0.5 mb-4 flex-1 overflow-hidden">
+        <nav className="px-4 space-y-0.5 mb-4 flex-1 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
             const Icon = item.icon;

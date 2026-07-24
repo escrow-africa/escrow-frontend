@@ -27,6 +27,7 @@ export default function Header({
   else if (pathname.includes("/dashboard/ads")) title = "Ads";
   else if (pathname.includes("/dashboard/create-escrow")) title = "Create Escrow";
   else if (pathname.includes("/dashboard/disputes")) title = "Disputes";
+  else if (pathname.includes("/dashboard/subscription")) title = "Subscription";
   else if (pathname.includes("/dashboard/notifications")) title = "Notifications";
   else if (pathname.includes("/dashboard/settings")) title = "Settings";
   else if (pathname.includes("/dashboard/help")) title = "Help";
