@@ -30,13 +30,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       return "";
     };
 
-    const fullName = getSavedName();
-    if (fullName) {
-      let name = fullName.includes("@") ? fullName.split("@")[0] : fullName;
-      name = name.replace(/[._-]/g, " ");
-      const firstWord = name.trim().split(" ")[0];
-      const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
-      setUserName(capitalized);
+    const updateNameFromStorage = () => {
+      const fullName = getSavedName();
+      if (fullName) {
+        let name = fullName.includes("@") ? fullName.split("@")[0] : fullName;
+        name = name.replace(/[._-]/g, " ");
+        const firstWord = name.trim().split(" ")[0];
+        const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
+        setUserName(capitalized);
+      }
+    };
+
+    updateNameFromStorage();
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("user-profile-updated", updateNameFromStorage);
     }
 
     // Fetch /auth/me and /auth/stats to populate name and sidebar earnings
@@ -75,9 +83,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       } catch (e) {
         console.error('Failed to fetch /auth/stats', e);
       }
-
-      return () => { mounted = false; };
     })();
+
+    return () => {
+      mounted = false;
+      if (typeof window !== "undefined") {
+        window.removeEventListener("user-profile-updated", updateNameFromStorage);
+      }
+    };
   }, []);
 
   return (

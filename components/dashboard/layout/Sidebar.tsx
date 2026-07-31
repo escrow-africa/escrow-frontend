@@ -115,6 +115,8 @@ export default function Sidebar({ isOpen, onClose, totalEarnings }: SidebarProps
           <div className="pt-2 border-t border-[#185541] space-y-0.5">
             {bottomItems.map((item) => {
               const Icon = item.icon;
+              const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
+              
               if (item.name === "Logout") {
                 return (
                   <button
@@ -137,9 +139,12 @@ export default function Sidebar({ isOpen, onClose, totalEarnings }: SidebarProps
                   key={item.name}
                   href={item.href}
                   onClick={onClose}
-                  className={`flex items-center gap-3 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-[#185541] hover:text-white ${item.textClass || "text-gray-300"}`}
+                  className={`flex items-center gap-3 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive
+                    ? "bg-[#F3B659] text-[#0F3D2E]"
+                    : "text-gray-300 hover:bg-[#185541] hover:text-white"
+                    }`}
                 >
-                  <Icon size={18} className={item.textClass ? "text-red-400" : "text-gray-400"} />
+                  <Icon size={18} className={isActive ? "text-[#0F3D2E]" : "text-gray-400"} />
                   {item.name}
                 </Link>
               );
