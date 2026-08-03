@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowLeft, Bell, Mail, Smartphone } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface AlertPreferencesFormProps {
@@ -9,199 +9,140 @@ interface AlertPreferencesFormProps {
   onSave: (data: any) => Promise<void>;
 }
 
+interface NotificationPreference {
+  id: string;
+  title: string;
+  description: string;
+  checked: boolean;
+}
+
 export default function AlertPreferencesForm({
   onCancel,
   onSave,
 }: AlertPreferencesFormProps) {
-  const [preferences, setPreferences] = useState({
-    escrowCreatedEmail: true,
-    escrowCreatedPush: true,
-    escrowCreatedSMS: false,
-    paymentReleasedEmail: true,
-    paymentReleasedPush: true,
-    paymentReleasedSMS: true,
-    disputeRaisedEmail: true,
-    disputeRaisedPush: true,
-    disputeRaisedSMS: true,
-    securityAlertsEmail: true,
-    securityAlertsPush: true,
-    securityAlertsSMS: true,
-  });
+  const [preferences, setPreferences] = useState<NotificationPreference[]>([
+    {
+      id: "escrowContractReleases",
+      title: "Escrow Contract Releases",
+      description: "Dispatch instant notification when buyer funds are locked or cleared.",
+      checked: true,
+    },
+    {
+      id: "dispersalClearingAlerts",
+      title: "Dispersal Clearing Alerts",
+      description: "Alert when a banking payout leaves the secure EscrowAfrica ledger.",
+      checked: true,
+    },
+    {
+      id: "disputeArbitrationWarning",
+      title: "Dispute & Arbitration Warning",
+      description: "High priority warnings if a buyer requests mediator mediation.",
+      checked: true,
+    },
+    {
+      id: "tipsPromotionalAnalytics",
+      title: "Tips and Promotional Analytics",
+      description: "Monthly ad performance spikes, tips and general newsletters.",
+      checked: false,
+    },
+  ]);
 
   const [saving, setSaving] = useState(false);
 
-  const handleToggle = (key: keyof typeof preferences) => {
-    setPreferences((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
+  const handleToggle = (id: string) => {
+    setPreferences((prev) =>
+      prev.map((pref) =>
+        pref.id === id ? { ...pref, checked: !pref.checked } : pref
+      )
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await onSave(preferences);
-      toast.success("Notification preferences saved!");
+      // Map preferences array to key-value object for API compatibility
+      const data = preferences.reduce((acc, current) => {
+        acc[current.id] = current.checked;
+        return acc;
+      }, {} as Record<string, boolean>);
+
+      await onSave(data);
+      toast.success("Notification preferences saved successfully!");
     } catch (err) {
-      // handled by parent
+      toast.error("Failed to save preferences.");
     } finally {
       setSaving(false);
     }
   };
 
-  const notificationSections = [
-    {
-      title: "Escrow Transactions",
-      description: "When an escrow transaction is created, funded, or progress updates occur.",
-      keys: {
-        email: "escrowCreatedEmail" as const,
-        push: "escrowCreatedPush" as const,
-        sms: "escrowCreatedSMS" as const,
-      },
-    },
-    {
-      title: "Payment Release & Completed Escrows",
-      description: "When funds are released or payouts are completed successfully.",
-      keys: {
-        email: "paymentReleasedEmail" as const,
-        push: "paymentReleasedPush" as const,
-        sms: "paymentReleasedSMS" as const,
-      },
-    },
-    {
-      title: "Disputes & Support",
-      description: "When a dispute is raised, escalated, or support messages are received.",
-      keys: {
-        email: "disputeRaisedEmail" as const,
-        push: "disputeRaisedPush" as const,
-        sms: "disputeRaisedSMS" as const,
-      },
-    },
-    {
-      title: "Security & Account Alerts",
-      description: "Critical security notifications, password changes, and login attempts.",
-      keys: {
-        email: "securityAlertsEmail" as const,
-        push: "securityAlertsPush" as const,
-        sms: "securityAlertsSMS" as const,
-      },
-    },
-  ];
-
   return (
-    <div className="w-full max-w-4xl mx-auto animate-fade-in">
+    <div className="w-full max-w-4xl mx-auto animate-fade-in pb-12">
+      {/* Back Button */}
       <button
         onClick={onCancel}
-        className="flex items-center gap-2 text-gray-500 hover:text-primary mb-6 transition-colors font-medium text-sm focus:outline-none"
+        className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-[#0F3D2E] dark:hover:text-[#F3B659] mb-6 transition-colors font-medium text-sm focus:outline-none cursor-pointer"
       >
         <ArrowLeft size={16} />
         <span>Back to Settings</span>
       </button>
 
-      <div className="bg-white dark:bg-[#18181b] border border-border dark:border-zinc-800 rounded-2xl p-6 md:p-8 shadow-sm">
+      {/* Main Settings Card */}
+      <div className="bg-white dark:bg-[#18181b] border border-[#E4E3E3CC] dark:border-zinc-800 rounded-2xl p-6 md:p-8 shadow-xs">
         {/* Header */}
-        <div className="pb-6 border-b border-gray-100 dark:border-zinc-800 mb-8">
-          <h2 className="text-xl font-bold text-primary dark:text-[#F3B659]">Alert Preferences</h2>
+        <div className="pb-6 mb-8 border-b border-gray-100 dark:border-zinc-800/80">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Compliance Notifications</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Choose how and when you want to be notified about transaction milestones and account security.
+            Decide what system notifications are dispatched and where.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Notification Matrix */}
-          <div className="space-y-6">
-            {notificationSections.map((sec, i) => (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* List of Notification Options */}
+          <div className="space-y-4">
+            {preferences.map((pref) => (
               <div
-                key={i}
-                className="flex flex-col md:flex-row justify-between md:items-center pb-6 border-b border-gray-100 dark:border-zinc-800/80 gap-4 last:border-b-0 last:pb-0"
+                key={pref.id}
+                onClick={() => handleToggle(pref.id)}
+                className="border border-[#E4E3E3CC] dark:border-zinc-800 bg-[#FAFBFA] dark:bg-zinc-900/30 rounded-xl p-5 flex items-center justify-between gap-6 cursor-pointer select-none hover:shadow-xs hover:border-gray-300 dark:hover:border-zinc-700 transition-all group"
               >
-                <div className="max-w-md">
-                  <h3 className="font-semibold text-primary dark:text-white text-base">
-                    {sec.title}
+                <div>
+                  <h3 className="font-bold text-gray-800 dark:text-white text-sm md:text-base group-hover:text-[#0F3D2E] dark:group-hover:text-[#F3B659] transition-colors">
+                    {pref.title}
                   </h3>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {sec.description}
+                    {pref.description}
                   </p>
                 </div>
 
-                {/* Toggles */}
-                <div className="flex flex-wrap gap-4 sm:gap-6 items-center">
-                  {/* Email Toggle */}
-                  <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900 px-3 py-2 rounded-xl border border-gray-100 dark:border-zinc-800 select-none">
-                    <Mail size={16} className="text-gray-400" />
-                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 mr-2">Email</span>
-                    <button
-                      type="button"
-                      onClick={() => handleToggle(sec.keys.email)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        preferences[sec.keys.email] ? "bg-[#0F3D2E]" : "bg-gray-200 dark:bg-zinc-700"
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          preferences[sec.keys.email] ? "translate-x-4" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  {/* Push Toggle */}
-                  <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900 px-3 py-2 rounded-xl border border-gray-100 dark:border-zinc-800 select-none">
-                    <Bell size={16} className="text-gray-400" />
-                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 mr-2">Push</span>
-                    <button
-                      type="button"
-                      onClick={() => handleToggle(sec.keys.push)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        preferences[sec.keys.push] ? "bg-[#0F3D2E]" : "bg-gray-200 dark:bg-zinc-700"
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          preferences[sec.keys.push] ? "translate-x-4" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </div>
-
-                  {/* SMS Toggle */}
-                  <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-900 px-3 py-2 rounded-xl border border-gray-100 dark:border-zinc-800 select-none">
-                    <Smartphone size={16} className="text-gray-400" />
-                    <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 mr-2">SMS</span>
-                    <button
-                      type="button"
-                      onClick={() => handleToggle(sec.keys.sms)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        preferences[sec.keys.sms] ? "bg-[#0F3D2E]" : "bg-gray-200 dark:bg-zinc-700"
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          preferences[sec.keys.sms] ? "translate-x-4" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </div>
+                {/* Custom Styled Checkbox */}
+                <div
+                  className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 transition-all duration-200 ${
+                    pref.checked
+                      ? "bg-[#2563EB] border-[#2563EB] dark:bg-blue-600 dark:border-blue-600 text-white"
+                      : "border-[#E4E3E3CC] bg-white dark:bg-zinc-800"
+                  }`}
+                >
+                  {pref.checked && <Check size={14} className="stroke-[3.5]" />}
                 </div>
               </div>
             ))}
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-zinc-800">
+          <div className="flex flex-col sm:flex-row items-center justify-start gap-4 pt-6 border-t border-gray-100 dark:border-zinc-800">
             <button
               type="button"
               onClick={onCancel}
               disabled={saving}
-              className="w-full sm:w-auto px-6 py-2.5 bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-zinc-700 rounded-lg text-sm font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto px-10 py-3 bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="w-full sm:w-auto px-6 py-2.5 bg-[#0F3D2E] dark:bg-[#185541] text-white rounded-lg text-sm font-semibold hover:bg-[#185541] dark:hover:bg-[#236b53] transition-colors cursor-pointer flex items-center justify-center disabled:opacity-50"
+              className="w-full sm:w-auto px-10 py-3 bg-[#0F3D2E] dark:bg-emerald-700 text-white rounded-lg text-sm font-semibold hover:bg-[#185541] dark:hover:bg-emerald-600 transition-colors cursor-pointer flex items-center justify-center disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save Preferences"}
             </button>

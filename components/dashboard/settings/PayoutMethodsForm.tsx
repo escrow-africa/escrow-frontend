@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowLeft, CreditCard, Plus, Trash2, Landmark } from "lucide-react";
+import { ArrowLeft, Landmark, Plus, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface BankAccount {
@@ -21,19 +21,20 @@ export default function PayoutMethodsForm({
   onCancel,
   onSave,
 }: PayoutMethodsFormProps) {
+  // Set default state to match Mockup 4 exactly
   const [accounts, setAccounts] = useState<BankAccount[]>([
     {
       id: "1",
-      bankName: "Access Bank Plc",
-      accountNumber: "******4567",
-      accountName: "Madeleine Nkiru",
+      bankName: "GTBank",
+      accountNumber: "0123456789",
+      accountName: "Primary Clearing Account",
       isDefault: true,
     },
     {
       id: "2",
-      bankName: "Guaranty Trust Bank (GTB)",
-      accountNumber: "******8912",
-      accountName: "Madeleine Creative Studio",
+      bankName: "Access Bank",
+      accountNumber: "9876543210",
+      accountName: "Secondary Clearing Account",
       isDefault: false,
     },
   ]);
@@ -55,6 +56,7 @@ export default function PayoutMethodsForm({
     const updated = accounts.map((acc) => ({
       ...acc,
       isDefault: acc.id === id,
+      accountName: acc.id === id ? "Primary Clearing Account" : "Secondary Clearing Account",
     }));
     setAccounts(updated);
     toast.success("Default payout method updated.");
@@ -71,12 +73,13 @@ export default function PayoutMethodsForm({
       return;
     }
 
+    const isFirst = accounts.length === 0;
     const newAcc: BankAccount = {
       id: Date.now().toString(),
       bankName: newBank.bankName,
-      accountNumber: `******${newBank.accountNumber.slice(-4)}`,
-      accountName: newBank.accountName,
-      isDefault: accounts.length === 0,
+      accountNumber: newBank.accountNumber,
+      accountName: isFirst ? "Primary Clearing Account" : "Secondary Clearing Account",
+      isDefault: isFirst,
     };
 
     setAccounts([...accounts, newAcc]);
@@ -86,63 +89,65 @@ export default function PayoutMethodsForm({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto animate-fade-in">
+    <div className="w-full max-w-4xl mx-auto animate-fade-in pb-12">
+      {/* Back Button */}
       <button
         onClick={onCancel}
-        className="flex items-center gap-2 text-gray-500 hover:text-primary mb-6 transition-colors font-medium text-sm focus:outline-none"
+        className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-[#0F3D2E] dark:hover:text-[#F3B659] mb-6 transition-colors font-medium text-sm focus:outline-none cursor-pointer"
       >
         <ArrowLeft size={16} />
         <span>Back to Settings</span>
       </button>
 
-      <div className="bg-white dark:bg-[#18181b] border border-border dark:border-zinc-800 rounded-2xl p-6 md:p-8 shadow-sm">
-        {/* Header */}
-        <div className="pb-6 border-b border-gray-100 dark:border-zinc-800 mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+      {/* Main Payment Methods Card */}
+      <div className="bg-white dark:bg-[#18181b] border border-[#E4E3E3CC] dark:border-zinc-800 rounded-2xl p-6 md:p-8 shadow-xs">
+        {/* Header Section */}
+        <div className="pb-6 border-b border-gray-100 dark:border-zinc-800 mb-8 flex justify-between items-center gap-4">
           <div>
-            <h2 className="text-xl font-bold text-primary dark:text-[#F3B659]">Payout Methods</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Payment Methods</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Manage bank accounts, settlement preferences, and default routing ledger.
+              Manage the physical banking institutions connected to your trade pipeline.
             </p>
           </div>
           {!showAddForm && (
             <button
               onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-[#0F3D2E] dark:bg-[#185541] hover:bg-[#185541] dark:hover:bg-[#236b53] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#0F3D2E] dark:bg-emerald-700 hover:bg-[#185541] dark:hover:bg-emerald-600 text-white text-xs font-bold rounded-lg shadow-sm transition-colors cursor-pointer shrink-0"
             >
-              <Plus size={14} />
-              <span>Add Account</span>
+              <Plus size={14} className="stroke-[3]" />
+              <span>Add Bank</span>
             </button>
           )}
         </div>
 
         {showAddForm ? (
-          /* Add Account Form */
+          /* Add Account Form container */
           <form onSubmit={handleAddAccount} className="space-y-6 max-w-xl animate-fade-in">
-            <h3 className="font-bold text-primary dark:text-white text-base">Add Settlement Bank Account</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white text-base">Add Settlement Bank Account</h3>
 
             <div>
-              <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 tracking-[0.2em] mb-2 uppercase">
+              <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 tracking-[0.15em] mb-2 uppercase">
                 Select Bank
               </label>
               <select
                 value={newBank.bankName}
                 onChange={(e) => setNewBank({ ...newBank, bankName: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border bg-[#E4E3E3CC] dark:bg-zinc-800 border-[#E4E3E3CC] dark:border-zinc-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0F3D2E] dark:focus:ring-[#F3B659] transition-all"
+                className="w-full px-4 py-3.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#0F3D2E] dark:focus:ring-[#F3B659] transition-all"
                 required
               >
                 <option value="">-- Choose a Bank --</option>
-                <option value="Access Bank Plc">Access Bank Plc</option>
-                <option value="Guaranty Trust Bank (GTB)">Guaranty Trust Bank (GTB)</option>
-                <option value="Zenith Bank Plc">Zenith Bank Plc</option>
-                <option value="United Bank for Africa (UBA)">United Bank for Africa (UBA)</option>
-                <option value="First Bank of Nigeria">First Bank of Nigeria</option>
+                <option value="GTBank">GTBank (Guaranty Trust)</option>
+                <option value="Access Bank">Access Bank Plc</option>
+                <option value="Zenith Bank">Zenith Bank Plc</option>
+                <option value="UBA">United Bank for Africa (UBA)</option>
+                <option value="First Bank">First Bank of Nigeria</option>
                 <option value="Kuda Bank">Kuda Bank</option>
                 <option value="OPay">OPay</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 tracking-[0.2em] mb-2 uppercase">
+              <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 tracking-[0.15em] mb-2 uppercase">
                 Account Number (10 Digits)
               </label>
               <input
@@ -154,21 +159,21 @@ export default function PayoutMethodsForm({
                 onChange={(e) =>
                   setNewBank({ ...newBank, accountNumber: e.target.value.replace(/\D/g, "") })
                 }
-                className="w-full px-4 py-3 rounded-lg border bg-[#E4E3E3CC] dark:bg-zinc-800 border-[#E4E3E3CC] dark:border-zinc-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0F3D2E] dark:focus:ring-[#F3B659] transition-all"
+                className="w-full px-4 py-3.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#0F3D2E] dark:focus:ring-[#F3B659] transition-all"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 tracking-[0.2em] mb-2 uppercase">
-                Account Name
+              <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 tracking-[0.15em] mb-2 uppercase">
+                Account Label / Description
               </label>
               <input
                 type="text"
-                placeholder="MADELEINE NKIRU"
+                placeholder="e.g. Primary Corporate Account"
                 value={newBank.accountName}
                 onChange={(e) => setNewBank({ ...newBank, accountName: e.target.value })}
-                className="w-full px-4 py-3 rounded-lg border bg-[#E4E3E3CC] dark:bg-zinc-800 border-[#E4E3E3CC] dark:border-zinc-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0F3D2E] dark:focus:ring-[#F3B659] transition-all"
+                className="w-full px-4 py-3.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#0F3D2E] dark:focus:ring-[#F3B659] transition-all"
                 required
               />
             </div>
@@ -177,13 +182,13 @@ export default function PayoutMethodsForm({
               <button
                 type="button"
                 onClick={() => setShowAddForm(false)}
-                className="px-5 py-2 bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-zinc-700 rounded-lg text-xs font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="px-5 py-2.5 bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 bg-[#0F3D2E] dark:bg-[#185541] text-white rounded-lg text-xs font-semibold hover:bg-[#185541] dark:hover:bg-[#236b53] transition-colors cursor-pointer"
+                className="px-5 py-2.5 bg-[#0F3D2E] dark:bg-emerald-700 text-white rounded-lg text-xs font-semibold hover:bg-[#185541] dark:hover:bg-emerald-600 transition-colors cursor-pointer"
               >
                 Verify & Add Bank
               </button>
@@ -192,75 +197,63 @@ export default function PayoutMethodsForm({
         ) : (
           /* Accounts List */
           <div className="space-y-4">
-            {accounts.length === 0 ? (
-              <div className="text-center py-10 border border-dashed border-gray-200 dark:border-zinc-800 rounded-xl">
-                <Landmark className="mx-auto text-gray-400 mb-3" size={32} />
-                <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">No bank accounts linked yet</p>
-                <p className="text-xs text-gray-400 mt-1">Add a settlement bank account to receive payouts.</p>
-              </div>
-            ) : (
-              accounts.map((acc) => (
-                <div
-                  key={acc.id}
-                  className={`border rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all ${
-                    acc.isDefault
-                      ? "border-[#0F3D2E]/40 bg-[#0F3D2E]/[0.02] dark:border-emerald-900/40 dark:bg-emerald-950/[0.05]"
-                      : "border-border dark:border-zinc-800 bg-white dark:bg-zinc-900/30"
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-primary dark:text-[#F3B659] border border-gray-200 dark:border-zinc-700 shrink-0">
-                      <Landmark size={20} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-gray-800 dark:text-white text-sm">
-                          {acc.bankName}
-                        </h4>
-                        {acc.isDefault && (
-                          <span className="bg-[#0F3D2E]/10 dark:bg-[#185541]/30 text-[#0F3D2E] dark:text-emerald-400 text-[10px] px-2 py-0.5 rounded-full font-bold">
-                            Default
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {acc.accountNumber} • {acc.accountName}
-                      </p>
-                    </div>
+            {accounts.map((acc) => (
+              <div
+                key={acc.id}
+                className="border border-[#E4E3E3CC] dark:border-zinc-800 bg-[#FAFBFA] dark:bg-zinc-900/30 rounded-xl p-5 flex items-center justify-between gap-4 transition-all"
+              >
+                {/* Left Side: Bank Landmark Icon + Names */}
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 border border-[#E4E3E3CC] dark:border-zinc-800 flex items-center justify-center text-[#0F3D2E] dark:text-[#F3B659] shrink-0 shadow-2xs">
+                    <Landmark size={20} />
                   </div>
-
-                  <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-                    {!acc.isDefault && (
-                      <button
-                        onClick={() => handleSetDefault(acc.id)}
-                        className="text-xs text-[#0F3D2E] dark:text-[#F3B659] hover:underline font-semibold cursor-pointer"
-                      >
-                        Set Default
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleDelete(acc.id)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors cursor-pointer"
-                      title="Remove Account"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                  <div>
+                    <h4 className="font-bold text-gray-900 dark:text-white text-sm md:text-base">
+                      {acc.bankName} &bull; Account {acc.accountNumber}
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {acc.accountName}
+                    </p>
                   </div>
                 </div>
-              ))
-            )}
 
-            <div className="flex justify-end pt-6 border-t border-gray-100 dark:border-zinc-800">
-              <button
-                type="button"
-                onClick={onCancel}
-                className="px-6 py-2.5 bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-zinc-700 rounded-lg text-sm font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-              >
-                Close Payout Settings
-              </button>
-            </div>
+                {/* Right Side Actions */}
+                <div className="flex items-center gap-6">
+                  {acc.isDefault ? (
+                    <span className="bg-[#0F3D2E] dark:bg-[#185541] text-white text-[10px] px-3.5 py-1.5 rounded-md font-bold tracking-wider uppercase">
+                      Default
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleSetDefault(acc.id)}
+                      className="text-xs font-bold text-[#0F3D2E] hover:text-[#185541] dark:text-[#F3B659] dark:hover:text-amber-400 hover:underline cursor-pointer focus:outline-none"
+                    >
+                      Set Default
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDelete(acc.id)}
+                    className="p-2 border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-400 hover:text-red-500 hover:border-red-200 dark:hover:bg-red-950/20 rounded-lg transition-all cursor-pointer shadow-2xs"
+                    title="Remove Account"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
+
+        {/* Back and Close buttons at the bottom */}
+        <div className="flex justify-end pt-8 mt-6 border-t border-gray-100 dark:border-zinc-800">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-8 py-3 bg-white dark:bg-zinc-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+          >
+            Close Payment Settings
+          </button>
+        </div>
       </div>
     </div>
   );

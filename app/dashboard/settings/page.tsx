@@ -378,6 +378,7 @@ export default function SettingsPage() {
             <SecurityForm
               onCancel={() => setActiveView("main")}
               onSave={handleSaveGeneric}
+              billingAddress={billingData.billingAddress}
             />
           )}
 
