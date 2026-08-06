@@ -2,9 +2,9 @@ import { api } from "./axios";
 
 
 export const walletApi = {
-  getWalletDetails: async () => {
+  getWalletDetails: async (page = 1, limit = 20) => {
     try {
-      const response = await api.get(`/wallet/details`);
+      const response = await api.get(`/wallet/details?page=${page}&limit=${limit}`);
       return response.data;
     } catch {
       alert("Failed to fetch wallet details. Please try again.");

@@ -1,21 +1,63 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Upload, X, AlertCircle, ChevronDown, Check } from "lucide-react";
+import { disputeApi } from "../../../../api/dispute";
+import { escrowApi } from "../../../../api/escrow";
+import toast from "react-hot-toast";
 
 type FormState = "form" | "submitted";
 
-export default function CreateDisputePage() {
+interface ContractOption {
+  id: string;
+  escrowCode: string;
+  description?: string;
+  amount: number;
+}
+
+function CreateDisputeForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectedEscrowId = searchParams.get("escrowId");
   const [formState, setFormState] = useState<FormState>("form");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contracts, setContracts] = useState<ContractOption[]>([]);
+  const [isLoadingContracts, setIsLoadingContracts] = useState(true);
   const [formData, setFormData] = useState({
     contract: "",
-    breachCategory: "Quality Issue", // Initial value matching screenshot
+    contractCode: "",
+    breachCategory: "Quality Issue",
     amount: "",
     description: "",
   });
+
+  useEffect(() => {
+    const loadContracts = async () => {
+      try {
+        // Escrows where the current user is either the buyer or the seller
+        // (the backend already scopes /escrow?preset=active to buyerId/sellerId OR userId).
+        // getActive() defaults to page 1/limit 20 - a generous cap for a dropdown, not a full list.
+        const response: any = await escrowApi.getActive(1, 100);
+        const list: ContractOption[] = Array.isArray(response) ? response : response?.data || [];
+        setContracts(list);
+
+        if (preselectedEscrowId) {
+          const match = list.find((c: ContractOption) => c.id === preselectedEscrowId);
+          if (match) {
+            setFormData((prev) => ({ ...prev, contract: match.id, contractCode: match.escrowCode }));
+          }
+        }
+      } catch (error: any) {
+        toast.error(error?.response?.data?.message || "Unable to load your active contracts");
+      } finally {
+        setIsLoadingContracts(false);
+      }
+    };
+    loadContracts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -39,21 +81,34 @@ export default function CreateDisputePage() {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedFiles.length === 0) return; // Blocked state
+    if (selectedFiles.length === 0) return;
 
-    setFormState("submitted");
+    setIsSubmitting(true);
 
-    console.log("Dispute submitted:", {
-      ...formData,
-      files: selectedFiles,
-    });
+    const payload = new FormData();
+    payload.append("relatedContractId", formData.contract);
+    payload.append("contract", formData.contractCode || formData.contract);
+    payload.append("breachCategory", formData.breachCategory);
+    payload.append("amount", formData.amount.replace(/[^0-9.]/g, ""));
+    payload.append("disputedAmount", formData.amount.replace(/[^0-9.]/g, ""));
+    payload.append("description", formData.description);
+    payload.append("claimDescription", formData.description);
+    selectedFiles.forEach((file) => payload.append("proofOfBreach", file));
 
-    // Close after 2 seconds
-    setTimeout(() => {
-      router.push("/dashboard/disputes");
-    }, 2000);
+    try {
+      await disputeApi.create(payload);
+      setFormState("submitted");
+      toast.success("Dispute submitted");
+      setTimeout(() => {
+        router.push("/dashboard/disputes");
+      }, 2000);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Unable to submit dispute");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
@@ -94,16 +149,31 @@ export default function CreateDisputePage() {
               <div className="relative">
                 <select
                   required
+                  disabled={isLoadingContracts}
                   value={formData.contract}
-                  onChange={(e) =>
-                    setFormData({ ...formData, contract: e.target.value })
-                  }
-                  className="w-full px-4 py-3 bg-[#FAFBFA] border border-gray-100 text-xs font-semibold text-gray-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#0F3D2E] focus:border-transparent appearance-none cursor-pointer"
+                  onChange={(e) => {
+                    const selected = contracts.find((c) => c.id === e.target.value);
+                    setFormData({
+                      ...formData,
+                      contract: e.target.value,
+                      contractCode: selected?.escrowCode || "",
+                    });
+                  }}
+                  className="w-full px-4 py-3 bg-[#FAFBFA] border border-gray-100 text-xs font-semibold text-gray-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#0F3D2E] focus:border-transparent appearance-none cursor-pointer disabled:opacity-60"
                 >
-                  <option value="">Select Active Contract</option>
-                  <option value="BUY-801">BUY-801 (Premium Web Application Design)</option>
-                  <option value="BUY-711">BUY-711 (Smart Contract Audit)</option>
-                  <option value="BUY-725">BUY-725 (E-Commerce Platform Implementation)</option>
+                  <option value="">
+                    {isLoadingContracts
+                      ? "Loading your active contracts…"
+                      : contracts.length === 0
+                      ? "No active contracts found"
+                      : "Select Active Contract"}
+                  </option>
+                  {contracts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.escrowCode}
+                      {c.description ? ` (${c.description})` : ""}
+                    </option>
+                  ))}
                 </select>
                 <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400">
                   <ChevronDown size={14} />
@@ -263,11 +333,11 @@ export default function CreateDisputePage() {
               </button>
               <button
                 type="submit"
-                disabled={selectedFiles.length === 0}
+                disabled={selectedFiles.length === 0 || isSubmitting}
                 className="flex-1 px-4 py-3 bg-[#E53E3E] hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-colors"
               >
                 <AlertCircle size={14} className="fill-white text-[#E53E3E]" />
-                <span>Submit Claim & Freeze Funds</span>
+                <span>{isSubmitting ? "Submitting…" : "Submit Claim & Freeze Funds"}</span>
               </button>
             </div>
           </form>
@@ -287,5 +357,13 @@ export default function CreateDisputePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CreateDisputePage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-gray-500">Loading…</p>}>
+      <CreateDisputeForm />
+    </Suspense>
   );
 }

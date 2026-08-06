@@ -1,8 +1,8 @@
 import React from "react";
 import Link from "next/link";
-import { Clock, ShieldCheck, CheckCircle2, AlertCircle, ChevronRight } from "lucide-react";
+import { Clock, ShieldCheck, CheckCircle2, AlertCircle, ChevronRight, Mail } from "lucide-react";
 
-export type EscrowStatus = "RELEASED" | "SECURED" | "IN_REVIEW" | "IN_DISPUTE";
+export type EscrowStatus = "RELEASED" | "SECURED" | "IN_REVIEW" | "IN_DISPUTE" | "AWAITING_APPROVAL";
 
 export interface EscrowCardProps {
   id: string;
@@ -45,6 +45,13 @@ export default function EscrowCard({
           text: "text-blue-600",
           icon: <ShieldCheck size={12} className="mr-1" />,
           label: "SECURED"
+        };
+      case "AWAITING_APPROVAL":
+        return {
+          bg: "bg-amber-50",
+          text: "text-amber-600",
+          icon: <Mail size={12} className="mr-1" />,
+          label: "AWAITING APPROVAL"
         };
       case "IN_REVIEW":
         return {

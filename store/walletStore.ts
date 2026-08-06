@@ -24,8 +24,11 @@ interface WalletState {
   banks: Bank[];
   isLoading: boolean;
   error: string | null;
+  transactionsPage: number;
+  transactionsLimit: number;
+  transactionsTotal: number;
 
-  fetchWalletDetails: () => Promise<void>;
+  fetchWalletDetails: (page?: number, limit?: number) => Promise<void>;
   fetchBankList: () => Promise<void>;
   fundWallet: (payload: any) => Promise<any>;
   verifyCardOtp: (payload: any) => Promise<any>;
@@ -37,15 +40,18 @@ export const useWalletStore = create<WalletState>((set) => ({
   banks: [],
   isLoading: false,
   error: null,
+  transactionsPage: 1,
+  transactionsLimit: 20,
+  transactionsTotal: 0,
 
-  fetchWalletDetails: async () => {
+  fetchWalletDetails: async (page = 1, limit = 20) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await walletApi.getWalletDetails();
-      
+      const response = await walletApi.getWalletDetails(page, limit);
+
       const backendWallet = response?.wallet || response?.data?.wallet || response;
       const backendPayments = response?.payments || response?.data?.payments || [];
-      
+
       const mappedDetails = {
         balance: parseFloat(backendWallet?.balance || 0),
         virtualAccount: {
@@ -63,7 +69,13 @@ export const useWalletStore = create<WalletState>((set) => ({
         }))
       };
 
-      set({ walletDetails: mappedDetails, isLoading: false });
+      set({
+        walletDetails: mappedDetails,
+        isLoading: false,
+        transactionsPage: response?.page || page,
+        transactionsLimit: response?.limit || limit,
+        transactionsTotal: typeof response?.total === 'number' ? response.total : backendPayments.length,
+      });
     } catch (error: any) {
       set({
         error: error.response?.data?.message || "Failed to fetch wallet details",

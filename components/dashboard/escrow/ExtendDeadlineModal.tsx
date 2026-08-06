@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { Calendar } from "lucide-react";
+import toast from "react-hot-toast";
+import { escrowApi } from "../../../api/escrow";
 
 interface ExtendDeadlineModalProps {
   isOpen: boolean;
   onClose: () => void;
+  escrowId: string;
+  onExtended?: () => void;
 }
 
-export default function ExtendDeadlineModal({ isOpen, onClose }: ExtendDeadlineModalProps) {
+export default function ExtendDeadlineModal({ isOpen, onClose, escrowId, onExtended }: ExtendDeadlineModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [date, setDate] = useState("");
   const [justification, setJustification] = useState("");
@@ -19,13 +23,18 @@ export default function ExtendDeadlineModal({ isOpen, onClose }: ExtendDeadlineM
     }
   }, [isOpen]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
-    // Simulate network request
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await escrowApi.extend(escrowId, date);
+      toast.success("Deadline extended");
+      onExtended?.();
       onClose();
-    }, 2500);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to extend deadline");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -33,8 +42,8 @@ export default function ExtendDeadlineModal({ isOpen, onClose }: ExtendDeadlineM
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" 
+      <div
+        className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
         onClick={() => !isSubmitting && onClose()}
       />
 
@@ -43,9 +52,9 @@ export default function ExtendDeadlineModal({ isOpen, onClose }: ExtendDeadlineM
         <div className="w-16 h-16 rounded-full bg-[#EBF3FF] flex items-center justify-center mb-6">
           <Calendar size={28} className="text-[#3B82F6]" />
         </div>
-        
+
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Extend Deadline</h2>
-        
+
         <p className="text-sm text-gray-500 mb-8 max-w-[280px]">
           Request more time from the buyer. A notification will be sent for approval.
         </p>
@@ -81,16 +90,16 @@ export default function ExtendDeadlineModal({ isOpen, onClose }: ExtendDeadlineM
             />
           </div>
         </div>
-        
-        <button 
+
+        <button
           onClick={handleSubmit}
           disabled={isSubmitting || !date || !justification.trim()}
           className="w-full bg-[#0F3D2E] hover:bg-[#185541] disabled:bg-[#86A69A] disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-colors mb-4 flex justify-center items-center"
         >
           {isSubmitting ? "Sending Request..." : "Send Extension Request"}
         </button>
-        
-        <button 
+
+        <button
           onClick={onClose}
           disabled={isSubmitting}
           className="w-full text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors py-2 disabled:opacity-50"

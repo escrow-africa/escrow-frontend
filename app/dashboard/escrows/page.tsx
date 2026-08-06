@@ -5,7 +5,10 @@ import Link from "next/link";
 import { ShieldCheck, Clock, Search } from "lucide-react";
 import EscrowStatCard from "../../../components/dashboard/escrow/EscrowStatCard";
 import EscrowCard, { EscrowStatus } from "../../../components/dashboard/escrow/EscrowCard";
+import Pagination from "../../../components/Pagination";
 import { escrowApi } from "../../../api/escrow";
+
+const ESCROWS_PER_PAGE = 12;
 
 interface MockEscrow {
   id: string;
@@ -21,70 +24,29 @@ interface MockEscrow {
   tab: "active" | "completed" | "disputed";
 }
 
-const MOCK_ESCROWS: MockEscrow[] = [
-  {
-    id: "ESC-103",
-    displayId: "#ESC-103",
-    partnerName: "Charlie Man",
-    avatarInitials: "C",
-    avatarBgClass: "bg-[#E6F4EA]", // light green
-    status: "RELEASED",
-    mainDeliverable: "Social Media Graphics",
-    escrowAmount: "₦200,150.00",
-    payoutAmount: "₦200,000",
-    updatedAt: "2026-04-20",
-    tab: "completed"
-  },
-  {
-    id: "ESC-101",
-    displayId: "#ESC-101",
-    partnerName: "Madeleine Nkiru",
-    avatarInitials: "M",
-    avatarBgClass: "bg-[#E6F4EA]",
-    status: "SECURED",
-    mainDeliverable: "Logo Design Service",
-    escrowAmount: "₦52,150.00",
-    payoutAmount: "₦52,000.00",
-    updatedAt: "2026-04-20",
-    tab: "active"
-  },
-  {
-    id: "ESC-102",
-    displayId: "#ESC-102",
-    partnerName: "Ruby Thomas",
-    avatarInitials: "R",
-    avatarBgClass: "bg-[#E6F4EA]",
-    status: "IN_REVIEW",
-    mainDeliverable: "E-Commerce Website",
-    escrowAmount: "₦202,150.00",
-    payoutAmount: "₦202,000",
-    updatedAt: "2026-04-20",
-    tab: "active"
-  },
-  {
-    id: "ESC-104",
-    displayId: "#ESC-104",
-    partnerName: "David Charles",
-    avatarInitials: "D",
-    avatarBgClass: "bg-[#E6F4EA]",
-    status: "IN_DISPUTE",
-    mainDeliverable: "Mobile App Prototype",
-    escrowAmount: "₦250,150.00",
-    payoutAmount: "₦250,000",
-    updatedAt: "2026-04-20",
-    tab: "disputed"
-  }
-];
-
 export default function EscrowsPage() {
   const [activeTab, setActiveTab] = useState<"active" | "completed" | "disputed">("active");
-  const [escrows, setEscrows] = useState<MockEscrow[]>(MOCK_ESCROWS);
+  const [escrows, setEscrows] = useState<MockEscrow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTotal, setActiveTotal] = useState<string>("₦102,751.32");
-  const [pendingRelease, setPendingRelease] = useState<string>("₦62,000.00");
+  const [activeTotal, setActiveTotal] = useState<string>("₦0.00");
+  const [pendingRelease, setPendingRelease] = useState<string>("₦0.00");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const filteredEscrows = escrows.filter(escrow => escrow.tab === activeTab);
+  // Reset to page 1 whenever the tab changes so switching tabs doesn't strand the user on a
+  // page number that may not exist for the new tab's result set.
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab]);
+
+  const filteredEscrows = escrows.filter((escrow) => {
+    if (escrow.tab !== activeTab) return false;
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.trim().toLowerCase();
+    return escrow.id.toLowerCase().includes(q) || escrow.partnerName.toLowerCase().includes(q);
+  });
 
   const formatCurrency = (val: any) => {
     try {
@@ -99,11 +61,19 @@ export default function EscrowsPage() {
   const mapToCard = (item: any, tab: "active" | "completed" | "disputed"): MockEscrow => {
     const id = item.id;
     const displayId = item.escrowCode;
-    const partnerName = item.user.name;
+    const partnerName = item.user?.name || item.user?.email || "Unknown";
     const initials = partnerName.split(' ').map((s: string) => s[0]).slice(0,2).join('').toUpperCase() || 'U';
     const statusRaw = (item.status || item.state || '').toString().toUpperCase();
-    const status: EscrowStatus = statusRaw.includes('RELEASE') ? 'RELEASED' : statusRaw.includes('DISPUTE') ? 'IN_DISPUTE' : statusRaw.includes('REVIEW') ? 'IN_REVIEW' : 'SECURED';
-    const mainDeliverable = item.description;
+    const status: EscrowStatus = statusRaw.includes('RELEASE')
+      ? 'RELEASED'
+      : statusRaw.includes('DISPUTE')
+      ? 'IN_DISPUTE'
+      : statusRaw.includes('REVIEW')
+      ? 'IN_REVIEW'
+      : statusRaw === 'PENDING_APPROVAL'
+      ? 'AWAITING_APPROVAL'
+      : 'SECURED';
+    const mainDeliverable = item.description || (Array.isArray(item.milestones) ? item.milestones.join(', ') : '') || '—';
     const escrowAmount = item.amount;
     const payoutAmount = item.payoutAmount ?? item.payout ?? 0;
     const updatedAt = item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : (item.updatedAtString || item.updated || '');
@@ -129,24 +99,27 @@ export default function EscrowsPage() {
       setLoading(true);
       setError(null);
       try {
-        let data: any = [];
+        let response: any;
         if (activeTab === 'active') {
-          data = await escrowApi.getActive();
+          response = await escrowApi.getActive(page, ESCROWS_PER_PAGE);
         } else if (activeTab === 'completed') {
-          data = await escrowApi.getCompleted();
+          response = await escrowApi.getCompleted(page, ESCROWS_PER_PAGE);
         } else {
-          data = await escrowApi.getDisputed();
+          response = await escrowApi.getDisputed(page, ESCROWS_PER_PAGE);
         }
 
-        if (!Array.isArray(data)) {
-          // some APIs wrap results in { data: [...] }
-          data = data?.results || data?.items || (data?.data && Array.isArray(data.data) ? data.data : [data]);
+        const data: any[] = Array.isArray(response) ? response : response?.data || [];
+        const mapped = data.map((d: any) => mapToCard(d, activeTab));
+        if (mounted) {
+          setEscrows(mapped);
+          setTotal(typeof response?.total === 'number' ? response.total : mapped.length);
         }
-
-        const mapped = (data || []).map((d: any) => mapToCard(d, activeTab));
-        if (mounted) setEscrows(mapped.length ? mapped : []);
       } catch (err: any) {
-        if (mounted) setError(err?.message || 'Failed to load escrows');
+        if (mounted) {
+          setError(err?.response?.data?.message || err?.message || 'Failed to load escrows');
+          setEscrows([]);
+          setTotal(0);
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -154,7 +127,7 @@ export default function EscrowsPage() {
 
     fetch();
     return () => { mounted = false; };
-  }, [activeTab]);
+  }, [activeTab, page]);
 
   useEffect(() => {
     let mounted = true;
@@ -263,6 +236,8 @@ export default function EscrowsPage() {
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search ID or buyer..."
             className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0F3D2E]/20 focus:border-[#0F3D2E]/30 transition-all placeholder:text-gray-400 font-medium"
           />
@@ -289,6 +264,8 @@ export default function EscrowsPage() {
           <p className="text-gray-500">No escrows found.</p>
         )}
       </div>
+
+      <Pagination page={page} limit={ESCROWS_PER_PAGE} total={total} onPageChange={setPage} itemLabel="escrows" />
     </div>
   );
 }
