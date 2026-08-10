@@ -11,6 +11,8 @@ import {
   Globe,
   ChevronRight,
   Camera,
+  CheckCircle2,
+  Image as ImageIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -239,47 +241,47 @@ export default function SettingsPage() {
           {/* Left Column (Profile & Limits) */}
           <div className="lg:col-span-4 space-y-6">
             {/* Profile Info Card */}
-            <div className="bg-white dark:bg-[#18181b] border border-border dark:border-zinc-800 rounded-2xl p-6 text-center shadow-sm relative group overflow-hidden">
-              <div className="absolute top-0 inset-x-0 h-2 bg-[#0F3D2E] dark:bg-[#185541]"></div>
-              
+            <div className="bg-white dark:bg-[#18181b] border border-[#E4E3E3CC] dark:border-zinc-800 rounded-[32px] p-8 text-center shadow-2xs relative overflow-hidden">
               {/* Profile Avatar */}
-              <div className="mx-auto w-24 h-24 rounded-full bg-[#E5ECE9] dark:bg-[#1f2937] border-2 border-white dark:border-zinc-900 shadow-md flex items-center justify-center text-primary dark:text-[#F3B659] text-3xl font-extrabold relative overflow-hidden select-none mb-4 mt-2">
-                {userData.avatarUrl ? (
-                  <img
-                    src={userData.avatarUrl}
-                    alt={userData.fullName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span>{getInitials(userData.fullName)}</span>
-                )}
-                {/* Visual Camera Indicator on Hover */}
+              <div className="relative mx-auto w-24 h-24 mb-4 select-none flex items-center justify-center">
+                <div className="w-full h-full rounded-full bg-[#FAFBFA] dark:bg-zinc-900 border border-[#E4E3E3CC] dark:border-zinc-800 flex items-center justify-center text-gray-700 dark:text-white text-3xl font-extrabold shadow-inner overflow-hidden">
+                  {userData.avatarUrl ? (
+                    <img
+                      src={userData.avatarUrl}
+                      alt={userData.fullName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>{getInitials(userData.fullName)}</span>
+                  )}
+                </div>
+                {/* Visual Camera Indicator */}
                 <div
                   onClick={() => setActiveView("personal-info")}
-                  className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer"
+                  className="absolute bottom-0 right-0 w-8 h-8 bg-white dark:bg-zinc-800 border border-[#E4E3E3CC] dark:border-zinc-800 rounded-full flex items-center justify-center text-gray-500 hover:text-[#0F3D2E] dark:hover:text-[#F3B659] shadow-sm cursor-pointer transition-colors"
                 >
-                  <Camera size={20} />
+                  <ImageIcon size={14} />
                 </div>
               </div>
 
               {/* Name & Email */}
-              <h2 className="text-lg font-bold text-[#0F3D2E] dark:text-[#F3B659] truncate px-2">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate mb-1">
                 {userData.fullName}
               </h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate px-2">
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate mb-4">
                 {userData.email}
               </p>
 
               {/* Verification Tag */}
-              <div className="mt-4 inline-flex items-center gap-1 bg-[#0F3D2E]/[0.06] dark:bg-[#185541]/20 border border-[#0F3D2E]/20 text-[#0F3D2E] dark:text-emerald-400 px-3.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">
-                <ShieldCheck size={12} className="shrink-0" />
+              <div className="inline-flex items-center gap-1.5 bg-[#E8F5E9] dark:bg-emerald-950/20 border border-[#A5D6A7] dark:border-emerald-900/40 text-[#2E7D32] dark:text-emerald-400 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">
+                <ShieldCheck size={12} className="shrink-0 text-[#2E7D32] dark:text-emerald-400" />
                 <span>Verified Broker</span>
               </div>
             </div>
 
             {/* Monthly Trading Limits Card */}
-            <div className="bg-white dark:bg-[#18181b] border border-border dark:border-zinc-800 rounded-2xl p-6 shadow-sm">
-              <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-bold tracking-wider block mb-3">
+            <div className="bg-white dark:bg-[#18181b] border border-[#E4E3E3CC] dark:border-zinc-800 rounded-[32px] p-6 shadow-2xs">
+              <span className="text-[10px] text-gray-450 dark:text-gray-500 uppercase font-bold tracking-wider block mb-4">
                 Monthly Trading Limits
               </span>
 
@@ -290,31 +292,26 @@ export default function SettingsPage() {
               </div>
 
               {/* Dispersal limits */}
-              <div className="flex justify-between items-center text-xs mb-2">
+              <div className="flex justify-between items-center text-xs mb-3">
                 <span className="text-gray-500 dark:text-gray-400">Monthly dispersal Limit:</span>
                 <span className="font-bold text-gray-800 dark:text-white">
-                  ₦1,500,000 / <span className="text-gray-400 dark:text-gray-600">₦5,000,000</span>
+                  ₦1,500,000 / <span className="text-gray-400 dark:text-zinc-600">₦5,000,000</span>
                 </span>
               </div>
 
               {/* Progress Bar */}
-              <div className="w-full bg-gray-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden mb-5">
+              <div className="w-full bg-[#FAFBFA] dark:bg-zinc-900 border border-[#E4E3E3CC] dark:border-zinc-800 h-2.5 rounded-full overflow-hidden mb-4">
                 <div
                   className="bg-[#0F3D2E] dark:bg-emerald-500 h-full rounded-full transition-all duration-500"
                   style={{ width: "30%" }}
                 ></div>
               </div>
 
-              {/* Footer upgrade notice */}
-              <p className="text-[11px] leading-relaxed text-gray-400 dark:text-gray-500">
-                Need to process over ₦50,000,000 monthly?{" "}
-                <button
-                  onClick={() => setActiveView("kyc")}
-                  className="text-[#0F3D2E] dark:text-[#F3B659] hover:underline font-bold focus:outline-none"
-                >
-                  Upload corporate tax certificates under the Identity Verification tab.
-                </button>
-              </p>
+              {/* Verified Upgrade Banner Info */}
+              <div className="flex items-start gap-2 text-[11px] leading-relaxed text-[#2E7D32] dark:text-emerald-400">
+                <CheckCircle2 size={14} className="shrink-0 mt-0.5" />
+                <span>Limits raised to ₦50,000,000 monthly. Your premium compliance badge is active.</span>
+              </div>
             </div>
           </div>
 
@@ -326,17 +323,17 @@ export default function SettingsPage() {
                 <div
                   key={opt.id}
                   onClick={() => setActiveView(opt.id)}
-                  className="bg-white dark:bg-[#18181b] border border-border dark:border-zinc-800 rounded-xl p-4 flex items-center justify-between shadow-xs hover:shadow-md hover:border-gray-300 dark:hover:border-zinc-700 cursor-pointer transition-all group duration-200"
+                  className="bg-white dark:bg-[#18181b] border border-[#E4E3E3CC] dark:border-zinc-800 rounded-2xl p-5 flex items-center justify-between shadow-2xs hover:border-[#0F3D2E] dark:hover:border-emerald-500 cursor-pointer transition-all group duration-200"
                 >
                   <div className="flex items-center gap-4">
                     {/* Left Icon Container */}
-                    <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 flex items-center justify-center text-primary dark:text-[#F3B659] shrink-0 transition-transform group-hover:scale-105 duration-200">
+                    <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-900 border border-[#E4E3E3CC] dark:border-zinc-800 flex items-center justify-center text-gray-500 dark:text-gray-400 shrink-0 group-hover:bg-gray-50 dark:group-hover:bg-zinc-800 transition-colors duration-200">
                       <Icon size={18} />
                     </div>
 
                     {/* Meta info */}
                     <div>
-                      <h3 className="font-bold text-gray-800 dark:text-white text-sm md:text-base group-hover:text-primary dark:group-hover:text-[#F3B659] transition-colors">
+                      <h3 className="font-bold text-gray-800 dark:text-white text-sm md:text-base group-hover:text-[#0F3D2E] dark:group-hover:text-[#F3B659] transition-colors">
                         {opt.title}
                       </h3>
                       <p className="text-[11px] md:text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -348,7 +345,7 @@ export default function SettingsPage() {
                   {/* Chevron Right */}
                   <ChevronRight
                     size={18}
-                    className="text-gray-400 group-hover:text-primary dark:group-hover:text-[#F3B659] transition-all duration-200 group-hover:translate-x-0.5"
+                    className="text-gray-400 group-hover:text-[#0F3D2E] dark:group-hover:text-[#F3B659] transition-all duration-200 group-hover:translate-x-0.5"
                   />
                 </div>
               );
