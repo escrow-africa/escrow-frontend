@@ -32,18 +32,18 @@ export default function PreferencesForm({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto animate-fade-in text-gray-900 dark:text-gray-200">
+    <div className="w-full max-w-2xl mx-auto animate-fade-in text-gray-900 dark:text-gray-200 px-4 py-8">
       {/* Back Link */}
       <button
         onClick={onCancel}
-        className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-[#0F3D2E] dark:hover:text-[#F3B659] mb-6 transition-colors font-medium text-sm focus:outline-none cursor-pointer"
+        className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-[#0F3D2E] dark:hover:text-[#F3B659] mb-6 transition-colors font-semibold text-sm focus:outline-none cursor-pointer"
       >
         <ArrowLeft size={16} />
         <span>Back to Settings</span>
       </button>
 
       {/* Form Card */}
-      <div className="bg-white dark:bg-[#18181b] border border-[#E4E3E3CC] dark:border-zinc-800 rounded-[32px] p-8 md:p-10 shadow-xs">
+      <div className="bg-white dark:bg-[#18181b] border border-[#E4E3E3CC] dark:border-zinc-800 rounded-md p-6 md:p-8 shadow-xs">
         {/* Header */}
         <div className="pb-6 border-b border-gray-100 dark:border-zinc-850 mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -52,17 +52,14 @@ export default function PreferencesForm({
               Configure default currency, interface language, and localized timezone preferences.
             </p>
           </div>
-          <div className="flex items-center gap-2 bg-[#FAFBFA] dark:bg-zinc-900 text-gray-650 dark:text-gray-400 px-3.5 py-1.5 rounded-full text-xs font-semibold self-start border border-[#E4E3E3CC] dark:border-zinc-800">
-            <Globe size={14} />
-            <span>UTC+01:00</span>
-          </div>
+          
         </div>
 
         {/* Form Fields */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Default Currency */}
           <div>
-            <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-[0.15em] mb-2 uppercase">
+            <label className="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 tracking-[0.15em] mb-2 uppercase">
               Preferred Payout & Ad Currency
             </label>
             <div className="relative">
