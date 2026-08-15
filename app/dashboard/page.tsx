@@ -35,10 +35,8 @@ export default function DashboardPage() {
     const fetchActive = async () => {
       setLoadingActiveEscrows(true);
       try {
-        let data: any = await escrowApi.getActive();
-        if (!Array.isArray(data)) {
-          data = data?.results || data?.items || (data?.data && Array.isArray(data.data) ? data.data : [data]);
-        }
+        const response: any = await escrowApi.getActive(1, 5);
+        const data: any[] = Array.isArray(response) ? response : response?.data || [];
 
         const mapped: ActiveEscrow[] = (data || []).map((it: any) => {
           const status = (it.status || it.state || '').toString().toUpperCase();
@@ -75,7 +73,7 @@ export default function DashboardPage() {
   useEffect(() => {
     (async () => {
       try {
-        await fetchWalletDetails();
+        await fetchWalletDetails(1, 5);
       } catch (e) {
         console.error('Failed to fetch wallet details for dashboard', e);
       }

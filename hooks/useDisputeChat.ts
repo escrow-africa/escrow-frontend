@@ -1,99 +1,121 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { disputeApi } from "../api/dispute";
 import { EvidenceItemData } from "../components/dashboard/disputes/EvidenceChat";
+import { mapDisputeMessagesToChatItems } from "../utils/disputeChatMapper";
 
-const MOCK_INITIAL_MESSAGES: EvidenceItemData[] = [
-  {
-    id: "EV-001",
-    type: "message",
-    sender: "Louis Client",
-    senderInitial: "L",
-    timestamp: "2026-06-21 • 05:18",
-    content: "Louis Client uploaded verified evidence package: Flaws-ui.png",
-    isUserMessage: false,
-  },
-  {
-    id: "EV-003",
-    type: "message",
-    sender: "Louis Client",
-    senderInitial: "L",
-    timestamp: "2026-06-21 • 05:18",
-    content: "The evidences as regards to this project has been dropped.",
-    isUserMessage: false,
-  },
-  {
-    id: "EV-004",
-    type: "message",
-    sender: "Madeleine Nkiru",
-    senderInitial: "M",
-    timestamp: "2026-06-21 • 05:20",
-    content: "I have received your comment. Please let me know what exact changes",
-    isUserMessage: true,
-  },
-];
+const PAGE_SIZE = 30;
 
-export function useDisputeChat(disputeId: string) {
-  const [messages, setMessages] = useState<EvidenceItemData[]>(MOCK_INITIAL_MESSAGES);
+export function useDisputeChat(disputeId: string, currentUserId?: string | null, counterpartyLabel = "Other Party") {
+  const [messages, setMessages] = useState<EvidenceItemData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Hook handles sending messages
-  const sendMessage = async (content: string) => {
-    if (!content.trim()) return;
+  // Raw message records keyed by id - the backend returns newest-first pages, but polling for
+  // new messages and "load earlier" both merge into this map so neither loses what the other
+  // already fetched, regardless of how the newest-30 window drifts between polls.
+  const recordsRef = useRef<Map<string, any>>(new Map());
+  const highestLoadedPageRef = useRef(0);
 
-    const timestamp = new Date().toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).replace(/\//g, "-") + " • " + new Date().toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
+  const applyRecords = useCallback(() => {
+    const all = Array.from(recordsRef.current.values());
+    all.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    setMessages(
+      mapDisputeMessagesToChatItems(all, {
+        currentUserId: currentUserId || undefined,
+        userLabel: "You",
+        counterpartyLabel,
+      })
+    );
+  }, [currentUserId, counterpartyLabel]);
 
-    const userMessage: EvidenceItemData = {
-      id: `EV-${Date.now()}`,
-      type: "message",
-      sender: "Madeleine Nkiru",
-      senderInitial: "M",
-      timestamp,
-      content,
-      isUserMessage: true,
+  const loadLatest = useCallback(async () => {
+    if (!disputeId) return;
+
+    try {
+      const response: any = await disputeApi.getMessages(disputeId, 1, PAGE_SIZE);
+      const data: any[] = Array.isArray(response) ? response : response?.data || [];
+      data.forEach((m) => recordsRef.current.set(m.id, m));
+
+      const total = typeof response?.total === "number" ? response.total : data.length;
+      highestLoadedPageRef.current = Math.max(highestLoadedPageRef.current, 1);
+      setHasMore(recordsRef.current.size < total);
+      applyRecords();
+      setIsConnected(true);
+    } catch (error) {
+      console.error("Failed to load dispute messages", error);
+      setIsConnected(false);
+    }
+  }, [disputeId, applyRecords]);
+
+  const loadOlder = useCallback(async () => {
+    if (!disputeId) return;
+
+    setIsLoadingMore(true);
+    try {
+      const nextPage = highestLoadedPageRef.current + 1;
+      const response: any = await disputeApi.getMessages(disputeId, nextPage, PAGE_SIZE);
+      const data: any[] = Array.isArray(response) ? response : response?.data || [];
+      data.forEach((m) => recordsRef.current.set(m.id, m));
+
+      const total = typeof response?.total === "number" ? response.total : recordsRef.current.size;
+      highestLoadedPageRef.current = nextPage;
+      setHasMore(recordsRef.current.size < total);
+      applyRecords();
+    } catch (error) {
+      console.error("Failed to load earlier dispute messages", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [disputeId, applyRecords]);
+
+  useEffect(() => {
+    let isMounted = true;
+    let pollTimer: ReturnType<typeof setInterval> | undefined;
+
+    recordsRef.current = new Map();
+    highestLoadedPageRef.current = 0;
+    setMessages([]);
+    setHasMore(false);
+
+    const refreshMessages = async () => {
+      if (!isMounted) return;
+      setIsLoading(true);
+      try {
+        await loadLatest();
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
     };
 
-    // 1. Optimistic Update
-    setMessages((prev) => [...prev, userMessage]);
+    void refreshMessages();
+    pollTimer = setInterval(() => {
+      void loadLatest();
+    }, 10000);
 
-    // Simulating backend / WebSocket roundtrip
+    return () => {
+      isMounted = false;
+      if (pollTimer) clearInterval(pollTimer);
+    };
+  }, [disputeId, loadLatest]);
+
+  const sendMessage = async (content: string) => {
+    if (!content.trim() || !disputeId) return;
+
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    setIsLoading(false);
-
-    // 2. Simulated Auto-Reply (For mock mode)
-    setTimeout(() => {
-      const replyTimestamp = new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).replace(/\//g, "-") + " • " + new Date().toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-
-      const mockReply: EvidenceItemData = {
-        id: `EV-${Date.now() + 1}`,
-        type: "message",
-        sender: "Louis Client",
-        senderInitial: "L",
-        timestamp: replyTimestamp,
-        content: `Thanks for the response. I've noted the request: "${content}". We will align with the arbitrator shortly.`,
-        isUserMessage: false,
-      };
-
-      setMessages((prev) => [...prev, mockReply]);
-    }, 1500);
+    try {
+      await disputeApi.sendMessage(disputeId, content);
+      await loadLatest();
+      setIsConnected(true);
+    } catch (error) {
+      console.error("Failed to send dispute message", error);
+      setIsConnected(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return {
@@ -102,5 +124,8 @@ export function useDisputeChat(disputeId: string) {
     sendMessage,
     isLoading,
     isConnected,
+    hasMore,
+    isLoadingMore,
+    loadOlder,
   };
 }

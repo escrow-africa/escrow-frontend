@@ -1,52 +1,28 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, use, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, X } from "lucide-react";
+import toast from "react-hot-toast";
 import DisputeTimeline from "../../../../components/dashboard/disputes/DisputeTimeline";
 import EvidenceChat from "../../../../components/dashboard/disputes/EvidenceChat";
-import CompromiseLedgerSidebar from "../../../../components/dashboard/disputes/CompromiseLedgerSidebar";
+import CompromiseLedgerSidebar, { ProposalItem } from "../../../../components/dashboard/disputes/CompromiseLedgerSidebar";
 import CompromiseOfferModal from "../../../../components/dashboard/disputes/CompromiseOfferModal";
 import { useDisputeChat } from "../../../../hooks/useDisputeChat";
-import { Dispute } from "../../../../types/disputes";
+import { disputeApi } from "../../../../api/dispute";
+import { escrowApi } from "../../../../api/escrow";
+import { getTokenFromCookie } from "../../../../utils/token";
 
-// Mock dispute data matching details screenshot (Screen 3)
-const mockDisputeData: Record<string, Dispute> = {
-  "DSP-001": {
-    id: "DSP-001",
-    issueId: "DIS-593",
-    orderRef: "BUY-723",
-    date: "2026-06-21",
-    title: "Buggy Deliverables",
-    description: "Figma grids are broken when imported into production tailwind components.",
-    amount: "₦79,000",
-    status: "INVESTIGATION_ACTIVE",
-    claimStatement: "Figma grids are broken when imported into production tailwind components.",
-    breachCategory: "Quality Issue",
-    relatedContract: "BUY-723",
-    timelineStage: "MEDIATION_ACTIVE",
-    currentStageNumber: 3,
-    totalStages: 4,
-  },
-  "DSP-002": {
-    id: "DSP-002",
-    issueId: "DIS-594",
-    orderRef: "BUY-711",
-    date: "2026-06-21",
-    title: "Out of Scope",
-    description: "Figma grids are broken when imported into production tailwind components.",
-    amount: "₦102,000",
-    status: "INVESTIGATION_ACTIVE",
-    claimStatement: "Figma grids are broken when imported into production tailwind components.",
-    breachCategory: "Out of Scope Demands / Contract Violation",
-    relatedContract: "BUY-711",
-    timelineStage: "MEDIATION_ACTIVE",
-    currentStageNumber: 3,
-    totalStages: 4,
-  },
-};
-
-type DemoState = "INITIAL" | "RELEASE_PROPOSED" | "RELEASE_PENDING" | "REFUND_ACCEPTED";
+function getCurrentUserId(): string | null {
+  const token = getTokenFromCookie();
+  if (!token) return null;
+  try {
+    const payload = token.split(".")[1];
+    const decoded = JSON.parse(atob(payload));
+    return decoded.sub || decoded.id || null;
+  } catch {
+    return null;
+  }
+}
 
 export default function DisputeDetailsPage({
   params,
@@ -55,211 +31,178 @@ export default function DisputeDetailsPage({
 }) {
   const router = useRouter();
   const { id } = use(params);
+  const currentUserId = getCurrentUserId();
 
-  // Initialize the real-time chat mock hook
-  const { messages, setMessages, sendMessage } = useDisputeChat(id);
-
-  const dispute = mockDisputeData[id] || mockDisputeData["DSP-001"];
-
-  // State management for interactive demo mockup screens
-  const [demoState, setDemoState] = useState<DemoState>("INITIAL");
-
-  // Compromise offer flow states
+  const [dispute, setDispute] = useState<any | null>(null);
+  const [escrow, setEscrow] = useState<any | null>(null);
+  const [events, setEvents] = useState<any[]>([]);
+  const [eventsTotal, setEventsTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isRespondingToOffer, setIsRespondingToOffer] = useState(false);
+  const [isProposing, setIsProposing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showNotification, setShowNotification] = useState(false);
-  const [notificationText, setNotificationText] = useState("");
+  const [isRequestingReview, setIsRequestingReview] = useState(false);
 
-  // Handle auto-transitions for the Release Proposal flow
-  React.useEffect(() => {
-    if (demoState === "RELEASE_PROPOSED") {
-      setNotificationText("Proposal registered: Release ₦79,000 to Louis / ₦0 to Madeleine");
-      setShowNotification(true);
+  const isBuyer = currentUserId === escrow?.buyerId;
+  const counterparty = isBuyer ? escrow?.seller : escrow?.buyer;
 
-      const timer = setTimeout(() => {
-        setDemoState("RELEASE_PENDING");
-        setShowNotification(false);
-      }, 3500);
+  const { messages, sendMessage, hasMore, isLoadingMore, loadOlder } = useDisputeChat(
+    id,
+    currentUserId,
+    counterparty?.name || "Other Party"
+  );
 
-      return () => clearTimeout(timer);
+  const loadDispute = useCallback(async () => {
+    try {
+      const data = await disputeApi.getById(id);
+      setDispute(data);
+
+      const contractId = data.relatedContractId || data.relatedContract;
+      if (contractId) {
+        try {
+          const escrowData = await escrowApi.getById(contractId);
+          setEscrow(escrowData);
+        } catch {
+          // Escrow lookup is best-effort context (buyer/seller names, amount); dispute still loads without it.
+        }
+      }
+
+      // Fetches the events endpoint's default page (most recent 100) - see the backend comment
+      // on DisputeService.getEvents for why this list isn't split across true pagination pages.
+      const eventsResponse: any = await disputeApi.getEvents(id);
+      const eventList: any[] = Array.isArray(eventsResponse) ? eventsResponse : eventsResponse?.data || [];
+      setEvents(eventList);
+      setEventsTotal(typeof eventsResponse?.total === 'number' ? eventsResponse.total : eventList.length);
+      setError(null);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to load dispute details");
+    } finally {
+      setLoading(false);
     }
-  }, [demoState]);
+  }, [id]);
 
-  // Dynamic timeline stages based on current state
+  useEffect(() => {
+    setLoading(true);
+    loadDispute();
+  }, [loadDispute]);
+
+  const buyerName = isBuyer ? "You" : counterparty?.name || "Buyer";
+  const sellerName = !isBuyer ? "You" : counterparty?.name || "Seller";
+
+  // Resolve pending settlement proposals: a SETTLEMENT_PROPOSED event with no later
+  // SETTLEMENT_ACCEPTED/DECLINED event referencing it as acceptedProposalId/declinedProposalId.
+  const respondedProposalIds = new Set(
+    events
+      .filter((e) => e.eventType === "SETTLEMENT_ACCEPTED" || e.eventType === "SETTLEMENT_DECLINED")
+      .map((e) => e.payload?.acceptedProposalId || e.payload?.declinedProposalId)
+      .filter(Boolean)
+  );
+
+  const proposals: ProposalItem[] = events
+    .filter((e) => e.eventType === "SETTLEMENT_PROPOSED")
+    .map((e) => {
+      const isMine = e.triggeredBy === currentUserId;
+      const accepted = events.find((ev) => ev.eventType === "SETTLEMENT_ACCEPTED" && ev.payload?.acceptedProposalId === e.id);
+      const declined = events.find((ev) => ev.eventType === "SETTLEMENT_DECLINED" && ev.payload?.declinedProposalId === e.id);
+      return {
+        id: e.id,
+        status: accepted ? "ACCEPTED" : declined ? "DECLINED" : "PENDING",
+        proposedByLabel: isMine ? "You" : counterparty?.name || "Other party",
+        isMine,
+        createdAt: e.createdAt,
+      } as ProposalItem;
+    })
+    .reverse();
+
+  const hasPendingProposal = proposals.some((p) => p.status === "PENDING");
+
+  const handleDraftOffer = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleSendProposal = async (message: string) => {
+    setIsProposing(true);
+    try {
+      await disputeApi.proposeSettlement(id);
+      await sendMessage(`Settlement proposal: ${message}`);
+      toast.success("Settlement proposal sent");
+      setIsModalOpen(false);
+      await loadDispute();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to send settlement proposal");
+    } finally {
+      setIsProposing(false);
+    }
+  };
+
+  const handleAccept = async (proposalId: string) => {
+    setIsRespondingToOffer(true);
+    try {
+      await disputeApi.acceptSettlement(id, proposalId);
+      toast.success("Settlement accepted");
+      await loadDispute();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to accept settlement");
+    } finally {
+      setIsRespondingToOffer(false);
+    }
+  };
+
+  const handleDecline = async (proposalId: string) => {
+    setIsRespondingToOffer(true);
+    try {
+      await disputeApi.declineSettlement(id, proposalId);
+      toast.success("Settlement declined");
+      await loadDispute();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to decline settlement");
+    } finally {
+      setIsRespondingToOffer(false);
+    }
+  };
+
+  const handleSpeedUpDesk = async () => {
+    setIsRequestingReview(true);
+    try {
+      await disputeApi.requestReview(id);
+      toast.success("Manual review requested — a broker will pick up this case");
+      await loadDispute();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to request review");
+    } finally {
+      setIsRequestingReview(false);
+    }
+  };
+
+  if (loading) {
+    return <p className="text-sm text-gray-500">Loading dispute details…</p>;
+  }
+
+  if (error || !dispute) {
+    return <p className="text-sm text-red-600">{error || "Unable to load this dispute"}</p>;
+  }
+
+  const isResolved = dispute.status === "RESOLVED" || dispute.status === "REJECTED";
   const timelineStages = [
     { title: "CONFLICT RAISED", status: "completed" as const },
     { title: "EVIDENCE LOCKED", status: "completed" as const },
-    { 
-      title: "MEDIATION ACTIVE", 
-      status: (demoState === "RELEASE_PENDING" || demoState === "REFUND_ACCEPTED") ? "completed" as const : "current" as const 
+    {
+      title: "MEDIATION ACTIVE",
+      status: isResolved ? "completed" as const : "current" as const,
     },
-    { 
-      title: "AGREEMENT SETTLED", 
-      status: demoState === "REFUND_ACCEPTED" 
-        ? "completed" as const 
-        : demoState === "RELEASE_PENDING" 
-        ? "current" as const 
-        : "upcoming" as const 
+    {
+      title: "AGREEMENT SETTLED",
+      status: isResolved
+        ? "completed" as const
+        : hasPendingProposal
+        ? "current" as const
+        : "upcoming" as const,
     },
   ];
 
-  // Dynamic ledger proposals array matching mockups
-  const getProposals = () => {
-    switch (demoState) {
-      case "INITIAL":
-        return [];
-      case "RELEASE_PROPOSED":
-        return [
-          {
-            id: "prop-split",
-            type: "split" as const,
-            status: "ACCEPTED" as const,
-            buyerAmount: 39500,
-            sellerAmount: 39500,
-            ratio: "50% / 50%",
-          }
-        ];
-      case "RELEASE_PENDING":
-        return [
-          {
-            id: "prop-split",
-            type: "split" as const,
-            status: "ACCEPTED" as const,
-            buyerAmount: 39500,
-            sellerAmount: 39500,
-            ratio: "50% / 50%",
-          },
-          {
-            id: "prop-release",
-            type: "release" as const,
-            status: "PENDING" as const,
-            buyerAmount: 0,
-            sellerAmount: 79000,
-            ratio: "0% / 100%",
-          }
-        ];
-      case "REFUND_ACCEPTED":
-        return [
-          {
-            id: "prop-split",
-            type: "split" as const,
-            status: "ACCEPTED" as const,
-            buyerAmount: 39500,
-            sellerAmount: 39500,
-            ratio: "50% / 50%",
-          },
-          {
-            id: "prop-refund",
-            type: "refund" as const,
-            status: "ACCEPTED" as const,
-            buyerAmount: 79000,
-            sellerAmount: 0,
-            ratio: "100% / 0%",
-          }
-        ];
-    }
-  };
-
-  // Combine typed chat messages with state-specific messages
-  const getCombinedMessages = () => {
-    const base = [...messages];
-    if (demoState === "RELEASE_PENDING") {
-      return [
-        ...base,
-        {
-          id: "EV-SYS-RELEASE-PEND-1",
-          type: "message" as const,
-          sender: "EscrowAfrica Ledger",
-          senderInitial: "L",
-          timestamp: "2026-06-25 • 06:00",
-          content: "Agreement executed. ₦79,000 refunded to Buyer wallet. N0 released to Seller. Escrow contract closed.",
-          isUserMessage: false,
-        },
-        {
-          id: "EV-REBUTTAL-1",
-          type: "message" as const,
-          sender: "Louis Client",
-          senderInitial: "L",
-          timestamp: "2026-06-21 • 05:18",
-          content: "I cannot agree to a full release. The app is completely non-functional. Let's do a 50/50 split so we both cut our losses.",
-          isUserMessage: false,
-        }
-      ];
-    } else if (demoState === "REFUND_ACCEPTED") {
-      return [
-        ...base,
-        {
-          id: "EV-SYS-REFUND-ACC-1",
-          type: "message" as const,
-          sender: "EscrowAfrica Ledger",
-          senderInitial: "L",
-          timestamp: "2026-06-25 • 06:00",
-          content: "Agreement executed. ₦39,500 refunded to Buyer wallet. ₦39,500 released to Seller. Escrow contract closed.",
-          isUserMessage: false,
-        },
-        {
-          id: "EV-SYS-REFUND-ACC-2",
-          type: "message" as const,
-          sender: "EscrowAfrica Ledger",
-          senderInitial: "L",
-          timestamp: "2026-06-25 • 06:00",
-          content: "Agreement executed. ₦79,000 refunded to Buyer wallet. N0 released to Seller. Escrow contract closed.",
-          isUserMessage: false,
-        }
-      ];
-    }
-    return base;
-  };
-
-  const handleSendProposal = (proposal: {
-    type: "split" | "refund" | "release";
-    buyerAmount: number;
-    sellerAmount: number;
-    ratio: string;
-  }) => {
-    setIsModalOpen(false);
-
-    if (proposal.type === "release") {
-      setDemoState("RELEASE_PROPOSED");
-    } else if (proposal.type === "refund") {
-      setDemoState("REFUND_ACCEPTED");
-      setNotificationText(`Proposal registered: Refund ₦${proposal.buyerAmount.toLocaleString()} to Madeleine / ₦${proposal.sellerAmount.toLocaleString()} to Louis`);
-      setShowNotification(true);
-      setTimeout(() => {
-        setShowNotification(false);
-      }, 4000);
-    } else {
-      // Split
-      setNotificationText(`Proposal registered: Split ₦${proposal.buyerAmount.toLocaleString()} to Madeleine / ₦${proposal.sellerAmount.toLocaleString()} to Louis`);
-      setShowNotification(true);
-      setTimeout(() => {
-        setShowNotification(false);
-      }, 4000);
-    }
-  };
-
   return (
     <div className="relative space-y-6 pb-12">
-      {/* Dark Dispute Security Toast Notification */}
-      {showNotification && (
-        <div className="fixed top-4 right-4 z-50 w-80 bg-[#090D16] text-white border border-gray-800 rounded-xl p-4 shadow-2xl flex items-start gap-3 transition-all duration-300 animate-in fade-in slide-in-from-top-4">
-          <AlertCircle size={16} className="text-gray-400 mt-0.5" />
-          <div className="flex-1 min-w-0">
-            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-              DISPUTE SECURITY
-            </h4>
-            <p className="text-[11px] text-gray-300 font-medium leading-normal">
-              {notificationText}
-            </p>
-          </div>
-          <button 
-            onClick={() => setShowNotification(false)}
-            className="text-gray-500 hover:text-white transition-colors p-0.5"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
       {/* Header Back Button */}
       <div>
         <button
@@ -274,24 +217,24 @@ export default function DisputeDetailsPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Left Column (Main Details & Chat) */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* Case Header Details Card */}
           <div className="bg-white rounded-2xl border border-gray-100 border-t-4 border-t-[#0F3D2E] p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
             <div className="flex justify-between items-start gap-4">
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="inline-block px-2 py-0.5 bg-[#FFF0F0] text-[#E53E3E] text-[10px] font-bold rounded uppercase tracking-wider">
-                    ACTIVE CASE DETAIL
+                    {isResolved ? "CASE RESOLVED" : "ACTIVE CASE DETAIL"}
                   </span>
                   <span className="inline-block px-2 py-0.5 bg-[#FFFBEB] border border-[#FEF3C7] text-[#D97706] text-[10px] font-bold rounded uppercase tracking-wider">
-                    INVESTIGATION ACTIVE
+                    {dispute.status}
                   </span>
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-                  {dispute.title}
+                  {dispute.claimDescription || "Dispute case"}
                 </h2>
                 <p className="text-xs text-gray-400 mt-2 font-medium">
-                  Ledger ID: ARB-592 • Order: {dispute.orderRef}
+                  Order: {escrow?.escrowCode || dispute.relatedContractId || "N/A"}
                 </p>
               </div>
 
@@ -301,7 +244,7 @@ export default function DisputeDetailsPage({
                   CONTESTED AMOUNT
                 </p>
                 <p className="text-lg font-bold text-[#E53E3E]">
-                  {dispute.amount}
+                  {dispute.disputedAmount ? `₦${Number(dispute.disputedAmount).toLocaleString()}` : "—"}
                 </p>
               </div>
             </div>
@@ -312,7 +255,7 @@ export default function DisputeDetailsPage({
                 CLAIM STATEMENT
               </p>
               <p className="text-xs text-gray-700 leading-relaxed font-medium">
-                "{dispute.claimStatement}"
+                "{dispute.claimDescription}"
               </p>
             </div>
           </div>
@@ -320,24 +263,31 @@ export default function DisputeDetailsPage({
           {/* Timeline progress */}
           <DisputeTimeline
             stages={timelineStages}
-            currentStage={demoState === "RELEASE_PENDING" || demoState === "REFUND_ACCEPTED" ? 4 : 3}
+            currentStage={isResolved ? 4 : hasPendingProposal ? 4 : 3}
             totalStages={4}
           />
 
-          {/* Dynamic Evidence Chat */}
+          {/* Evidence Chat */}
           <EvidenceChat
-            evidenceItems={getCombinedMessages()}
+            evidenceItems={messages}
             onSendMessage={sendMessage}
-            onProposeSettlement={() => setIsModalOpen(true)}
+            onProposeSettlement={handleDraftOffer}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={loadOlder}
           />
         </div>
 
         {/* Right Sidebar */}
         <div className="lg:sticky lg:top-4">
           <CompromiseLedgerSidebar
-            onDraftOffer={() => setIsModalOpen(true)}
-            onSpeedUpDesk={() => console.log("Speed up broker desk clicked")}
-            proposals={getProposals()}
+            onDraftOffer={handleDraftOffer}
+            onSpeedUpDesk={handleSpeedUpDesk}
+            proposals={proposals}
+            onAccept={handleAccept}
+            onDecline={handleDecline}
+            isResponding={isRespondingToOffer || isRequestingReview}
+            truncatedNotice={eventsTotal > events.length ? `Showing the most recent ${events.length} of ${eventsTotal} case events` : undefined}
           />
         </div>
       </div>
@@ -347,6 +297,10 @@ export default function DisputeDetailsPage({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSendProposal={handleSendProposal}
+        isSubmitting={isProposing}
+        disputedAmount={Number(dispute.disputedAmount) || 0}
+        buyerName={buyerName}
+        sellerName={sellerName}
       />
     </div>
   );

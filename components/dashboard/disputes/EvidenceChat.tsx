@@ -17,12 +17,18 @@ interface EvidenceChatProps {
   evidenceItems: EvidenceItemData[];
   onSendMessage?: (message: string) => void;
   onProposeSettlement?: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
 export default function EvidenceChat({
   evidenceItems,
   onSendMessage,
   onProposeSettlement,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
 }: EvidenceChatProps) {
   const [messageInput, setMessageInput] = useState("");
 
@@ -59,6 +65,17 @@ export default function EvidenceChat({
 
       {/* Evidence Items (Chat History) */}
       <div className="flex-1 overflow-y-auto space-y-5 mb-4 pr-1 scrollbar-thin">
+        {hasMore && (
+          <div className="flex justify-center pb-1">
+            <button
+              onClick={onLoadMore}
+              disabled={isLoadingMore}
+              className="text-[11px] font-bold text-gray-500 hover:text-gray-800 disabled:opacity-50 transition-colors px-3 py-1.5 rounded-full border border-gray-200 hover:bg-gray-50"
+            >
+              {isLoadingMore ? "Loading…" : "Load earlier messages"}
+            </button>
+          </div>
+        )}
         {evidenceItems.map((item) => {
           const isUser = item.isUserMessage;
           let avatarBg = isUser ? "bg-[#0F3D2E] text-white" : "bg-[#FFF0F0] text-[#E53E3E] border border-[#FFE3E3]";

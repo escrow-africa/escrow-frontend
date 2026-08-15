@@ -7,19 +7,23 @@ import PendingFundsCard from "../../../components/dashboard/wallet/PendingFundsC
 import TransactionHistory, { TransactionItem } from "../../../components/dashboard/transaction/TransactionHistory";
 import TransactionDetail from "../../../components/dashboard/transaction/TransactionDetail";
 import WithdrawFundsFlow from "../../../components/dashboard/wallet/WithdrawFundsFlow";
+import Pagination from "../../../components/Pagination";
 import { useWalletStore } from "../../../store/walletStore";
 import FundWalletFlow from "@/components/dashboard/wallet/FundWalletFlow";
+
+const TRANSACTIONS_PER_PAGE = 20;
 
 export default function WalletPage() {
   const router = useRouter();
   const [viewState, setViewState] = useState<"overview" | "transaction_detail" | "withdraw_funds" | "fund_wallet">("overview");
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionItem | null>(null);
+  const [transactionsPage, setTransactionsPage] = useState(1);
 
-  const { walletDetails, error, fetchWalletDetails } = useWalletStore();
+  const { walletDetails, error, fetchWalletDetails, transactionsTotal } = useWalletStore();
 
   useEffect(() => {
-    fetchWalletDetails();
-  }, []);
+    fetchWalletDetails(transactionsPage, TRANSACTIONS_PER_PAGE);
+  }, [transactionsPage]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -55,7 +59,12 @@ export default function WalletPage() {
   const handleBackToOverview = () => {
     setSelectedTransaction(null);
     setViewState("overview");
-    fetchWalletDetails();
+    // A fund/withdraw flow may have just created a new transaction - jump back to page 1 so it's visible.
+    if (transactionsPage === 1) {
+      fetchWalletDetails(1, TRANSACTIONS_PER_PAGE);
+    } else {
+      setTransactionsPage(1);
+    }
   };
 
   // Safe fallbacks if wallet details are missing or loading
@@ -129,9 +138,16 @@ export default function WalletPage() {
 
           {/* Bottom Section - Transaction History */}
           <div className="w-full">
-            <TransactionHistory 
+            <TransactionHistory
               transactions={transactions}
               onSelectTransaction={handleTransactionSelect}
+            />
+            <Pagination
+              page={transactionsPage}
+              limit={TRANSACTIONS_PER_PAGE}
+              total={transactionsTotal}
+              onPageChange={setTransactionsPage}
+              itemLabel="transactions"
             />
           </div>
         </div>

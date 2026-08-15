@@ -1,12 +1,16 @@
 import React, { useState } from "react";
 import { Clock, AlertCircle, ChevronDown } from "lucide-react";
+import toast from "react-hot-toast";
+import { escrowApi } from "../../../api/escrow";
 
 interface CancelEscrowModalProps {
   isOpen: boolean;
   onClose: () => void;
+  escrowId: string;
+  onCancelled?: () => void;
 }
 
-export default function CancelEscrowModal({ isOpen, onClose }: CancelEscrowModalProps) {
+export default function CancelEscrowModal({ isOpen, onClose, escrowId, onCancelled }: CancelEscrowModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [reason, setReason] = useState("Mutual Agreement");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -21,13 +25,18 @@ export default function CancelEscrowModal({ isOpen, onClose }: CancelEscrowModal
     "Other"
   ];
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
     setIsProcessing(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await escrowApi.cancel(escrowId, reason);
+      toast.success("Escrow cancelled");
+      onCancelled?.();
+      onClose();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to cancel escrow");
+    } finally {
       setIsProcessing(false);
-      onClose(); // Close after processing
-    }, 3000);
+    }
   };
 
   const handleClose = () => {

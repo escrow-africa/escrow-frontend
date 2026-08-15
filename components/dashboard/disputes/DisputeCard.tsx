@@ -1,16 +1,17 @@
 import React from "react";
 import Link from "next/link";
 import { AlertCircle, ChevronRight } from "lucide-react";
+import { DisputeStatus } from "../../../types/disputes";
 
 export interface DisputeCardProps {
   id: string;
-  issueId: string;
-  orderRef: string;
-  date: string;
+  issueId?: string;
+  orderRef?: string;
+  date?: string;
   title: string;
-  description: string;
-  amount: string;
-  status: "INVESTIGATION_ACTIVE" | "ACTIVE_CASE_DETAILS";
+  description?: string;
+  amount?: string;
+  status: DisputeStatus;
 }
 
 export default function DisputeCard({

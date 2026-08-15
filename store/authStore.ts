@@ -45,10 +45,13 @@ export const useAuthStore = create<AuthState>((set)=>({
 
       if (typeof window !== "undefined" && response) {
         const token = response.accessToken || response.token;
-        if (token) setTokenCookie(token);
+        if (token) {
+          setTokenCookie(token);
+        }
       }
 
       set({loading:false});
+      return response;
     } catch(error:any) {
       set({
         error:error.response?.data?.message,

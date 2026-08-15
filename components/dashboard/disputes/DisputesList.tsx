@@ -1,35 +1,27 @@
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import DisputeCard from "./DisputeCard";
+import Pagination from "../../Pagination";
 import { DisputeCard as DisputeCardType } from "../../../types/disputes";
 
 interface DisputesListProps {
   disputes: DisputeCardType[];
-  itemsPerPage?: number;
+  page: number;
+  limit: number;
+  total: number;
+  onPageChange: (page: number) => void;
   onRaiseDispute?: () => void;
 }
 
 export default function DisputesList({
   disputes,
-  itemsPerPage = 10,
+  page,
+  limit,
+  total,
+  onPageChange,
   onRaiseDispute,
 }: DisputesListProps) {
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const totalPages = Math.ceil(disputes.length / itemsPerPage);
-  const startIdx = (currentPage - 1) * itemsPerPage;
-  const endIdx = startIdx + itemsPerPage;
-  const currentDisputes = disputes.slice(startIdx, endIdx);
-
-  const handlePrevious = () => {
-    setCurrentPage((p) => Math.max(1, p - 1));
-  };
-
-  const handleNext = () => {
-    setCurrentPage((p) => Math.min(totalPages, p + 1));
-  };
-
   return (
     <div className="space-y-6">
       {/* Header with Button */}
@@ -73,8 +65,8 @@ export default function DisputesList({
 
       {/* Disputes Grid */}
       <div className="grid grid-cols-1 gap-4">
-        {currentDisputes.length > 0 ? (
-          currentDisputes.map((dispute) => (
+        {disputes.length > 0 ? (
+          disputes.map((dispute) => (
             <DisputeCard
               key={dispute.id}
               id={dispute.id}
@@ -94,50 +86,7 @@ export default function DisputesList({
         )}
       </div>
 
-      {/* Pagination */}
-      {disputes.length > 0 && (
-        <div className="flex justify-between items-center py-4">
-          <p className="text-xs text-gray-500 font-medium">
-            Showing Page {currentPage} of {totalPages} ({disputes.length} items total)
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrevious}
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium text-gray-600 flex items-center gap-1"
-            >
-              <ChevronLeft size={14} />
-              <span>Prev</span>
-            </button>
-
-            {/* Page Numbers */}
-            <div className="flex gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`w-7 h-7 rounded-lg font-bold text-xs transition-colors ${
-                    page === currentPage
-                      ? "bg-[#0F3D2E] text-white"
-                      : "border border-gray-200 text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={handleNext}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium text-gray-600 flex items-center gap-1"
-            >
-              <span>Next</span>
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
-      )}
+      <Pagination page={page} limit={limit} total={total} onPageChange={onPageChange} itemLabel="disputes" />
     </div>
   );
 }

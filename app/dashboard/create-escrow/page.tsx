@@ -20,7 +20,8 @@ function formatCurrency(value: number) {
 }
 
 export default function CreateEscrowPage() {
-  const [buyer, setBuyer] = useState("");
+  const [role, setRole] = useState<"BUYER" | "SELLER">("SELLER");
+  const [counterpartyEmail, setCounterpartyEmail] = useState("");
   const [amount, setAmount] = useState("");
   const [milestones, setMilestones] = useState(["", ""]);
   const [deadline, setDeadline] = useState("");
@@ -42,7 +43,7 @@ export default function CreateEscrowPage() {
     return Math.max(0, parsedAmount - fee);
   }, [parsedAmount]);
 
-  const canInitialize = Boolean(buyer.trim() && parsedAmount > 0 && milestones.some((m) => m.trim()) && deadline);
+  const canInitialize = Boolean(counterpartyEmail.trim() && parsedAmount > 0 && milestones.some((m) => m.trim()) && deadline);
 
   const router = useRouter();
 
@@ -50,9 +51,11 @@ export default function CreateEscrowPage() {
     if (!canInitialize) return;
     setStep("submitting");
 
-    // Build payload matching backend CreateEscrowDto
+    // Build payload matching backend CreateEscrowDto. creatorRole reflects which party the
+    // current user identified as; the counterparty's email is passed under the matching key.
     const payload = {
-      buyerEmail: buyer.trim(),
+      creatorRole: role,
+      ...(role === "SELLER" ? { buyerEmail: counterpartyEmail.trim() } : { sellerEmail: counterpartyEmail.trim() }),
       milestones: milestones.filter((m) => m.trim()).map((m) => m.trim()),
       amount: parsedAmount,
       deliveryDeadline: deadline,
@@ -63,14 +66,14 @@ export default function CreateEscrowPage() {
     try {
       setIsLoading(true);
       await escrowApi.create(payload);
+      toast.success("Escrow initialized — the buyer will receive an email to approve it");
+      router.push("/dashboard/escrows");
     } catch (error: any) {
       const message = error?.response?.data?.message || "Failed to initialize escrow";
       toast.error(message);
       setStep("form");
     } finally {
       setIsLoading(false);
-      toast.success("Escrow initialized");
-      router.push("/dashboard/escrows");
     }
   };
 
@@ -94,16 +97,36 @@ export default function CreateEscrowPage() {
             <h1 className="text-3xl font-bold text-[#0F3D2E] mb-2">Transaction Details</h1>
             <p className="text-gray-500 text-sm mb-8">Define the scope and scale of your escrow agreement</p>
 
+            <div className="mb-4">
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400">I am the</span>
+              <div className="mt-2 inline-flex rounded-2xl bg-[#F5F7F8] border border-gray-200 p-1">
+                {(["SELLER", "BUYER"] as const).map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setRole(option)}
+                    className={`px-6 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                      role === option ? "bg-[#0F3D2E] text-white" : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    {option === "SELLER" ? "Seller" : "Buyer"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
               <label className="space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400">Buyer Identity</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400">
+                  {role === "SELLER" ? "Buyer Identity" : "Seller Identity"}
+                </span>
                 <div className="relative">
                   <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
-                    value={buyer}
-                    onChange={(e) => setBuyer(e.target.value)}
-                    placeholder="Email or @username"
+                    value={counterpartyEmail}
+                    onChange={(e) => setCounterpartyEmail(e.target.value)}
+                    placeholder="Email"
                     className="w-full pl-11 pr-4 py-3 bg-[#F5F7F8] border border-gray-200 rounded-2xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0F3D2E]/15"
                   />
                 </div>
