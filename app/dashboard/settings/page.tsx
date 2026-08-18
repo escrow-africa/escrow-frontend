@@ -223,7 +223,7 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="flex flex-col h-full fade-in pb-20 text-gray-800 dark:text-gray-200">
+    <div className="flex flex-col min-h-full fade-in pb-36 text-gray-800 dark:text-gray-200 ">
       {/* Loading Sync Spinner */}
       <SyncLoader isOpen={isSyncing} />
 

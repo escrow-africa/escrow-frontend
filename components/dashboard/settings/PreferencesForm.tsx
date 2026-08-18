@@ -32,7 +32,7 @@ export default function PreferencesForm({
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto animate-fade-in text-gray-900 dark:text-gray-200 px-4 py-8">
+    <div className="w-full max-w-2xl mx-auto animate-fade-in text-gray-900 dark:text-gray-200 px-4 pt-8 pb-16">
       {/* Back Link */}
       <button
         onClick={onCancel}

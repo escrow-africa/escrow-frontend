@@ -59,7 +59,7 @@ export default function BillingForm({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto animate-fade-in">
+    <div className="w-full max-w-4xl mx-auto animate-fade-in pb-16">
       {/* Back to Settings Link */}
       <button
         onClick={onCancel}
