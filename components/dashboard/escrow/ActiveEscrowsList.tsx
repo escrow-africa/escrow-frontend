@@ -15,7 +15,7 @@ interface ActiveEscrowsListProps {
 
 export default function ActiveEscrowsList({ escrows }: ActiveEscrowsListProps) {
   return (
-    <div className="bg-surface rounded-2xl border border-border p-4 md:p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] h-full flex flex-col">
+    <div className="bg-surface rounded-2xl border border-border p-4 md:p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col">
       <h2 className="text-lg font-bold text-foreground mb-6">Active Escrows</h2>
       
       <div className="space-y-6 flex-1">

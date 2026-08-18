@@ -191,7 +191,7 @@ export default function EscrowDetailsPage({ params }: { params: Promise<{ id: st
   };
 
   return (
-    <div className="flex flex-col h-full fade-in pb-12 max-w-6xl mx-auto">
+    <div className="flex flex-col min-h-full fade-in pb-36 max-w-6xl mx-auto">
 
       {/* Header Actions */}
       <div className="flex justify-between items-center mb-8">

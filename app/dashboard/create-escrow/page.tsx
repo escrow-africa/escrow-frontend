@@ -90,7 +90,7 @@ export default function CreateEscrowPage() {
   const summaryPayout = formatCurrency(payoutAmount);
 
   return (
-    <div className="flex flex-col h-full fade-in pb-12 max-w-7xl mx-auto">
+    <div className="flex flex-col min-h-full fade-in pb-36 max-w-7xl mx-auto">
       {step !== "success" ? (
         <div className="grid grid-cols-1 xl:grid-cols-[1.5fr_0.9fr] gap-8">
           <div className="bg-white rounded-[30px] p-8 shadow-[0_20px_60px_rgba(15,61,46,0.08)] border border-gray-100">

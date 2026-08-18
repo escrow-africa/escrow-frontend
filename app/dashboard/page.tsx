@@ -122,7 +122,7 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="flex flex-col h-full fade-in pb-24">
+    <div className="flex flex-col min-h-full fade-in pb-36">
       {/* Welcome Section */}
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
