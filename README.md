@@ -1,4 +1,4 @@
-# Escrow Africa — Frontend
+# Escrow Africa Frontend
 
 This is the user-facing Next.js application for Escrow Africa. It provides the authentication flow, dashboard experience, wallet interactions, escrow management, and dispute-related views used by buyers and sellers.
 
