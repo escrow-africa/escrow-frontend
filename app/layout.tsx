@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ReactNode } from 'react';
 import ThemeProvider from '../components/ThemeProvider'
+import { Toaster } from "react-hot-toast";
 
 
 
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       >
         <ThemeProvider >
         {children}
+        <Toaster position="top-right" />
         </ThemeProvider>
       </body>
   </html>
