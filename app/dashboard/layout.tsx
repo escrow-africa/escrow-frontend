@@ -9,6 +9,7 @@ import { getTokenFromCookie } from "../../utils/token";
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [userName, setUserName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [totalEarnings, setTotalEarnings] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,7 +31,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       return "";
     };
 
-    const updateNameFromStorage = () => {
+    const getSavedAvatar = () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("user_avatarUrl");
+        if (saved) return saved;
+      }
+      return "";
+    };
+
+    const updateProfileFromStorage = () => {
       const fullName = getSavedName();
       if (fullName) {
         let name = fullName.includes("@") ? fullName.split("@")[0] : fullName;
@@ -39,12 +48,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
         setUserName(capitalized);
       }
+      
+      const savedAvatar = getSavedAvatar();
+      setAvatarUrl(savedAvatar);
     };
 
-    updateNameFromStorage();
+    updateProfileFromStorage();
 
     if (typeof window !== "undefined") {
-      window.addEventListener("user-profile-updated", updateNameFromStorage);
+      window.addEventListener("user-profile-updated", updateProfileFromStorage);
     }
 
     // Fetch /auth/me and /auth/stats to populate name and sidebar earnings
@@ -61,6 +73,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           const firstWord = display.trim().split(" ")[0];
           const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
           setUserName(capitalized);
+        }
+        if (me?.avatarUrl) {
+          setAvatarUrl(me.avatarUrl);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user_avatarUrl", me.avatarUrl);
+          }
         }
       } catch (e) {
         // fallback: keep token/localStorage method
@@ -88,7 +106,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
       if (typeof window !== "undefined") {
-        window.removeEventListener("user-profile-updated", updateNameFromStorage);
+        window.removeEventListener("user-profile-updated", updateProfileFromStorage);
       }
     };
   }, []);
@@ -105,6 +123,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header 
           userName={userName} 
+          avatarUrl={avatarUrl}
           onMenuClick={() => setIsMobileSidebarOpen(true)} 
         />
 
