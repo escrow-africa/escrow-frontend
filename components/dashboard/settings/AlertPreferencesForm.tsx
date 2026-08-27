@@ -5,6 +5,12 @@ import { ArrowLeft, Check } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface AlertPreferencesFormProps {
+  initialData: {
+    escrowContractReleases: boolean;
+    dispersalClearingAlerts: boolean;
+    disputeArbitrationWarning: boolean;
+    tipsPromotionalAnalytics: boolean;
+  } | null;
   onCancel: () => void;
   onSave: (data: any) => Promise<void>;
 }
@@ -17,6 +23,7 @@ interface NotificationPreference {
 }
 
 export default function AlertPreferencesForm({
+  initialData,
   onCancel,
   onSave,
 }: AlertPreferencesFormProps) {
@@ -48,6 +55,18 @@ export default function AlertPreferencesForm({
   ]);
 
   const [saving, setSaving] = useState(false);
+
+  // Sync initialData changes
+  React.useEffect(() => {
+    if (initialData) {
+      setPreferences((prev) =>
+        prev.map((pref) => ({
+          ...pref,
+          checked: initialData[pref.id as keyof typeof initialData] ?? pref.checked,
+        }))
+      );
+    }
+  }, [initialData]);
 
   const handleToggle = (id: string) => {
     setPreferences((prev) =>

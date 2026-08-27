@@ -84,7 +84,7 @@ export default function SecurityForm({
       await onSave({ ...data, billingAddress: address });
       reset();
       toast.success("Security settings updated successfully!");
-    } catch (err) {
+    } catch {
       toast.error("Failed to update password.");
     }
   };

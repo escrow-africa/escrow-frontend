@@ -28,6 +28,7 @@ import SyncLoader from "../../../components/dashboard/settings/SyncLoader";
 
 // Import API
 import { authApi } from "../../../api/auth";
+import { settingsApi } from "../../../api/settings";
 
 type ViewType =
   | "main"
@@ -62,27 +63,52 @@ export default function SettingsPage() {
     billingAddress: "22 Admiralty Way, Lekki Phase 1, Lagos, Nigeria",
   });
 
-  // Fetch real User Data from API on mount
+  // Notification Preferences State
+  const [notificationData, setNotificationData] = useState({
+    escrowContractReleases: true,
+    dispersalClearingAlerts: true,
+    disputeArbitrationWarning: true,
+    tipsPromotionalAnalytics: false,
+  });
+
+  // Preferences State
+  const [preferencesData, setPreferencesData] = useState({
+    currency: "NGN",
+    language: "en-US",
+    timezone: "GMT+1",
+  });
+
+  // KYC Status State
+  const [kycStatus, setKycStatus] = useState({
+    tier: "Tier 2 Verified",
+    dispersalLimitUsed: 1500000,
+    dispersalLimitTotal: 5000000,
+    status: "verified",
+  });
+
+  // Fetch real User Data & settings from API on mount
   useEffect(() => {
-    const loadProfile = async () => {
+    const loadSettings = async () => {
+      // 1. Fetch Profile
       try {
         const me = await authApi.getMe();
         if (me) {
+          const fullName = me.fullName || `${me.firstName || ""} ${me.lastName || ""}`.trim() || "Madeleine Nkiru";
           setUserData({
-            fullName: me.fullName || me.name || "Madeleine Nkiru",
+            fullName,
             email: me.email || "madeleinenkiru@gmail.com",
             bio: me.bio || "Professional UI/UX designer with 5+ years of experience in creating modern digital products.",
             avatarUrl: me.avatarUrl || undefined,
           });
           
-          // Seed local storage with values from API if not already present
           if (typeof window !== "undefined") {
-            if (me.fullName) localStorage.setItem("user_fullName", me.fullName);
+            localStorage.setItem("user_fullName", fullName);
             if (me.email) localStorage.setItem("user_email", me.email);
             if (me.avatarUrl) localStorage.setItem("user_avatarUrl", me.avatarUrl);
           }
         }
       } catch (err) {
+        console.error("Error loading profile from API, using fallback", err);
         // Fallback: Read from LocalStorage if API fails
         if (typeof window !== "undefined") {
           const savedName = localStorage.getItem("user_fullName");
@@ -98,9 +124,77 @@ export default function SettingsPage() {
           });
         }
       }
+
+      // 2. Fetch Billing Information
+      try {
+        const billing = await settingsApi.getBilling();
+        if (billing) {
+          setBillingData({
+            companyName: billing.companyName || "Madeleine Creative Studio",
+            vatId: billing.vatId || "VAT-NG-992102",
+            billingAddress: billing.billingAddress || "22 Admiralty Way, Lekki Phase 1, Lagos, Nigeria",
+          });
+        }
+      } catch (err) {
+        console.error("Error loading billing info from API, using fallback", err);
+        if (typeof window !== "undefined") {
+          const savedComp = localStorage.getItem("billing_companyName");
+          const savedVat = localStorage.getItem("billing_vatId");
+          const savedAddr = localStorage.getItem("billing_address");
+          setBillingData({
+            companyName: savedComp || "Madeleine Creative Studio",
+            vatId: savedVat || "VAT-NG-992102",
+            billingAddress: savedAddr || "22 Admiralty Way, Lekki Phase 1, Lagos, Nigeria",
+          });
+        }
+      }
+
+      // 3. Fetch Notification Preferences
+      try {
+        const notifications = await settingsApi.getNotificationPreferences();
+        if (notifications) {
+          setNotificationData({
+            escrowContractReleases: notifications.escrowContractReleases ?? true,
+            dispersalClearingAlerts: notifications.dispersalClearingAlerts ?? true,
+            disputeArbitrationWarning: notifications.disputeArbitrationWarning ?? true,
+            tipsPromotionalAnalytics: notifications.tipsPromotionalAnalytics ?? false,
+          });
+        }
+      } catch (err) {
+        console.error("Error loading notification preferences from API", err);
+      }
+
+      // 4. Fetch Localization Preferences
+      try {
+        const preferences = await settingsApi.getPreferences();
+        if (preferences) {
+          setPreferencesData({
+            currency: preferences.currency || "NGN",
+            language: preferences.language || "en-US",
+            timezone: preferences.timezone || "GMT+1",
+          });
+        }
+      } catch (err) {
+        console.error("Error loading preferences from API", err);
+      }
+
+      // 5. Fetch KYC status
+      try {
+        const kyc = await settingsApi.getKycStatus();
+        if (kyc) {
+          setKycStatus({
+            tier: kyc.tier || "Tier 2 Verified",
+            dispersalLimitUsed: kyc.dispersalLimitUsed ?? 1500000,
+            dispersalLimitTotal: kyc.dispersalLimitTotal ?? 5000000,
+            status: kyc.status || "verified",
+          });
+        }
+      } catch (err) {
+        console.error("Error loading KYC status from API", err);
+      }
     };
 
-    loadProfile();
+    loadSettings();
   }, []);
 
   // Save Handlers
@@ -110,54 +204,132 @@ export default function SettingsPage() {
     email: string;
     bio: string;
     avatarUrl?: string;
+    avatarFile?: File;
   }) => {
     setIsSyncing(true);
-    // Simulate API save delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    const combinedName = `${data.firstName} ${data.lastName}`.trim();
-    
-    // Update local react state
-    setUserData({
-      fullName: combinedName,
-      email: data.email,
-      bio: data.bio,
-      avatarUrl: data.avatarUrl,
-    });
+    try {
+      // 1. Update core fields via PATCH /auth/me
+      await settingsApi.updateProfile({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        bio: data.bio,
+      });
 
-    // Update local storage
-    if (typeof window !== "undefined") {
-      localStorage.setItem("user_fullName", combinedName);
-      localStorage.setItem("user_email", data.email);
-      localStorage.setItem("user_bio", data.bio);
-      if (data.avatarUrl) {
-        localStorage.setItem("user_avatarUrl", data.avatarUrl);
+      // 2. Upload avatar if a new image file is chosen
+      let finalAvatarUrl = data.avatarUrl;
+      if (data.avatarFile) {
+        const formData = new FormData();
+        formData.append("avatar-file", data.avatarFile);
+        const avatarRes = await settingsApi.uploadAvatar(formData);
+        if (avatarRes && avatarRes.avatarUrl) {
+          finalAvatarUrl = avatarRes.avatarUrl;
+        } else if (avatarRes && avatarRes.url) {
+          finalAvatarUrl = avatarRes.url;
+        }
       }
       
-      // Dispatch custom event to notify Sidebar/Header of the name change in real-time
-      window.dispatchEvent(new Event("user-profile-updated"));
-    }
+      const combinedName = `${data.firstName} ${data.lastName}`.trim();
+      
+      // Update local react state
+      setUserData({
+        fullName: combinedName,
+        email: data.email,
+        bio: data.bio,
+        avatarUrl: finalAvatarUrl,
+      });
 
-    setIsSyncing(false);
-    toast.success("Profile updated successfully!");
-    setActiveView("main");
+      // Update local storage
+      if (typeof window !== "undefined") {
+        localStorage.setItem("user_fullName", combinedName);
+        localStorage.setItem("user_email", data.email);
+        localStorage.setItem("user_bio", data.bio);
+        if (finalAvatarUrl) {
+          localStorage.setItem("user_avatarUrl", finalAvatarUrl);
+        }
+        
+        // Dispatch custom event to notify Sidebar/Header of the name change in real-time
+        window.dispatchEvent(new Event("user-profile-updated"));
+      }
+
+      toast.success("Profile updated successfully!");
+      setActiveView("main");
+    } catch (err) {
+      toast.error("Failed to update profile. Please try again.");
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const handleSaveBilling = async (data: typeof billingData) => {
     setIsSyncing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    setBillingData(data);
-    
-    if (typeof window !== "undefined") {
-      localStorage.setItem("billing_companyName", data.companyName);
-      localStorage.setItem("billing_vatId", data.vatId);
-      localStorage.setItem("billing_address", data.billingAddress);
+    try {
+      await settingsApi.updateBilling(data);
+      setBillingData(data);
+      
+      if (typeof window !== "undefined") {
+        localStorage.setItem("billing_companyName", data.companyName);
+        localStorage.setItem("billing_vatId", data.vatId);
+        localStorage.setItem("billing_address", data.billingAddress);
+      }
+      toast.success("Billing details updated successfully!");
+      setActiveView("main");
+    } catch (err) {
+      toast.error("Failed to save billing information.");
+    } finally {
+      setIsSyncing(false);
     }
-    
-    setIsSyncing(false);
-    toast.success("Billing details updated successfully!");
-    setActiveView("main");
+  };
+
+  const handleSaveNotifications = async (data: typeof notificationData) => {
+    setIsSyncing(true);
+    try {
+      await settingsApi.updateNotificationPreferences(data);
+      setNotificationData(data);
+      toast.success("Notification preferences saved successfully!");
+      setActiveView("main");
+    } catch (err) {
+      toast.error("Failed to save notification preferences.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSavePreferences = async (data: typeof preferencesData) => {
+    setIsSyncing(true);
+    try {
+      await settingsApi.updatePreferences(data);
+      setPreferencesData(data);
+      toast.success("Preferences saved successfully!");
+      setActiveView("main");
+    } catch (err) {
+      toast.error("Failed to save preferences.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSaveKyc = async (data: { documentType: string; file: File }) => {
+    setIsSyncing(true);
+    try {
+      const formData = new FormData();
+      formData.append("document-file", data.file);
+      formData.append("documenttype", data.documentType);
+      await settingsApi.submitKyc(formData);
+      
+      // Update local state to pending
+      setKycStatus((prev) => ({
+        ...prev,
+        status: "pending",
+        tier: "Pending Review",
+      }));
+      
+      toast.success("KYC documentation submitted successfully!");
+    } catch (err) {
+      toast.error("Failed to upload KYC credentials.");
+      throw err;
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const handleSaveGeneric = async (data: any) => {
@@ -275,7 +447,7 @@ export default function SettingsPage() {
               {/* Verification Tag */}
               <div className="inline-flex items-center gap-1.5 bg-[#E8F5E9] dark:bg-emerald-950/20 border border-[#A5D6A7] dark:border-emerald-900/40 text-[#2E7D32] dark:text-emerald-400 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">
                 <ShieldCheck size={12} className="shrink-0 text-[#2E7D32] dark:text-emerald-400" />
-                <span>Verified Broker</span>
+                <span>{kycStatus.status === "verified" ? "Verified Broker" : kycStatus.status === "pending" ? "Verification Pending" : "Unverified Broker"}</span>
               </div>
             </div>
 
@@ -288,14 +460,14 @@ export default function SettingsPage() {
               {/* KYC Tier */}
               <div className="flex justify-between items-center text-xs font-semibold mb-3">
                 <span className="text-gray-500 dark:text-gray-400">KYC Verification Tier:</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">Tier 2 Verified</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">{kycStatus.tier}</span>
               </div>
 
               {/* Dispersal limits */}
               <div className="flex justify-between items-center text-xs mb-3">
                 <span className="text-gray-500 dark:text-gray-400">Monthly dispersal Limit:</span>
                 <span className="font-bold text-gray-800 dark:text-white">
-                  ₦1,500,000 / <span className="text-gray-400 dark:text-zinc-600">₦5,000,000</span>
+                  ₦{kycStatus.dispersalLimitUsed.toLocaleString()} / <span className="text-gray-400 dark:text-zinc-600">₦{kycStatus.dispersalLimitTotal.toLocaleString()}</span>
                 </span>
               </div>
 
@@ -303,14 +475,20 @@ export default function SettingsPage() {
               <div className="w-full bg-[#FAFBFA] dark:bg-zinc-900 border border-[#E4E3E3CC] dark:border-zinc-800 h-2.5 rounded-full overflow-hidden mb-4">
                 <div
                   className="bg-[#0F3D2E] dark:bg-emerald-500 h-full rounded-full transition-all duration-500"
-                  style={{ width: "30%" }}
+                  style={{ width: `${Math.min(100, (kycStatus.dispersalLimitUsed / kycStatus.dispersalLimitTotal) * 100)}%` }}
                 ></div>
               </div>
 
               {/* Verified Upgrade Banner Info */}
               <div className="flex items-start gap-2 text-[11px] leading-relaxed text-[#2E7D32] dark:text-emerald-400">
                 <CheckCircle2 size={14} className="shrink-0 mt-0.5" />
-                <span>Limits raised to ₦50,000,000 monthly. Your premium compliance badge is active.</span>
+                <span>
+                  {kycStatus.status === "verified"
+                    ? "Limits raised to ₦50,000,000 monthly. Your premium compliance badge is active."
+                    : kycStatus.status === "pending"
+                    ? "Your credentials have been submitted and are under review. Limits will be raised shortly."
+                    : "Upload identity credentials to raise your limits."}
+                </span>
               </div>
             </div>
           </div>
@@ -381,8 +559,9 @@ export default function SettingsPage() {
 
           {activeView === "alerts" && (
             <AlertPreferencesForm
+              initialData={notificationData}
               onCancel={() => setActiveView("main")}
-              onSave={handleSaveGeneric}
+              onSave={handleSaveNotifications}
             />
           )}
 
@@ -396,14 +575,15 @@ export default function SettingsPage() {
           {activeView === "kyc" && (
             <IdentityVerificationForm
               onCancel={() => setActiveView("main")}
-              onSave={handleSaveGeneric}
+              onSave={handleSaveKyc}
             />
           )}
 
           {activeView === "preferences" && (
             <PreferencesForm
+              initialData={preferencesData}
               onCancel={() => setActiveView("main")}
-              onSave={handleSaveGeneric}
+              onSave={handleSavePreferences}
             />
           )}
         </div>

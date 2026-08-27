@@ -78,6 +78,7 @@ export default function IdentityVerificationForm({
         documentType: selectedDocType,
         fileName: file.name,
         fileSize: file.size,
+        file: file,
       });
       setStep(3);
     } catch (err) {

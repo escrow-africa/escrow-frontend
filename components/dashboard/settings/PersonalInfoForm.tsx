@@ -19,6 +19,7 @@ interface PersonalInfoFormProps {
     email: string;
     bio: string;
     avatarUrl?: string;
+    avatarFile?: File;
   }) => Promise<void>;
 }
 
@@ -35,6 +36,7 @@ export default function PersonalInfoForm({
   onSave,
 }: PersonalInfoFormProps) {
   const [avatar, setAvatar] = useState<string>("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Split fullName into firstName and lastName
@@ -84,6 +86,7 @@ export default function PersonalInfoForm({
         toast.error("Image size must be less than 2MB");
         return;
       }
+      setAvatarFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatar(reader.result as string);
@@ -98,6 +101,7 @@ export default function PersonalInfoForm({
       await onSave({
         ...data,
         avatarUrl: avatar || undefined,
+        avatarFile: avatarFile || undefined,
       });
     } catch (err) {
       // handled by parent

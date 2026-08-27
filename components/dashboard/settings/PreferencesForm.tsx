@@ -1,15 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowLeft, Globe, ChevronDown } from "lucide-react";
+import { ArrowLeft, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface PreferencesFormProps {
+  initialData: {
+    currency?: string;
+    language?: string;
+    timezone?: string;
+  } | null;
   onCancel: () => void;
   onSave: (data: any) => Promise<void>;
 }
 
 export default function PreferencesForm({
+  initialData,
   onCancel,
   onSave,
 }: PreferencesFormProps) {
@@ -18,13 +24,22 @@ export default function PreferencesForm({
   const [timezone, setTimezone] = useState("GMT+1");
   const [saving, setSaving] = useState(false);
 
+  // Sync initialData changes
+  React.useEffect(() => {
+    if (initialData) {
+      if (initialData.currency) setCurrency(initialData.currency);
+      if (initialData.language) setLanguage(initialData.language);
+      if (initialData.timezone) setTimezone(initialData.timezone);
+    }
+  }, [initialData]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
       await onSave({ currency, language, timezone });
       toast.success("Preferences updated successfully!");
-    } catch (err) {
+    } catch {
       // Handled by parent
     } finally {
       setSaving(false);
