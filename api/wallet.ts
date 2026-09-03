@@ -1,4 +1,5 @@
 import { api } from "./axios";
+import toast from "react-hot-toast";
 
 
 export const walletApi = {
@@ -7,7 +8,7 @@ export const walletApi = {
       const response = await api.get(`/wallet/details?page=${page}&limit=${limit}`);
       return response.data;
     } catch {
-      alert("Failed to fetch wallet details. Please try again.");
+      toast.error("Failed to fetch wallet details. Please try again.");
     }
   },
 
