@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ArrowLeft, Landmark, MoreVertical, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
+import { useWalletStore } from "../../../store/walletStore";
 
 interface BankAccount {
   id: string;
@@ -14,39 +15,27 @@ interface BankAccount {
 
 interface PayoutMethodsFormProps {
   onCancel: () => void;
-  onSave: (data: any) => Promise<void>;
 }
 
 export default function PayoutMethodsForm({
   onCancel,
-  onSave,
 }: PayoutMethodsFormProps) {
-  // Set default state to match Mockup exactly
-  const [accounts, setAccounts] = useState<BankAccount[]>([
-    {
-      id: "1",
-      bankName: "GTBank",
-      accountNumber: "0123456789",
-      accountName: "Primary Clearing Account",
-      isDefault: true,
-    },
-    {
-      id: "2",
-      bankName: "Access Bank",
-      accountNumber: "9876543210",
-      accountName: "Secondary Clearing Account",
-      isDefault: false,
-    },
-  ]);
+  const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const { banks, fetchBankList } = useWalletStore();
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   
-  // Default bank selection to GTBank as shown in the mockup
   const [newBank, setNewBank] = useState({
-    bankName: "GTBank",
+    bankName: "",
     accountNumber: "",
   });
+
+  React.useEffect(() => {
+    fetchBankList().catch(() => {
+      toast.error("Failed to load bank providers.");
+    });
+  }, [fetchBankList]);
 
   const handleDelete = (id: string) => {
     const accountToDelete = accounts.find((acc) => acc.id === id);
@@ -83,19 +72,7 @@ export default function PayoutMethodsForm({
       return;
     }
 
-    const isFirst = accounts.length === 0;
-    const newAcc: BankAccount = {
-      id: Date.now().toString(),
-      bankName: newBank.bankName,
-      accountNumber: newBank.accountNumber,
-      accountName: isFirst ? "Primary Clearing Account" : "Secondary Clearing Account",
-      isDefault: isFirst,
-    };
-
-    setAccounts([...accounts, newAcc]);
-    setNewBank({ bankName: "GTBank", accountNumber: "" });
-    setShowAddForm(false);
-    toast.success("New payout bank account added successfully!");
+    toast.error("Adding payout methods is not connected to the backend yet.");
   };
 
   return (
@@ -129,6 +106,11 @@ export default function PayoutMethodsForm({
 
         {/* Accounts List */}
         <div className="space-y-4">
+          {accounts.length === 0 && (
+            <p className="border border-dashed border-[#E4E3E3CC] dark:border-zinc-800 rounded-xl p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+              No payout methods are connected.
+            </p>
+          )}
           {accounts.map((acc) => (
             <div
               key={acc.id}
@@ -254,13 +236,10 @@ export default function PayoutMethodsForm({
                     className="w-full !bg-[#F4F4F5] dark:!bg-zinc-950 border !border-transparent dark:!border-zinc-800 text-gray-900 dark:text-white px-4 py-3.5 rounded-xl appearance-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-[#0F3D2E] dark:focus:ring-emerald-500 cursor-pointer pr-10"
                     required
                   >
-                    <option value="GTBank">GTBank</option>
-                    <option value="Access Bank">Access Bank</option>
-                    <option value="Zenith Bank">Zenith Bank</option>
-                    <option value="UBA">UBA</option>
-                    <option value="First Bank">First Bank</option>
-                    <option value="Kuda Bank">Kuda Bank</option>
-                    <option value="OPay">OPay</option>
+                    <option value="">Select a bank</option>
+                    {banks.map((bank) => (
+                      <option key={bank.code} value={bank.name}>{bank.name}</option>
+                    ))}
                   </select>
                   {/* Custom Arrow Down */}
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 dark:text-gray-400">

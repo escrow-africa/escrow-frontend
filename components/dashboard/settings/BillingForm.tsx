@@ -36,17 +36,17 @@ export default function BillingForm({
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     defaultValues: {
-      companyName: initialData?.companyName || "Madeleine Creative Studio",
-      vatId: initialData?.vatId || "VAT-NG-992102",
-      billingAddress: initialData?.billingAddress || "22 Admiralty Way, Lekki Phase 1, Lagos, Nigeria",
+      companyName: initialData?.companyName || "",
+      vatId: initialData?.vatId || "",
+      billingAddress: initialData?.billingAddress || "",
     },
   });
 
   useEffect(() => {
     if (initialData) {
-      if (initialData.companyName) setValue("companyName", initialData.companyName);
-      if (initialData.vatId) setValue("vatId", initialData.vatId);
-      if (initialData.billingAddress) setValue("billingAddress", initialData.billingAddress);
+      setValue("companyName", initialData.companyName || "");
+      setValue("vatId", initialData.vatId || "");
+      setValue("billingAddress", initialData.billingAddress || "");
     }
   }, [initialData, setValue]);
 

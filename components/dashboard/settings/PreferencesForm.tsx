@@ -19,17 +19,17 @@ export default function PreferencesForm({
   onCancel,
   onSave,
 }: PreferencesFormProps) {
-  const [currency, setCurrency] = useState("NGN");
-  const [language, setLanguage] = useState("en-US");
-  const [timezone, setTimezone] = useState("GMT+1");
+  const [currency, setCurrency] = useState("");
+  const [language, setLanguage] = useState("");
+  const [timezone, setTimezone] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Sync initialData changes
   React.useEffect(() => {
     if (initialData) {
-      if (initialData.currency) setCurrency(initialData.currency);
-      if (initialData.language) setLanguage(initialData.language);
-      if (initialData.timezone) setTimezone(initialData.timezone);
+      setCurrency(initialData.currency || "");
+      setLanguage(initialData.language || "");
+      setTimezone(initialData.timezone || "");
     }
   }, [initialData]);
 

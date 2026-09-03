@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, Eye, EyeOff, Laptop, Smartphone, MapPin, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, AlertTriangle } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface SecurityFormProps {
@@ -11,57 +11,20 @@ interface SecurityFormProps {
   billingAddress?: string;
 }
 
-interface BrowserSession {
-  id: number;
-  browser: string;
-  location: string;
-  ip: string;
-  isActive: boolean;
-  type: "desktop" | "mobile";
-}
-
 export default function SecurityForm({
   onCancel,
   onSave,
-  billingAddress = "22 Admiralty Way, Lekki Phase 1, Lagos, Nigeria",
+  billingAddress = "",
 }: SecurityFormProps) {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [address, setAddress] = useState(billingAddress);
 
-  // Active sessions state for mock interactivity
-  const [sessions, setSessions] = useState<BrowserSession[]>([
-    {
-      id: 1,
-      browser: "Chrome on macOS (Mac Studio)",
-      location: "Ikeja, Lagos",
-      ip: "197.210.64.43",
-      isActive: true,
-      type: "desktop",
-    },
-    {
-      id: 2,
-      browser: "Safari on iPhone 15 Pro",
-      location: "Lekki, Lagos",
-      ip: "102.89.43.11",
-      isActive: false,
-      type: "mobile",
-    },
-    {
-      id: 3,
-      browser: "Edge on Windows 11 Desktop",
-      location: "Abuja, FCT",
-      ip: "197.210.88.92",
-      isActive: false,
-      type: "desktop",
-    },
-  ]);
-
   // Modal State
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivateInput, setDeactivateInput] = useState("");
-  const [isDeactivating, setIsDeactivating] = useState(false);
+  const [isDeactivating] = useState(false);
 
   const {
     register,
@@ -89,20 +52,9 @@ export default function SecurityForm({
     }
   };
 
-  const handleRevokeOthers = () => {
-    setSessions((prev) => prev.filter((s) => s.isActive));
-    toast.success("Other active browser sessions have been revoked.");
-  };
-
-  const handleDeactivate = async () => {
+  const handleDeactivate = () => {
     if (deactivateInput !== "DEACTIVATE") return;
-    setIsDeactivating(true);
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsDeactivating(false);
-    setShowDeactivateModal(false);
-    toast.success("Broker profile deactivated successfully.");
-    onCancel(); // Navigate back
+    toast.error("Account deactivation is not connected to the backend yet.");
   };
 
   return (
@@ -254,48 +206,12 @@ export default function SecurityForm({
                 Logged in browser sessions currently linked to your escrow profile.
               </p>
             </div>
-            {sessions.length > 1 && (
-              <button
-                onClick={handleRevokeOthers}
-                className="text-xs font-bold text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors cursor-pointer focus:outline-none"
-              >
-                Revoke Others
-              </button>
-            )}
           </div>
 
           <div className="space-y-4">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                className="border border-[#E4E3E3CC] dark:border-zinc-800 bg-[#FAFBFA] dark:bg-zinc-900/30 rounded-xl p-4 flex items-center gap-4 transition-all"
-              >
-                {/* Device Icon */}
-                <div className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 flex items-center justify-center text-gray-500 dark:text-gray-400 shrink-0 shadow-2xs">
-                  {session.type === "desktop" ? <Laptop size={20} /> : <Smartphone size={20} />}
-                </div>
-
-                {/* Session Details */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center flex-wrap gap-2">
-                    <h4 className="font-bold text-gray-800 dark:text-white text-sm md:text-base truncate">
-                      {session.browser}
-                    </h4>
-                    {session.isActive && (
-                      <span className="bg-[#E8F5E9] dark:bg-emerald-950/50 text-[#2E7D32] dark:text-emerald-400 text-[10px] px-2.5 py-0.5 rounded-md font-extrabold tracking-wider uppercase">
-                        Active
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 text-xs mt-1">
-                    <MapPin size={12} className="shrink-0" />
-                    <span>
-                      {session.location} &bull; {session.ip}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
+            <p className="border border-dashed border-[#E4E3E3CC] dark:border-zinc-800 rounded-xl p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+              Browser session details are unavailable.
+            </p>
           </div>
         </div>
 

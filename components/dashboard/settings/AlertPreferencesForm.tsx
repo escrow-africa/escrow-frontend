@@ -27,44 +27,19 @@ export default function AlertPreferencesForm({
   onCancel,
   onSave,
 }: AlertPreferencesFormProps) {
-  const [preferences, setPreferences] = useState<NotificationPreference[]>([
-    {
-      id: "escrowContractReleases",
-      title: "Escrow Contract Releases",
-      description: "Dispatch instant notification when buyer funds are locked or cleared.",
-      checked: true,
-    },
-    {
-      id: "dispersalClearingAlerts",
-      title: "Dispersal Clearing Alerts",
-      description: "Alert when a banking payout leaves the secure EscrowAfrica ledger.",
-      checked: true,
-    },
-    {
-      id: "disputeArbitrationWarning",
-      title: "Dispute & Arbitration Warning",
-      description: "High priority warnings if a buyer requests mediator mediation.",
-      checked: true,
-    },
-    {
-      id: "tipsPromotionalAnalytics",
-      title: "Tips and Promotional Analytics",
-      description: "Monthly ad performance spikes, tips and general newsletters.",
-      checked: false,
-    },
-  ]);
+  const [preferences, setPreferences] = useState<NotificationPreference[]>([]);
 
   const [saving, setSaving] = useState(false);
 
   // Sync initialData changes
   React.useEffect(() => {
     if (initialData) {
-      setPreferences((prev) =>
-        prev.map((pref) => ({
-          ...pref,
-          checked: initialData[pref.id as keyof typeof initialData] ?? pref.checked,
-        }))
-      );
+      setPreferences([
+        { id: "escrowContractReleases", title: "Escrow Contract Releases", description: "Dispatch instant notification when buyer funds are locked or cleared.", checked: initialData.escrowContractReleases },
+        { id: "dispersalClearingAlerts", title: "Dispersal Clearing Alerts", description: "Alert when a banking payout leaves the secure EscrowAfrica ledger.", checked: initialData.dispersalClearingAlerts },
+        { id: "disputeArbitrationWarning", title: "Dispute & Arbitration Warning", description: "High priority warnings if a buyer requests mediator mediation.", checked: initialData.disputeArbitrationWarning },
+        { id: "tipsPromotionalAnalytics", title: "Tips and Promotional Analytics", description: "Monthly ad performance spikes, tips and general newsletters.", checked: initialData.tipsPromotionalAnalytics },
+      ]);
     }
   }, [initialData]);
 

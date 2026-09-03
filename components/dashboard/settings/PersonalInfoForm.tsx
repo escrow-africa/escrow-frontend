@@ -59,7 +59,7 @@ export default function PersonalInfoForm({
       firstName: firstName,
       lastName: lastName,
       email: initialData?.email || "",
-      bio: initialData?.bio || "Professional UI/UX designer with 5+ years of experience in creating modern digital products.",
+      bio: initialData?.bio || "",
     },
   });
 
@@ -70,8 +70,7 @@ export default function PersonalInfoForm({
       setValue("firstName", firstName);
       setValue("lastName", lastName);
       setValue("email", initialData.email);
-      if (initialData.bio) setValue("bio", initialData.bio);
-      if (initialData.avatarUrl) setAvatar(initialData.avatarUrl);
+      setValue("bio", initialData.bio || "");
     }
   }, [initialData, setValue]);
 
@@ -129,9 +128,9 @@ export default function PersonalInfoForm({
           {/* Interactive Avatar Container */}
           <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
             <div className="w-20 h-20 rounded-full bg-[#E5ECE9] dark:bg-[#1f2937] border border-gray-200 dark:border-zinc-700 flex items-center justify-center text-primary dark:text-[#F3B659] text-2xl font-bold overflow-hidden shadow-inner select-none transition-transform duration-200 hover:scale-105">
-              {avatar ? (
+              {avatar || initialData?.avatarUrl ? (
                 <img
-                  src={avatar}
+                  src={avatar || initialData?.avatarUrl}
                   alt="Profile Avatar"
                   className="w-full h-full object-cover"
                 />

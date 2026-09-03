@@ -10,7 +10,6 @@ import {
   ShieldCheck,
   Globe,
   ChevronRight,
-  Camera,
   CheckCircle2,
   Image as ImageIcon,
 } from "lucide-react";
@@ -51,40 +50,40 @@ export default function SettingsPage() {
     bio: string;
     avatarUrl?: string;
   }>({
-    fullName: "Madeleine Nkiru",
-    email: "madeleinenkiru@gmail.com",
-    bio: "Professional UI/UX designer with 5+ years of experience in creating modern digital products.",
+    fullName: "",
+    email: "",
+    bio: "",
   });
 
   // Billing Data State
   const [billingData, setBillingData] = useState({
-    companyName: "Madeleine Creative Studio",
-    vatId: "VAT-NG-992102",
-    billingAddress: "22 Admiralty Way, Lekki Phase 1, Lagos, Nigeria",
+    companyName: "",
+    vatId: "",
+    billingAddress: "",
   });
 
   // Notification Preferences State
-  const [notificationData, setNotificationData] = useState({
-    escrowContractReleases: true,
-    dispersalClearingAlerts: true,
-    disputeArbitrationWarning: true,
-    tipsPromotionalAnalytics: false,
-  });
+  const [notificationData, setNotificationData] = useState<{
+    escrowContractReleases: boolean;
+    dispersalClearingAlerts: boolean;
+    disputeArbitrationWarning: boolean;
+    tipsPromotionalAnalytics: boolean;
+  } | null>(null);
 
   // Preferences State
-  const [preferencesData, setPreferencesData] = useState({
-    currency: "NGN",
-    language: "en-US",
-    timezone: "GMT+1",
-  });
+  const [preferencesData, setPreferencesData] = useState<{
+    currency: string;
+    language: string;
+    timezone: string;
+  } | null>(null);
 
   // KYC Status State
-  const [kycStatus, setKycStatus] = useState({
-    tier: "Tier 2 Verified",
-    dispersalLimitUsed: 1500000,
-    dispersalLimitTotal: 5000000,
-    status: "verified",
-  });
+  const [kycStatus, setKycStatus] = useState<{
+    tier: string;
+    dispersalLimitUsed: number;
+    dispersalLimitTotal: number;
+    status: string;
+  } | null>(null);
 
   // Fetch real User Data & settings from API on mount
   useEffect(() => {
@@ -93,36 +92,16 @@ export default function SettingsPage() {
       try {
         const me = await authApi.getMe();
         if (me) {
-          const fullName = me.fullName || `${me.firstName || ""} ${me.lastName || ""}`.trim() || "Madeleine Nkiru";
+          const fullName = me.fullName || `${me.firstName || ""} ${me.lastName || ""}`.trim();
           setUserData({
             fullName,
-            email: me.email || "madeleinenkiru@gmail.com",
-            bio: me.bio || "Professional UI/UX designer with 5+ years of experience in creating modern digital products.",
+            email: me.email || "",
+            bio: me.bio || "",
             avatarUrl: me.avatarUrl || undefined,
           });
-          
-          if (typeof window !== "undefined") {
-            localStorage.setItem("user_fullName", fullName);
-            if (me.email) localStorage.setItem("user_email", me.email);
-            if (me.avatarUrl) localStorage.setItem("user_avatarUrl", me.avatarUrl);
-          }
         }
       } catch (err) {
-        console.error("Error loading profile from API, using fallback", err);
-        // Fallback: Read from LocalStorage if API fails
-        if (typeof window !== "undefined") {
-          const savedName = localStorage.getItem("user_fullName");
-          const savedEmail = localStorage.getItem("user_email");
-          const savedAvatar = localStorage.getItem("user_avatarUrl");
-          const savedBio = localStorage.getItem("user_bio");
-
-          setUserData({
-            fullName: savedName || "Madeleine Nkiru",
-            email: savedEmail || "madeleinenkiru@gmail.com",
-            bio: savedBio || "Professional UI/UX designer with 5+ years of experience in creating modern digital products.",
-            avatarUrl: savedAvatar || undefined,
-          });
-        }
+        console.error("Error loading profile from API", err);
       }
 
       // 2. Fetch Billing Information
@@ -130,23 +109,13 @@ export default function SettingsPage() {
         const billing = await settingsApi.getBilling();
         if (billing) {
           setBillingData({
-            companyName: billing.companyName || "Madeleine Creative Studio",
-            vatId: billing.vatId || "VAT-NG-992102",
-            billingAddress: billing.billingAddress || "22 Admiralty Way, Lekki Phase 1, Lagos, Nigeria",
+            companyName: billing.companyName || "",
+            vatId: billing.vatId || "",
+            billingAddress: billing.billingAddress || "",
           });
         }
       } catch (err) {
-        console.error("Error loading billing info from API, using fallback", err);
-        if (typeof window !== "undefined") {
-          const savedComp = localStorage.getItem("billing_companyName");
-          const savedVat = localStorage.getItem("billing_vatId");
-          const savedAddr = localStorage.getItem("billing_address");
-          setBillingData({
-            companyName: savedComp || "Madeleine Creative Studio",
-            vatId: savedVat || "VAT-NG-992102",
-            billingAddress: savedAddr || "22 Admiralty Way, Lekki Phase 1, Lagos, Nigeria",
-          });
-        }
+        console.error("Error loading billing info from API", err);
       }
 
       // 3. Fetch Notification Preferences
@@ -154,10 +123,10 @@ export default function SettingsPage() {
         const notifications = await settingsApi.getNotificationPreferences();
         if (notifications) {
           setNotificationData({
-            escrowContractReleases: notifications.escrowContractReleases ?? true,
-            dispersalClearingAlerts: notifications.dispersalClearingAlerts ?? true,
-            disputeArbitrationWarning: notifications.disputeArbitrationWarning ?? true,
-            tipsPromotionalAnalytics: notifications.tipsPromotionalAnalytics ?? false,
+            escrowContractReleases: notifications.escrowContractReleases,
+            dispersalClearingAlerts: notifications.dispersalClearingAlerts,
+            disputeArbitrationWarning: notifications.disputeArbitrationWarning,
+            tipsPromotionalAnalytics: notifications.tipsPromotionalAnalytics,
           });
         }
       } catch (err) {
@@ -169,9 +138,9 @@ export default function SettingsPage() {
         const preferences = await settingsApi.getPreferences();
         if (preferences) {
           setPreferencesData({
-            currency: preferences.currency || "NGN",
-            language: preferences.language || "en-US",
-            timezone: preferences.timezone || "GMT+1",
+            currency: preferences.currency,
+            language: preferences.language,
+            timezone: preferences.timezone,
           });
         }
       } catch (err) {
@@ -182,11 +151,14 @@ export default function SettingsPage() {
       try {
         const kyc = await settingsApi.getKycStatus();
         if (kyc) {
+          const kycData = kyc.data || kyc;
+          const dispersalLimitUsed = Number(kycData.dispersalLimitUsed);
+          const dispersalLimitTotal = Number(kycData.dispersalLimitTotal);
           setKycStatus({
-            tier: kyc.tier || "Tier 2 Verified",
-            dispersalLimitUsed: kyc.dispersalLimitUsed ?? 1500000,
-            dispersalLimitTotal: kyc.dispersalLimitTotal ?? 5000000,
-            status: kyc.status || "verified",
+            tier: kycData.tier || "",
+            dispersalLimitUsed: Number.isFinite(dispersalLimitUsed) ? dispersalLimitUsed : 0,
+            dispersalLimitTotal: Number.isFinite(dispersalLimitTotal) ? dispersalLimitTotal : 0,
+            status: kycData.status || "",
           });
         }
       } catch (err) {
@@ -238,16 +210,7 @@ export default function SettingsPage() {
         avatarUrl: finalAvatarUrl,
       });
 
-      // Update local storage
       if (typeof window !== "undefined") {
-        localStorage.setItem("user_fullName", combinedName);
-        localStorage.setItem("user_email", data.email);
-        localStorage.setItem("user_bio", data.bio);
-        if (finalAvatarUrl) {
-          localStorage.setItem("user_avatarUrl", finalAvatarUrl);
-        }
-        
-        // Dispatch custom event to notify Sidebar/Header of the name change in real-time
         window.dispatchEvent(new Event("user-profile-updated"));
       }
 
@@ -265,12 +228,6 @@ export default function SettingsPage() {
     try {
       await settingsApi.updateBilling(data);
       setBillingData(data);
-      
-      if (typeof window !== "undefined") {
-        localStorage.setItem("billing_companyName", data.companyName);
-        localStorage.setItem("billing_vatId", data.vatId);
-        localStorage.setItem("billing_address", data.billingAddress);
-      }
       toast.success("Billing details updated successfully!");
       setActiveView("main");
     } catch (err) {
@@ -280,7 +237,12 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveNotifications = async (data: typeof notificationData) => {
+  const handleSaveNotifications = async (data: {
+    escrowContractReleases: boolean;
+    dispersalClearingAlerts: boolean;
+    disputeArbitrationWarning: boolean;
+    tipsPromotionalAnalytics: boolean;
+  }) => {
     setIsSyncing(true);
     try {
       await settingsApi.updateNotificationPreferences(data);
@@ -294,7 +256,11 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSavePreferences = async (data: typeof preferencesData) => {
+  const handleSavePreferences = async (data: {
+    currency: string;
+    language: string;
+    timezone: string;
+  }) => {
     setIsSyncing(true);
     try {
       await settingsApi.updatePreferences(data);
@@ -318,7 +284,7 @@ export default function SettingsPage() {
       
       // Update local state to pending
       setKycStatus((prev) => ({
-        ...prev,
+        ...(prev || { dispersalLimitUsed: 0, dispersalLimitTotal: 0 }),
         status: "pending",
         tier: "Pending Review",
       }));
@@ -332,11 +298,8 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveGeneric = async (data: any) => {
-    setIsSyncing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    setIsSyncing(false);
-    setActiveView("main");
+  const handleSaveGeneric = async () => {
+    throw new Error("This settings section is not connected to a backend endpoint.");
   };
 
   // Get initials for profile fallback
@@ -447,7 +410,7 @@ export default function SettingsPage() {
               {/* Verification Tag */}
               <div className="inline-flex items-center gap-1.5 bg-[#E8F5E9] dark:bg-emerald-950/20 border border-[#A5D6A7] dark:border-emerald-900/40 text-[#2E7D32] dark:text-emerald-400 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">
                 <ShieldCheck size={12} className="shrink-0 text-[#2E7D32] dark:text-emerald-400" />
-                <span>{kycStatus.status === "verified" ? "Verified Broker" : kycStatus.status === "pending" ? "Verification Pending" : "Unverified Broker"}</span>
+                <span>{kycStatus?.status === "verified" ? "Verified Broker" : kycStatus?.status === "pending" ? "Verification Pending" : "Verification unavailable"}</span>
               </div>
             </div>
 
@@ -460,14 +423,16 @@ export default function SettingsPage() {
               {/* KYC Tier */}
               <div className="flex justify-between items-center text-xs font-semibold mb-3">
                 <span className="text-gray-500 dark:text-gray-400">KYC Verification Tier:</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">{kycStatus.tier}</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">{kycStatus?.tier || "Unavailable"}</span>
               </div>
 
               {/* Dispersal limits */}
               <div className="flex justify-between items-center text-xs mb-3">
                 <span className="text-gray-500 dark:text-gray-400">Monthly dispersal Limit:</span>
                 <span className="font-bold text-gray-800 dark:text-white">
-                  ₦{kycStatus.dispersalLimitUsed.toLocaleString()} / <span className="text-gray-400 dark:text-zinc-600">₦{kycStatus.dispersalLimitTotal.toLocaleString()}</span>
+                  {kycStatus && kycStatus.dispersalLimitTotal > 0
+                    ? `${kycStatus.dispersalLimitUsed.toLocaleString()} / ${kycStatus.dispersalLimitTotal.toLocaleString()}`
+                    : "Unavailable"}
                 </span>
               </div>
 
@@ -475,7 +440,7 @@ export default function SettingsPage() {
               <div className="w-full bg-[#FAFBFA] dark:bg-zinc-900 border border-[#E4E3E3CC] dark:border-zinc-800 h-2.5 rounded-full overflow-hidden mb-4">
                 <div
                   className="bg-[#0F3D2E] dark:bg-emerald-500 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, (kycStatus.dispersalLimitUsed / kycStatus.dispersalLimitTotal) * 100)}%` }}
+                  style={{ width: `${kycStatus?.dispersalLimitTotal ? Math.min(100, (kycStatus.dispersalLimitUsed / kycStatus.dispersalLimitTotal) * 100) : 0}%` }}
                 ></div>
               </div>
 
@@ -483,9 +448,9 @@ export default function SettingsPage() {
               <div className="flex items-start gap-2 text-[11px] leading-relaxed text-[#2E7D32] dark:text-emerald-400">
                 <CheckCircle2 size={14} className="shrink-0 mt-0.5" />
                 <span>
-                  {kycStatus.status === "verified"
-                    ? "Limits raised to ₦50,000,000 monthly. Your premium compliance badge is active."
-                    : kycStatus.status === "pending"
+                  {kycStatus?.status === "verified"
+                    ? "Your verified compliance status is active."
+                    : kycStatus?.status === "pending"
                     ? "Your credentials have been submitted and are under review. Limits will be raised shortly."
                     : "Upload identity credentials to raise your limits."}
                 </span>
@@ -568,7 +533,6 @@ export default function SettingsPage() {
           {activeView === "payouts" && (
             <PayoutMethodsForm
               onCancel={() => setActiveView("main")}
-              onSave={handleSaveGeneric}
             />
           )}
 

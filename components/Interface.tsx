@@ -1,7 +1,7 @@
 export default interface SignUpData {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   phone: string;
-  whatsappPhone: string;
   email: string;
   password: string;
 }

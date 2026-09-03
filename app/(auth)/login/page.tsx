@@ -154,7 +154,7 @@ export default function Login() {
                 <label className="tracking-[0.4em] text-xs">EMAIL ADDRESS</label>
                 <Input
                   type="email"
-                  placeholder="enter your email"
+                 
                   {...register("email", {
                     required: "Email required"
                   })}
@@ -168,7 +168,7 @@ export default function Login() {
                 <label className="tracking-[0.4em] text-xs">PASSWORD</label>
                 <Input
                   type="password"
-                  placeholder="enter your password"
+                
                   {...register("password", {
                     required: "Password required"
                   })}
