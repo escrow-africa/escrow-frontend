@@ -80,6 +80,7 @@ export const useAuthStore = create<AuthState>((set)=>({
     set({ loading: true, error: null });
     try {
       const response = await authApi.verifyEmail(data);
+      set({ loading: false });
       return response;
     } catch (error: any) {
       set({
