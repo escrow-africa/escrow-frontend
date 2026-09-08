@@ -8,18 +8,15 @@ import toast from "react-hot-toast";
 interface SecurityFormProps {
   onCancel: () => void;
   onSave: (data: any) => Promise<void>;
-  billingAddress?: string;
 }
 
 export default function SecurityForm({
   onCancel,
   onSave,
-  billingAddress = "",
 }: SecurityFormProps) {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [address, setAddress] = useState(billingAddress);
 
   // Modal State
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
@@ -44,7 +41,7 @@ export default function SecurityForm({
 
   const onSubmit = async (data: any) => {
     try {
-      await onSave({ ...data, billingAddress: address });
+      await onSave(data);
       reset();
       toast.success("Security settings updated successfully!");
     } catch {
@@ -83,7 +80,7 @@ export default function SecurityForm({
             {/* Current Account Password */}
             <div className="relative">
               <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 tracking-[0.15em] mb-2 uppercase">
-                Current Acount Password
+                Current Account Password
               </label>
               <div className="relative">
                 <input
@@ -160,20 +157,6 @@ export default function SecurityForm({
                   <p className="mt-1.5 text-xs text-red-500">{errors.confirmPassword.message}</p>
                 )}
               </div>
-            </div>
-
-            {/* Physical Billing Address */}
-            <div>
-              <label className="block text-[11px] font-bold text-gray-500 dark:text-gray-400 tracking-[0.15em] mb-2 uppercase">
-                Physical Billing Address
-              </label>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Enter billing address"
-                className="w-full px-4 py-3.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#0F3D2E] dark:focus:ring-[#F3B659] transition-all"
-              />
             </div>
 
             {/* Change Password Actions */}

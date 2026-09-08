@@ -45,14 +45,41 @@ export default function SettingsPage() {
   
   // User Data State
   const [userData, setUserData] = useState<{
+    firstName: string;
+    lastName: string;
     fullName: string;
     email: string;
     bio: string;
     avatarUrl?: string;
-  }>({
-    fullName: "",
-    email: "",
-    bio: "",
+  }>(() => {
+    if (typeof window !== "undefined") {
+      const savedName = localStorage.getItem("user_fullName") || "";
+      const savedEmail = localStorage.getItem("user_email") || "";
+      const savedAvatar = localStorage.getItem("user_avatarUrl") || "";
+      const savedBio = localStorage.getItem("user_bio") || "";
+      let firstName = "";
+      let lastName = "";
+      if (savedName) {
+        const parts = savedName.trim().split(/\s+/);
+        firstName = parts[0] || "";
+        lastName = parts.slice(1).join(" ") || "";
+      }
+      return {
+        firstName,
+        lastName,
+        fullName: savedName,
+        email: savedEmail,
+        bio: savedBio,
+        avatarUrl: savedAvatar || undefined,
+      };
+    }
+    return {
+      firstName: "",
+      lastName: "",
+      fullName: "",
+      email: "",
+      bio: "",
+    };
   });
 
   // Billing Data State
@@ -90,15 +117,41 @@ export default function SettingsPage() {
     const loadSettings = async () => {
       // 1. Fetch Profile
       try {
-        const me = await authApi.getMe();
+        const res = await authApi.getMe();
+        const me = res?.data || res?.user || res;
         if (me) {
-          const fullName = me.fullName || `${me.firstName || ""} ${me.lastName || ""}`.trim();
+          let firstName = me.firstName || me.first_name || "";
+          let lastName = me.lastName || me.last_name || "";
+          let fullName = me.fullName || me.name || "";
+          if (!fullName && (firstName || lastName)) {
+            fullName = `${firstName} ${lastName}`.trim();
+          }
+          if ((!firstName || !lastName) && fullName) {
+            const parts = fullName.trim().split(/\s+/);
+            if (!firstName) firstName = parts[0] || "";
+            if (!lastName) lastName = parts.slice(1).join(" ") || "";
+          }
+
+          const avatarUrl = me.avatarUrl || me.avatar || undefined;
           setUserData({
-            fullName,
+            firstName,
+            lastName,
+            fullName: fullName || (firstName ? `${firstName} ${lastName}`.trim() : ""),
             email: me.email || "",
             bio: me.bio || "",
-            avatarUrl: me.avatarUrl || undefined,
+            avatarUrl,
           });
+
+          if (typeof window !== "undefined") {
+            if (fullName) localStorage.setItem("user_fullName", fullName);
+            if (me.email) localStorage.setItem("user_email", me.email);
+            if (me.bio) localStorage.setItem("user_bio", me.bio);
+            if (avatarUrl) {
+              localStorage.setItem("user_avatarUrl", avatarUrl);
+            } else {
+              localStorage.removeItem("user_avatarUrl");
+            }
+          }
         }
       } catch (err) {
         console.error("Error loading profile from API", err);
@@ -107,11 +160,12 @@ export default function SettingsPage() {
       // 2. Fetch Billing Information
       try {
         const billing = await settingsApi.getBilling();
-        if (billing) {
+        const bData = billing?.data || billing;
+        if (bData) {
           setBillingData({
-            companyName: billing.companyName || "",
-            vatId: billing.vatId || "",
-            billingAddress: billing.billingAddress || "",
+            companyName: bData.companyName || "",
+            vatId: bData.vatId || "",
+            billingAddress: bData.billingAddress || "",
           });
         }
       } catch (err) {
@@ -121,12 +175,13 @@ export default function SettingsPage() {
       // 3. Fetch Notification Preferences
       try {
         const notifications = await settingsApi.getNotificationPreferences();
-        if (notifications) {
+        const nData = notifications?.data || notifications;
+        if (nData) {
           setNotificationData({
-            escrowContractReleases: notifications.escrowContractReleases,
-            dispersalClearingAlerts: notifications.dispersalClearingAlerts,
-            disputeArbitrationWarning: notifications.disputeArbitrationWarning,
-            tipsPromotionalAnalytics: notifications.tipsPromotionalAnalytics,
+            escrowContractReleases: Boolean(nData.escrowContractReleases),
+            dispersalClearingAlerts: Boolean(nData.dispersalClearingAlerts),
+            disputeArbitrationWarning: Boolean(nData.disputeArbitrationWarning),
+            tipsPromotionalAnalytics: Boolean(nData.tipsPromotionalAnalytics),
           });
         }
       } catch (err) {
@@ -136,11 +191,12 @@ export default function SettingsPage() {
       // 4. Fetch Localization Preferences
       try {
         const preferences = await settingsApi.getPreferences();
-        if (preferences) {
+        const pData = preferences?.data || preferences;
+        if (pData) {
           setPreferencesData({
-            currency: preferences.currency,
-            language: preferences.language,
-            timezone: preferences.timezone,
+            currency: pData.currency || "NGN",
+            language: pData.language || "en-US",
+            timezone: pData.timezone || "GMT+1",
           });
         }
       } catch (err) {
@@ -193,10 +249,9 @@ export default function SettingsPage() {
         const formData = new FormData();
         formData.append("avatar-file", data.avatarFile);
         const avatarRes = await settingsApi.uploadAvatar(formData);
-        if (avatarRes && avatarRes.avatarUrl) {
-          finalAvatarUrl = avatarRes.avatarUrl;
-        } else if (avatarRes && avatarRes.url) {
-          finalAvatarUrl = avatarRes.url;
+        const resUrl = avatarRes?.avatarUrl || avatarRes?.url || avatarRes?.data?.avatarUrl || avatarRes?.data?.url || (typeof avatarRes?.data === 'string' ? avatarRes.data : undefined);
+        if (resUrl) {
+          finalAvatarUrl = resUrl;
         }
       }
       
@@ -204,6 +259,8 @@ export default function SettingsPage() {
       
       // Update local react state
       setUserData({
+        firstName: data.firstName,
+        lastName: data.lastName,
         fullName: combinedName,
         email: data.email,
         bio: data.bio,
@@ -211,6 +268,14 @@ export default function SettingsPage() {
       });
 
       if (typeof window !== "undefined") {
+        if (combinedName) localStorage.setItem("user_fullName", combinedName);
+        if (data.email) localStorage.setItem("user_email", data.email);
+        if (data.bio) localStorage.setItem("user_bio", data.bio);
+        if (finalAvatarUrl) {
+          localStorage.setItem("user_avatarUrl", finalAvatarUrl);
+        } else {
+          localStorage.removeItem("user_avatarUrl");
+        }
         window.dispatchEvent(new Event("user-profile-updated"));
       }
 
@@ -302,13 +367,29 @@ export default function SettingsPage() {
     throw new Error("This settings section is not connected to a backend endpoint.");
   };
 
-  // Get initials for profile fallback
-  const getInitials = (name: string) => {
-    const parts = (name || "").trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+  // Get initials from first name and last name
+  const getInitials = (firstName?: string, lastName?: string, fullName?: string) => {
+    const f = (firstName || "").trim();
+    const l = (lastName || "").trim();
+    if (f && l) {
+      return `${f.charAt(0)}${l.charAt(0)}`.toUpperCase();
     }
-    return parts[0]?.charAt(0).toUpperCase() || "M";
+    if (f) {
+      return f.charAt(0).toUpperCase();
+    }
+    if (l) {
+      return l.charAt(0).toUpperCase();
+    }
+    if (fullName) {
+      const parts = fullName.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
+      }
+      if (parts[0]) {
+        return parts[0].charAt(0).toUpperCase();
+      }
+    }
+    return "";
   };
 
   // List of Right Column Settings options
@@ -383,11 +464,11 @@ export default function SettingsPage() {
                   {userData.avatarUrl ? (
                     <img
                       src={userData.avatarUrl}
-                      alt={userData.fullName}
+                      alt={userData.fullName || "User Avatar"}
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span>{getInitials(userData.fullName)}</span>
+                    <span>{getInitials(userData.firstName, userData.lastName, userData.fullName)}</span>
                   )}
                 </div>
                 {/* Visual Camera Indicator */}
@@ -410,7 +491,7 @@ export default function SettingsPage() {
               {/* Verification Tag */}
               <div className="inline-flex items-center gap-1.5 bg-[#E8F5E9] dark:bg-emerald-950/20 border border-[#A5D6A7] dark:border-emerald-900/40 text-[#2E7D32] dark:text-emerald-400 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">
                 <ShieldCheck size={12} className="shrink-0 text-[#2E7D32] dark:text-emerald-400" />
-                <span>{kycStatus?.status === "verified" ? "Verified Broker" : kycStatus?.status === "pending" ? "Verification Pending" : "Verification unavailable"}</span>
+                <span>{kycStatus?.status === "verified" ? "Verified Broker" : kycStatus?.status === "pending" ? "Verification Pending" : "Unverified"}</span>
               </div>
             </div>
 
@@ -431,7 +512,7 @@ export default function SettingsPage() {
                 <span className="text-gray-500 dark:text-gray-400">Monthly dispersal Limit:</span>
                 <span className="font-bold text-gray-800 dark:text-white">
                   {kycStatus && kycStatus.dispersalLimitTotal > 0
-                    ? `${kycStatus.dispersalLimitUsed.toLocaleString()} / ${kycStatus.dispersalLimitTotal.toLocaleString()}`
+                    ? `₦${kycStatus.dispersalLimitUsed.toLocaleString()} / ₦${kycStatus.dispersalLimitTotal.toLocaleString()}`
                     : "Unavailable"}
                 </span>
               </div>
@@ -518,7 +599,6 @@ export default function SettingsPage() {
             <SecurityForm
               onCancel={() => setActiveView("main")}
               onSave={handleSaveGeneric}
-              billingAddress={billingData.billingAddress}
             />
           )}
 

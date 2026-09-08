@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 
 interface PersonalInfoFormProps {
   initialData: {
+    firstName?: string;
+    lastName?: string;
     fullName: string;
     email: string;
     bio?: string;
@@ -40,24 +42,28 @@ export default function PersonalInfoForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Split fullName into firstName and lastName
-  const getNames = (fullName: string) => {
+  const getNames = (fullName: string, defaultFirst?: string, defaultLast?: string) => {
+    if (defaultFirst || defaultLast) {
+      return { firstName: defaultFirst || "", lastName: defaultLast || "" };
+    }
     const parts = (fullName || "").trim().split(/\s+/);
     const firstName = parts[0] || "";
     const lastName = parts.slice(1).join(" ") || "";
     return { firstName, lastName };
   };
 
-  const { firstName, lastName } = getNames(initialData?.fullName || "");
+  const initialNames = getNames(initialData?.fullName || "", initialData?.firstName, initialData?.lastName);
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     defaultValues: {
-      firstName: firstName,
-      lastName: lastName,
+      firstName: initialNames.firstName,
+      lastName: initialNames.lastName,
       email: initialData?.email || "",
       bio: initialData?.bio || "",
     },
@@ -66,7 +72,7 @@ export default function PersonalInfoForm({
   // Sync initialData changes (if fetched asynchronously)
   useEffect(() => {
     if (initialData) {
-      const { firstName, lastName } = getNames(initialData.fullName);
+      const { firstName, lastName } = getNames(initialData.fullName, initialData.firstName, initialData.lastName);
       setValue("firstName", firstName);
       setValue("lastName", lastName);
       setValue("email", initialData.email);
@@ -107,8 +113,19 @@ export default function PersonalInfoForm({
     }
   };
 
-  // Initials for avatar fallback
-  const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || "MN";
+  // Initials for avatar fallback from First Name and Last Name
+  const watchedFirstName = watch("firstName") || "";
+  const watchedLastName = watch("lastName") || "";
+  const f = watchedFirstName.trim();
+  const l = watchedLastName.trim();
+  let initials = "";
+  if (f && l) {
+    initials = `${f.charAt(0)}${l.charAt(0)}`.toUpperCase();
+  } else if (f) {
+    initials = f.charAt(0).toUpperCase();
+  } else if (l) {
+    initials = l.charAt(0).toUpperCase();
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto animate-fade-in pb-16">

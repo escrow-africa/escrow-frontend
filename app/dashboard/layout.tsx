@@ -9,6 +9,7 @@ import { getTokenFromCookie } from "../../utils/token";
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [userName, setUserName] = useState("");
+  const [userRole, setUserRole] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [totalEarnings, setTotalEarnings] = useState<string | null>(null);
 
@@ -24,7 +25,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           const payload = token.split(".")[1];
           const decoded = JSON.parse(atob(payload));
           return decoded.fullName || decoded.name || decoded.username || decoded.email || "";
-        } catch (e) {
+        } catch {
           return "";
         }
       }
@@ -44,8 +45,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       if (fullName) {
         let name = fullName.includes("@") ? fullName.split("@")[0] : fullName;
         name = name.replace(/[._-]/g, " ");
-        const firstWord = name.trim().split(" ")[0];
-        const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
+        const parts = name.trim().split(/\s+/);
+        const capitalized = parts.map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
         setUserName(capitalized);
       }
       
@@ -65,20 +66,36 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       try {
         const me = await authApi.getMe();
         if (!mounted) return;
-        const name = me?.fullName || me?.name || me?.username || me?.email || null;
+        const profile = me?.data || me?.user || me;
+        const name = profile?.fullName || `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() || profile?.name || profile?.username || profile?.email || null;
         if (name) {
           let display = String(name);
           display = display.includes("@") ? display.split("@")[0] : display;
           display = display.replace(/[._-]/g, " ");
-          const firstWord = display.trim().split(" ")[0];
-          const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
+          const parts = display.trim().split(/\s+/);
+          const capitalized = parts.map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
           setUserName(capitalized);
-        }
-        if (me?.avatarUrl) {
-          setAvatarUrl(me.avatarUrl);
           if (typeof window !== "undefined") {
-            localStorage.setItem("user_avatarUrl", me.avatarUrl);
+            localStorage.setItem("user_fullName", String(name));
           }
+        }
+        const avatar = profile?.avatarUrl || profile?.avatar || profile?.photo || profile?.profilePicture || "";
+        if (avatar) {
+          setAvatarUrl(avatar);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user_avatarUrl", avatar);
+          }
+        } else {
+          setAvatarUrl("");
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("user_avatarUrl");
+          }
+        }
+
+        const role = profile?.role || profile?.userRole || profile?.userType || "";
+        if (role) {
+          const formattedRole = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+          setUserRole(formattedRole);
         }
       } catch (e) {
         // fallback: keep token/localStorage method
@@ -123,6 +140,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header 
           userName={userName} 
+          userRole={userRole}
           avatarUrl={avatarUrl}
           onMenuClick={() => setIsMobileSidebarOpen(true)} 
         />

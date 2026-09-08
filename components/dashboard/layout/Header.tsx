@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { Search, Bell, User, Menu } from "lucide-react";
+import { Search, Bell, Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "../../ThemeToggle";
 
@@ -14,8 +13,8 @@ interface HeaderProps {
 }
 
 export default function Header({
-  userName = "Madeleine Nkiru",
-  userRole = "Verified Seller",
+  userName = "",
+  userRole = "",
   avatarUrl = "",
   onMenuClick,
 }: HeaderProps) {
@@ -79,22 +78,20 @@ export default function Header({
 
         {/* User Profile */}
         <Link href="/dashboard/settings" className="flex items-center gap-3 cursor-pointer">
-          <div className="hidden md:block text-right">
-            <p className="text-xs font-semibold text-primary">{userName}</p>
-            <p className="text-[10px] text-muted-foreground">{userRole}</p>
-          </div>
+          {(userName || userRole) ? (
+            <div className="hidden md:block text-right">
+              {userName ? <p className="text-xs font-semibold text-primary">{userName}</p> : null}
+              {userRole ? <p className="text-[10px] text-muted-foreground">{userRole}</p> : null}
+            </div>
+          ) : null}
           <div className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-[#E4E3E3CC] dark:border-zinc-800 flex items-center justify-center overflow-hidden bg-muted shrink-0 shadow-inner">
             {avatarUrl ? (
-              <Image
+              <img
                 src={avatarUrl}
-                alt={userName}
-                width={40}
-                height={40}
+                alt={userName || "Profile"}
                 className="w-full h-full object-cover"
               />
-            ) : (
-              <User size={16} className="text-muted-foreground" />
-            )}
+            ) : null}
           </div>
         </Link>
       </div>

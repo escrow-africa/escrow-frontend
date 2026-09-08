@@ -121,9 +121,6 @@ export default function BillingForm({
                 {errors.vatId.message}
               </p>
             )}
-            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2">
-              To change your primary login email, please contact customer integrity desks.
-            </p>
           </div>
 
           {/* Physical Billing Address */}
