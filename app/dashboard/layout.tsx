@@ -5,6 +5,7 @@ import Sidebar from "../../components/dashboard/layout/Sidebar";
 import Header from "../../components/dashboard/layout/Header";
 import { authApi } from "../../api/auth";
 import { getTokenFromCookie } from "../../utils/token";
+import { extractFirstName } from "../../utils/user";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -67,6 +68,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         const me = await authApi.getMe();
         if (!mounted) return;
         const profile = me?.data || me?.user || me;
+        const firstName = extractFirstName(profile);
         const name = profile?.fullName || `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() || profile?.name || profile?.username || profile?.email || null;
         if (name) {
           let display = String(name);
@@ -78,6 +80,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           if (typeof window !== "undefined") {
             localStorage.setItem("user_fullName", String(name));
           }
+        }
+        if (firstName && typeof window !== "undefined") {
+          localStorage.setItem("user_firstName", firstName);
+          window.dispatchEvent(new Event("user-profile-updated"));
         }
         const avatar = profile?.avatarUrl || profile?.avatar || profile?.photo || profile?.profilePicture || "";
         if (avatar) {

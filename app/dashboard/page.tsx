@@ -12,6 +12,7 @@ import { getTokenFromCookie } from "../../utils/token";
 import { escrowApi } from "../../api/escrow";
 import { useWalletStore } from "../../store/walletStore";
 import { authApi } from "../../api/auth";
+import { extractFirstName } from "../../utils/user";
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState("User");
@@ -91,35 +92,84 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const getSavedName = () => {
+    let mounted = true;
+
+    const resolveInitialFirstName = () => {
       if (typeof window !== "undefined") {
-        const saved = localStorage.getItem("user_fullName");
-        if (saved) return saved;
-      }
-      const token = getTokenFromCookie();
-      if (token) {
-        try {
-          const payload = token.split(".")[1];
-          const decoded = JSON.parse(atob(payload));
-          return decoded.fullName || decoded.name || decoded.username || decoded.email || "";
-        } catch {
-          return "";
+        const savedFirst = localStorage.getItem("user_firstName");
+        if (savedFirst) return extractFirstName(savedFirst);
+
+        // Check if token has identity info
+        const token = getTokenFromCookie();
+        let tokenEmail = "";
+        let tokenFirstName = "";
+        if (token) {
+          try {
+            const payload = token.split(".")[1];
+            const decoded = JSON.parse(atob(payload));
+            tokenEmail = decoded.email || "";
+            tokenFirstName = extractFirstName(
+              decoded.firstName || decoded.first_name || decoded.fullName || decoded.name || decoded.email || ""
+            );
+          } catch {}
         }
+
+        const savedEmail = localStorage.getItem("user_email");
+        // If stored email doesn't match current token, clear stale storage
+        if (tokenEmail && savedEmail && tokenEmail.toLowerCase() !== savedEmail.toLowerCase()) {
+          localStorage.removeItem("user_fullName");
+          localStorage.removeItem("user_firstName");
+          localStorage.removeItem("user_email");
+          localStorage.removeItem("user_avatarUrl");
+        } else {
+          const savedFull = localStorage.getItem("user_fullName");
+          if (savedFull) return extractFirstName(savedFull);
+        }
+
+        if (tokenFirstName) return tokenFirstName;
       }
       return "";
     };
 
-    const fullName = getSavedName();
-    if (fullName) {
-      let name = fullName.includes("@") ? fullName.split("@")[0] : fullName;
-      name = name.replace(/[._-]/g, " ");
-      const firstWord = name.trim().split(" ")[0];
-      const capitalized = firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
-      setUserName(capitalized);
+    const initial = resolveInitialFirstName();
+    if (initial) {
+      setUserName(initial);
     }
+
+    // Always fetch live authenticated user profile to guarantee correct first name
+    const syncUserProfile = async () => {
+      try {
+        const res = await authApi.getMe();
+        if (!mounted) return;
+        const profile = res?.data || res?.user || res;
+        const firstName = extractFirstName(profile);
+        if (firstName) {
+          setUserName(firstName);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user_firstName", firstName);
+            const full = profile?.fullName || `${profile?.firstName || firstName} ${profile?.lastName || ""}`.trim();
+            if (full) localStorage.setItem("user_fullName", full);
+            if (profile?.email) localStorage.setItem("user_email", profile.email);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to sync user profile in dashboard", e);
+      }
+    };
+
+    syncUserProfile();
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("user-profile-updated", syncUserProfile);
+    }
+
+    return () => {
+      mounted = false;
+      if (typeof window !== "undefined") {
+        window.removeEventListener("user-profile-updated", syncUserProfile);
+      }
+    };
   }, []);
-
-
 
   return (
     <div className="flex flex-col min-h-full fade-in pb-36">
@@ -127,7 +177,7 @@ export default function DashboardPage() {
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-primary mb-2">
-            Welcome back, {userName}
+            Welcome, {userName}
           </h1>
           <p className="text-muted-foreground text-sm">
             Here&rsquo;s what&rsquo;s happening with your account today.

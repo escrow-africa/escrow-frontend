@@ -8,6 +8,7 @@ import Input from "@/components/Input";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
+import { extractFirstName } from "@/utils/user";
 
 export default function Signup() {
   const router = useRouter();
@@ -25,6 +26,22 @@ export default function Signup() {
 
   const onSubmit = async (data: SignUpData) => {
     try {
+      if (typeof window !== "undefined") {
+        // Clear any old session data
+        localStorage.removeItem("user_fullName");
+        localStorage.removeItem("user_avatarUrl");
+        if (data.firstName) {
+          const first = extractFirstName(data.firstName);
+          localStorage.setItem("user_firstName", first);
+        }
+        if (data.firstName && data.lastName) {
+          localStorage.setItem("user_fullName", `${data.firstName.trim()} ${data.lastName.trim()}`);
+        }
+        if (data.email) {
+          localStorage.setItem("user_email", data.email.trim());
+        }
+      }
+
       await registerUser(data);
       toast.success("Your account was created successfully");
       router.push(`/verify?email=${encodeURIComponent(data.email)}`);
