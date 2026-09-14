@@ -1,0 +1,162 @@
+"use client";
+
+import React, { ReactNode, useState, useEffect } from "react";
+import Sidebar from "../../components/dashboard/layout/Sidebar";
+import Header from "../../components/dashboard/layout/Header";
+import { authApi } from "../../api/auth";
+import { getTokenFromCookie } from "../../utils/token";
+import { extractFirstName } from "../../utils/user";
+
+export default function DashboardLayout({ children }: { children: ReactNode }) {
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [userRole, setUserRole] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [totalEarnings, setTotalEarnings] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getSavedName = () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("user_fullName");
+        if (saved) return saved;
+      }
+      const token = getTokenFromCookie();
+      if (token) {
+        try {
+          const payload = token.split(".")[1];
+          const decoded = JSON.parse(atob(payload));
+          return decoded.fullName || decoded.name || decoded.username || decoded.email || "";
+        } catch {
+          return "";
+        }
+      }
+      return "";
+    };
+
+    const getSavedAvatar = () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("user_avatarUrl");
+        if (saved) return saved;
+      }
+      return "";
+    };
+
+    const updateProfileFromStorage = () => {
+      const fullName = getSavedName();
+      if (fullName) {
+        let name = fullName.includes("@") ? fullName.split("@")[0] : fullName;
+        name = name.replace(/[._-]/g, " ");
+        const parts = name.trim().split(/\s+/);
+        const capitalized = parts.map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
+        setUserName(capitalized);
+      }
+      
+      const savedAvatar = getSavedAvatar();
+      setAvatarUrl(savedAvatar);
+    };
+
+    updateProfileFromStorage();
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("user-profile-updated", updateProfileFromStorage);
+    }
+
+    // Fetch /auth/me and /auth/stats to populate name and sidebar earnings
+    let mounted = true;
+    (async () => {
+      try {
+        const me = await authApi.getMe();
+        if (!mounted) return;
+        const profile = me?.data || me?.user || me;
+        const firstName = extractFirstName(profile);
+        const name = profile?.fullName || `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() || profile?.name || profile?.username || profile?.email || null;
+        if (name) {
+          let display = String(name);
+          display = display.includes("@") ? display.split("@")[0] : display;
+          display = display.replace(/[._-]/g, " ");
+          const parts = display.trim().split(/\s+/);
+          const capitalized = parts.map((p: string) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
+          setUserName(capitalized);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user_fullName", String(name));
+          }
+        }
+        if (firstName && typeof window !== "undefined") {
+          localStorage.setItem("user_firstName", firstName);
+          window.dispatchEvent(new Event("user-profile-updated"));
+        }
+        const avatar = profile?.avatarUrl || profile?.avatar || profile?.photo || profile?.profilePicture || "";
+        if (avatar) {
+          setAvatarUrl(avatar);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user_avatarUrl", avatar);
+          }
+        } else {
+          setAvatarUrl("");
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("user_avatarUrl");
+          }
+        }
+
+        const role = profile?.role || profile?.userRole || profile?.userType || "";
+        if (role) {
+          const formattedRole = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+          setUserRole(formattedRole);
+        }
+      } catch (e) {
+        // fallback: keep token/localStorage method
+        console.error('Failed to fetch /auth/me', e);
+      }
+
+      try {
+        const stats = await authApi.getStats();
+        if (!mounted) return;
+        const total = stats?.totalEarnings ?? stats?.totalEarningsAmount ?? stats?.total ?? null;
+        if (total !== undefined && total !== null) {
+          try {
+            const n = Number(total);
+            if (!Number.isNaN(n)) setTotalEarnings(new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 2 }).format(n));
+            else setTotalEarnings(String(total));
+          } catch {
+            setTotalEarnings(String(total));
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch /auth/stats', e);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+      if (typeof window !== "undefined") {
+        window.removeEventListener("user-profile-updated", updateProfileFromStorage);
+      }
+    };
+  }, []);
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-[#FAFBFA] text-gray-900 font-sans">
+
+      <Sidebar 
+        isOpen={isMobileSidebarOpen} 
+        onClose={() => setIsMobileSidebarOpen(false)} 
+        totalEarnings={totalEarnings ?? undefined}
+      />
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header 
+          userName={userName} 
+          userRole={userRole}
+          avatarUrl={avatarUrl}
+          onMenuClick={() => setIsMobileSidebarOpen(true)} 
+        />
+
+        <main className="flex-1 overflow-y-auto w-full">
+          <div className="mx-auto max-w-7xl px-2 md:px-8 py-4 md:py-4 h-full">
+            {children}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
