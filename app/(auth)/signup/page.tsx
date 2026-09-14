@@ -26,6 +26,7 @@ export default function Signup() {
   const onSubmit = async (data: SignUpData) => {
     try {
       await registerUser(data);
+      toast.success("Your account was created successfully");
       router.push(`/verify?email=${encodeURIComponent(data.email)}`);
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Signup failed");

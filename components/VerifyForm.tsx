@@ -127,6 +127,7 @@ export default function VerifyPage() {
 
             <SuccessModal
                 isOpen={showSuccessModal}
+                description="Your account was created successfully."
                 onClose={() => {
                     setShowSuccessModal(false);
                     router.push("/login");

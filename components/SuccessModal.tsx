@@ -16,7 +16,7 @@ export default function SuccessModal({
   isOpen,
   onClose,
   title = 'Success',
-  description = 'Your request completed successfully.',
+  description = 'Your account was created successfully.',
   buttonText = 'Continue',
   redirectTo,
   onAction,
