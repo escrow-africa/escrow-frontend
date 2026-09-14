@@ -9,12 +9,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
 
-type SignupFormData = SignUpData & {
-  confirmPassword: string;
-};
-
 export default function Signup() {
-  const router = useRouter()
+  const router = useRouter();
   const registerUser = useAuthStore((state) => state.register);
   const loading = useAuthStore((state) => state.loading);
 
@@ -23,20 +19,18 @@ export default function Signup() {
     handleSubmit,
     watch,
     formState: { errors, isSubmitting }
-  } = useForm<SignupFormData>();
+  } = useForm<SignUpData>();
 
-  const password = watch("password");
+  const createPassword = watch("createPassword");
 
-  const onSubmit = async (data: SignupFormData) => {
+  const onSubmit = async (data: SignUpData) => {
     try {
-      const { confirmPassword, ...signupData } = data;
-      if (!confirmPassword) return;
-      await registerUser(signupData);
-      router.push(`/verify?email=${data.email}`);
-    } catch {
-      toast.error("Signup failed");
+      await registerUser(data);
+      router.push(`/verify?email=${encodeURIComponent(data.email)}`);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Signup failed");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -53,7 +47,7 @@ export default function Signup() {
             <div className="flex gap-4 mt-7">
               <div className="w-full">
                 <label htmlFor="firstName" className="tracking-[0.4em] text-xs" >FIRST NAME</label>
-                <Input type="text"  {...register("firstName", {
+                <Input id="firstName" type="text"  {...register("firstName", {
                   required: "First name required"
                 })} />
                 {errors.firstName && (
@@ -65,7 +59,7 @@ export default function Signup() {
 
               <div className="w-full">
                 <label htmlFor="lastName" className="tracking-[0.4em] text-xs" >LAST NAME</label>
-                <Input type="text"  {...register("lastName", {
+                <Input id="lastName" type="text"  {...register("lastName", {
                   required: "Last name required"
                 })} />{errors.lastName && (
                   <p className="text-red-500 text-sm">
@@ -77,7 +71,7 @@ export default function Signup() {
 
             <div className="mt-5">
               <label htmlFor="phone" className="tracking-[0.4em] text-xs" >PHONE</label>
-              <Input type="tel"   {...register("phone", {
+              <Input id="phone" type="tel"   {...register("phone", {
                 required: "WhatsApp phone number required"
               })} />{errors.phone && (
                 <p className="text-red-500 text-sm">
@@ -88,7 +82,7 @@ export default function Signup() {
 
             <div className="mt-5">
               <label htmlFor="email" className="tracking-[0.4em] text-xs" >EMAIL</label>
-              <Input type="email" {...register("email", {
+              <Input id="email" type="email" {...register("email", {
                 required: "Email required"
               })} />{errors.email && (
                 <p className="text-red-500 text-sm">
@@ -98,16 +92,16 @@ export default function Signup() {
             </div>
 
             <div className="mt-3">
-              <label htmlFor="password" className="tracking-[0.4em] text-xs" > CREATE PASSWORD</label>
-              <Input type="password"  {...register("password", {
+              <label htmlFor="createPassword" className="tracking-[0.4em] text-xs" > CREATE PASSWORD</label>
+              <Input id="createPassword" type="password"  {...register("createPassword", {
                 required: "Password required",
                 minLength: {
                   value: 6,
                   message: "Minimum 6 characters"
                 }
-              })} />{errors.password && (
+              })} />{errors.createPassword && (
                 <p className="text-red-500 text-sm">
-                  {errors.password.message}
+                  {errors.createPassword.message}
                 </p>
               )}
 
@@ -115,9 +109,9 @@ export default function Signup() {
 
             <div className="mt-3">
               <label htmlFor="confirmPassword" className="tracking-[0.4em] text-xs" >CONFIRM PASSWORD</label>
-              <Input type="password" {...register("confirmPassword", {
+              <Input id="confirmPassword" type="password" {...register("confirmPassword", {
                 required: "Please confirm your password",
-                validate: (value) => value === password || "Passwords do not match"
+                validate: (value) => value === createPassword || "Passwords do not match"
               })} />{errors.confirmPassword && (
                 <p className="text-red-500 text-sm">
                   {errors.confirmPassword.message}

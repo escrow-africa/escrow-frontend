@@ -3,7 +3,8 @@ export default interface SignUpData {
   lastName: string;
   phone: string;
   email: string;
-  password: string;
+  createPassword: string;
+  confirmPassword: string;
 }
 export interface LoginData{
 

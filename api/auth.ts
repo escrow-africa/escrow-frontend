@@ -1,8 +1,9 @@
 import { api } from "./axios";
+import type SignUpData from "@/components/Interface";
 
 export const authApi = {
 
-  signup: async (payload: any) => {
+  signup: async (payload: SignUpData) => {
     try {
 
       const response = await api.post("/auth/register", payload);
