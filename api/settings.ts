@@ -101,4 +101,32 @@ export const settingsApi = {
       throw error;
     }
   },
+
+  // Active Sessions
+  getSessions: async () => {
+    try {
+      const response = await api.get("/auth/sessions");
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
+  },
+
+  revokeOtherSessions: async () => {
+    try {
+      const response = await api.post("/auth/sessions/revoke-others");
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
+  },
+
+  revokeSession: async (sessionId: string) => {
+    try {
+      const response = await api.delete(`/auth/sessions/${sessionId}`);
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
+  },
 };
