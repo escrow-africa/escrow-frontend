@@ -81,8 +81,8 @@ export default function IdentityVerificationForm({
         file: file,
       });
       setStep(3);
-    } catch (err) {
-      toast.error("Failed to submit verification documents.");
+    } catch {
+      // Error toast is handled by parent (handleSaveKyc)
     } finally {
       setSubmitting(false);
     }

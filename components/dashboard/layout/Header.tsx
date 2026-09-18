@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Search, Bell, Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import ThemeToggle from "../../ThemeToggle";
 
 interface HeaderProps {
@@ -19,6 +20,11 @@ export default function Header({
   onMenuClick,
 }: HeaderProps) {
   const pathname = usePathname() || "";
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [avatarUrl]);
   
   // Determine title based on current path
   let title = "Dashboard";
@@ -84,12 +90,13 @@ export default function Header({
               {userRole ? <p className="text-[10px] text-muted-foreground">{userRole}</p> : null}
             </div>
           ) : null}
-          <div className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-[#E4E3E3CC] dark:border-zinc-800 flex items-center justify-center overflow-hidden bg-muted shrink-0 shadow-inner">
-            {avatarUrl ? (
+          <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gray-300 dark:bg-zinc-700 flex items-center justify-center overflow-hidden shrink-0 border border-gray-300 dark:border-zinc-600 transition-colors">
+            {avatarUrl && !imgError ? (
               <img
                 src={avatarUrl}
                 alt={userName || "Profile"}
                 className="w-full h-full object-cover"
+                onError={() => setImgError(true)}
               />
             ) : null}
           </div>

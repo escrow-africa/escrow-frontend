@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { ArrowLeft, ChevronDown } from "lucide-react";
-import toast from "react-hot-toast";
 
 interface PreferencesFormProps {
   initialData: {
@@ -38,7 +37,6 @@ export default function PreferencesForm({
     setSaving(true);
     try {
       await onSave({ currency, language, timezone });
-      toast.success("Preferences updated successfully!");
     } catch {
       // Handled by parent
     } finally {

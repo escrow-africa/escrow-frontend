@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { ArrowLeft, Check } from "lucide-react";
-import toast from "react-hot-toast";
 
 interface AlertPreferencesFormProps {
   initialData: {
@@ -62,9 +61,8 @@ export default function AlertPreferencesForm({
       }, {} as Record<string, boolean>);
 
       await onSave(data);
-      toast.success("Notification preferences saved successfully!");
     } catch (err) {
-      toast.error("Failed to save preferences.");
+      // Handled by parent
     } finally {
       setSaving(false);
     }

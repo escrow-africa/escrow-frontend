@@ -43,15 +43,15 @@ export default function SecurityForm({
     try {
       await onSave(data);
       reset();
-      toast.success("Security settings updated successfully!");
+      toast.success("Security settings updated successfully!", { id: "settings-toast" });
     } catch {
-      toast.error("Failed to update password.");
+      toast.error("Failed to update password.", { id: "settings-toast" });
     }
   };
 
   const handleDeactivate = () => {
     if (deactivateInput !== "DEACTIVATE") return;
-    toast.error("Account deactivation is not connected to the backend yet.");
+    toast.error("Account deactivation is not connected to the backend yet.", { id: "settings-toast" });
   };
 
   return (

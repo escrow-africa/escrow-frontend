@@ -279,10 +279,10 @@ export default function SettingsPage() {
         window.dispatchEvent(new Event("user-profile-updated"));
       }
 
-      toast.success("Profile updated successfully!");
+      toast.success("Profile updated successfully!", { id: "settings-toast" });
       setActiveView("main");
     } catch (err) {
-      toast.error("Failed to update profile. Please try again.");
+      toast.error("Failed to update profile. Please try again.", { id: "settings-toast" });
     } finally {
       setIsSyncing(false);
     }
@@ -293,10 +293,10 @@ export default function SettingsPage() {
     try {
       await settingsApi.updateBilling(data);
       setBillingData(data);
-      toast.success("Billing details updated successfully!");
+      toast.success("Billing details updated successfully!", { id: "settings-toast" });
       setActiveView("main");
     } catch (err) {
-      toast.error("Failed to save billing information.");
+      toast.error("Failed to save billing information.", { id: "settings-toast" });
     } finally {
       setIsSyncing(false);
     }
@@ -312,10 +312,10 @@ export default function SettingsPage() {
     try {
       await settingsApi.updateNotificationPreferences(data);
       setNotificationData(data);
-      toast.success("Notification preferences saved successfully!");
+      toast.success("Notification preferences saved successfully!", { id: "settings-toast" });
       setActiveView("main");
     } catch (err) {
-      toast.error("Failed to save notification preferences.");
+      toast.error("Failed to save notification preferences.", { id: "settings-toast" });
     } finally {
       setIsSyncing(false);
     }
@@ -330,10 +330,10 @@ export default function SettingsPage() {
     try {
       await settingsApi.updatePreferences(data);
       setPreferencesData(data);
-      toast.success("Preferences saved successfully!");
+      toast.success("Preferences saved successfully!", { id: "settings-toast" });
       setActiveView("main");
     } catch (err) {
-      toast.error("Failed to save preferences.");
+      toast.error("Failed to save preferences.", { id: "settings-toast" });
     } finally {
       setIsSyncing(false);
     }
@@ -354,9 +354,9 @@ export default function SettingsPage() {
         tier: "Pending Review",
       }));
       
-      toast.success("KYC documentation submitted successfully!");
+      toast.success("KYC documentation submitted successfully!", { id: "settings-toast" });
     } catch (err) {
-      toast.error("Failed to upload KYC credentials.");
+      toast.error("Failed to upload KYC credentials.", { id: "settings-toast" });
       throw err;
     } finally {
       setIsSyncing(false);
