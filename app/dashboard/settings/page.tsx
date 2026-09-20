@@ -247,7 +247,7 @@ export default function SettingsPage() {
       let finalAvatarUrl = data.avatarUrl;
       if (data.avatarFile) {
         const formData = new FormData();
-        formData.append("avatar-file", data.avatarFile);
+        formData.append("avatar", data.avatarFile);
         const avatarRes = await settingsApi.uploadAvatar(formData);
         const resUrl = avatarRes?.avatarUrl || avatarRes?.url || avatarRes?.data?.avatarUrl || avatarRes?.data?.url || (typeof avatarRes?.data === 'string' ? avatarRes.data : undefined);
         if (resUrl) {

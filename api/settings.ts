@@ -95,7 +95,7 @@ export const settingsApi = {
   // Avatar Upload
   uploadAvatar: async (formData: FormData) => {
     try {
-      const response = await api.post("/auth/avatar", formData);
+      const response = await api.post("/auth/me/avatar", formData);
       return response.data;
     } catch (error: any) {
       throw error;
