@@ -64,7 +64,7 @@ export const settingsApi = {
   },
 
   // User Profile
-  updateProfile: async (payload: { firstName: string; lastName: string; bio: string }) => {
+  updateProfile: async (payload: { firstName: string; lastName: string; bio: string; avatar?: string }) => {
     try {
       const response = await api.patch("/auth/me", payload);
       return response.data;

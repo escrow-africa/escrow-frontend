@@ -236,14 +236,7 @@ export default function SettingsPage() {
   }) => {
     setIsSyncing(true);
     try {
-      // 1. Update core fields via PATCH /auth/me
-      await settingsApi.updateProfile({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        bio: data.bio,
-      });
-
-      // 2. Upload avatar if a new image file is chosen
+      // Upload the avatar first so the profile payload contains its persisted URL.
       let finalAvatarUrl = data.avatarUrl;
       if (data.avatarFile) {
         const formData = new FormData();
@@ -254,6 +247,13 @@ export default function SettingsPage() {
           finalAvatarUrl = resUrl;
         }
       }
+
+      await settingsApi.updateProfile({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        bio: data.bio,
+        ...(finalAvatarUrl ? { avatar: finalAvatarUrl } : {}),
+      });
       
       const combinedName = `${data.firstName} ${data.lastName}`.trim();
       
