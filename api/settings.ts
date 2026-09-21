@@ -73,6 +73,19 @@ export const settingsApi = {
     }
   },
 
+  changePassword: async (payload: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => {
+    try {
+      const response = await api.post("/auth/change-password", payload);
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
+  },
+
   // KYC Status & Submit
   getKycStatus: async () => {
     try {

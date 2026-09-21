@@ -363,8 +363,18 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveGeneric = async () => {
-    throw new Error("This settings section is not connected to a backend endpoint.");
+  const handleSavePassword = async (data: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }) => {
+    setIsSyncing(true);
+    try {
+      await settingsApi.changePassword(data);
+      setActiveView("main");
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   // Get initials from first name and last name
@@ -598,7 +608,7 @@ export default function SettingsPage() {
           {activeView === "security" && (
             <SecurityForm
               onCancel={() => setActiveView("main")}
-              onSave={handleSaveGeneric}
+              onSave={handleSavePassword}
             />
           )}
 
