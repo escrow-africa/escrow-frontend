@@ -343,8 +343,8 @@ export default function SettingsPage() {
     setIsSyncing(true);
     try {
       const formData = new FormData();
-      formData.append("document-file", data.file);
-      formData.append("documenttype", data.documentType);
+      formData.append("documentType", data.documentType);
+      formData.append("document", data.file);
       await settingsApi.submitKyc(formData);
       
       // Update local state to pending
