@@ -498,6 +498,15 @@ export default function SettingsPage() {
                 {userData.email}
               </p>
 
+              <div className="mb-4 rounded-2xl border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/80 px-3 py-2 text-left">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400 mb-1">
+                  Bio
+                </p>
+                <p className="text-xs leading-5 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                  {userData.bio || "No bio added yet."}
+                </p>
+              </div>
+
               {/* Verification Tag */}
               <div className="inline-flex items-center gap-1.5 bg-[#E8F5E9] dark:bg-emerald-950/20 border border-[#A5D6A7] dark:border-emerald-900/40 text-[#2E7D32] dark:text-emerald-400 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">
                 <ShieldCheck size={12} className="shrink-0 text-[#2E7D32] dark:text-emerald-400" />
