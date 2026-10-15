@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import {
   ArrowLeft,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { authApi, SessionItem } from "../../../api/auth";
+import { useAuthStore } from "../../../store/authStore";
 
 interface SecurityFormProps {
   onCancel: () => void;
@@ -261,6 +263,8 @@ export default function SecurityForm({
   onCancel,
   onSave,
 }: SecurityFormProps) {
+  const router = useRouter();
+  const logout = useAuthStore((state) => state.logout);
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -268,7 +272,7 @@ export default function SecurityForm({
   // Modal State
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivateInput, setDeactivateInput] = useState("");
-  const [isDeactivating] = useState(false);
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   // Sessions State
   const [sessions, setSessions] = useState<SessionItem[]>([]);
@@ -304,9 +308,20 @@ export default function SecurityForm({
     }
   };
 
-  const handleDeactivate = () => {
+  const handleDeactivate = async () => {
     if (deactivateInput !== "DEACTIVATE") return;
-    toast.error("Account deactivation is not connected to the backend yet.", { id: "settings-toast" });
+    setIsDeactivating(true);
+    try {
+      await authApi.deactivateAccount();
+      toast.success("Your account has been deactivated.", { id: "settings-toast" });
+      setShowDeactivateModal(false);
+      logout();
+      router.push("/login");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to deactivate account.", { id: "settings-toast" });
+    } finally {
+      setIsDeactivating(false);
+    }
   };
 
   const fetchSessions = async () => {

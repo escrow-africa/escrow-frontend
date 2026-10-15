@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowLeft, Landmark, MoreVertical, ChevronDown } from "lucide-react";
+import { ArrowLeft, Landmark, MoreVertical, ChevronDown, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useWalletStore } from "../../../store/walletStore";
+import { walletApi } from "../../../api/wallet";
 
 interface BankAccount {
   id: string;
   bankName: string;
+  bankCode: string;
   accountNumber: string;
   accountName: string;
   isDefault: boolean;
@@ -21,49 +23,63 @@ export default function PayoutMethodsForm({
   onCancel,
 }: PayoutMethodsFormProps) {
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const { banks, fetchBankList } = useWalletStore();
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  
+
   const [newBank, setNewBank] = useState({
+    bankCode: "",
     bankName: "",
     accountNumber: "",
+    accountName: "",
   });
+
+  const fetchAccounts = async () => {
+    setLoadingAccounts(true);
+    try {
+      const res = await walletApi.getPayoutAccounts();
+      const list = res?.data || res;
+      setAccounts(Array.isArray(list) ? list : []);
+    } catch {
+      toast.error("Failed to load payout accounts.");
+    } finally {
+      setLoadingAccounts(false);
+    }
+  };
 
   React.useEffect(() => {
     fetchBankList().catch(() => {
       toast.error("Failed to load bank providers.");
     });
+    fetchAccounts();
   }, [fetchBankList]);
 
-  const handleDelete = (id: string) => {
-    const accountToDelete = accounts.find((acc) => acc.id === id);
-    const updated = accounts.filter((acc) => acc.id !== id);
-    
-    // If we deleted the default account, make the next one default
-    if (accountToDelete?.isDefault && updated.length > 0) {
-      updated[0].isDefault = true;
-      updated[0].accountName = "Primary Clearing Account";
+  const handleDelete = async (id: string) => {
+    try {
+      await walletApi.deletePayoutAccount(id);
+      toast.success("Bank account removed.");
+      await fetchAccounts();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to remove bank account.");
     }
-    
-    setAccounts(updated);
-    toast.success("Bank account removed.");
   };
 
-  const handleSetDefault = (id: string) => {
-    const updated = accounts.map((acc) => ({
-      ...acc,
-      isDefault: acc.id === id,
-      accountName: acc.id === id ? "Primary Clearing Account" : "Secondary Clearing Account",
-    }));
-    setAccounts(updated);
-    toast.success("Default payout method updated.");
+  const handleSetDefault = async (id: string) => {
+    try {
+      await walletApi.setDefaultPayoutAccount(id);
+      toast.success("Default payout method updated.");
+      await fetchAccounts();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to update default payout method.");
+    }
   };
 
-  const handleAddAccount = (e: React.FormEvent) => {
+  const handleAddAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBank.bankName || !newBank.accountNumber) {
+    if (!newBank.bankCode || !newBank.accountNumber || !newBank.accountName) {
       toast.error("Please fill in all fields.");
       return;
     }
@@ -72,7 +88,18 @@ export default function PayoutMethodsForm({
       return;
     }
 
-    toast.error("Adding payout methods is not connected to the backend yet.");
+    setSubmitting(true);
+    try {
+      await walletApi.addPayoutAccount(newBank);
+      toast.success("Bank account added.");
+      setShowAddForm(false);
+      setNewBank({ bankCode: "", bankName: "", accountNumber: "", accountName: "" });
+      await fetchAccounts();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to add payout account.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -106,12 +133,17 @@ export default function PayoutMethodsForm({
 
         {/* Accounts List */}
         <div className="space-y-4">
-          {accounts.length === 0 && (
+          {loadingAccounts ? (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400">
+              <Loader2 size={24} className="animate-spin text-[#0F3D2E] dark:text-[#F3B659] mb-2" />
+              <p className="text-xs">Loading payout methods...</p>
+            </div>
+          ) : accounts.length === 0 ? (
             <p className="border border-dashed border-[#E4E3E3CC] dark:border-zinc-800 rounded-xl p-6 text-center text-sm text-gray-500 dark:text-gray-400">
               No payout methods are connected.
             </p>
-          )}
-          {accounts.map((acc) => (
+          ) : (
+            accounts.map((acc) => (
             <div
               key={acc.id}
               className="border border-[#E4E3E3CC] dark:border-zinc-800 bg-[#FAFBFA] dark:bg-zinc-900/30 rounded-2xl p-5 flex items-center justify-between gap-4 transition-all relative"
@@ -190,7 +222,8 @@ export default function PayoutMethodsForm({
                 </div>
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
 
         {/* Close button at the bottom */}
@@ -231,14 +264,17 @@ export default function PayoutMethodsForm({
                 </label>
                 <div className="relative">
                   <select
-                    value={newBank.bankName}
-                    onChange={(e) => setNewBank({ ...newBank, bankName: e.target.value })}
+                    value={newBank.bankCode}
+                    onChange={(e) => {
+                      const selected = banks.find((b) => b.code === e.target.value);
+                      setNewBank({ ...newBank, bankCode: e.target.value, bankName: selected?.name || "" });
+                    }}
                     className="w-full !bg-[#F4F4F5] dark:!bg-zinc-950 border !border-transparent dark:!border-zinc-800 text-gray-900 dark:text-white px-4 py-3.5 rounded-xl appearance-none font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-[#0F3D2E] dark:focus:ring-emerald-500 cursor-pointer pr-10"
                     required
                   >
                     <option value="">Select a bank</option>
                     {banks.map((bank) => (
-                      <option key={bank.code} value={bank.name}>{bank.name}</option>
+                      <option key={bank.code} value={bank.code}>{bank.name}</option>
                     ))}
                   </select>
                   {/* Custom Arrow Down */}
@@ -267,20 +303,44 @@ export default function PayoutMethodsForm({
                 />
               </div>
 
+              {/* ACCOUNT NAME */}
+              <div>
+                <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-[0.15em] mb-2 uppercase">
+                  Account Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="As it appears on your bank account"
+                  value={newBank.accountName}
+                  onChange={(e) => setNewBank({ ...newBank, accountName: e.target.value })}
+                  className="w-full !bg-[#F4F4F5] dark:!bg-zinc-950 border !border-transparent dark:!border-zinc-800 text-gray-900 dark:text-white px-4 py-3.5 rounded-xl font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-[#0F3D2E] dark:focus:ring-emerald-500 placeholder-gray-400"
+                  required
+                />
+              </div>
+
               {/* Action Buttons */}
               <div className="flex items-center gap-4 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="w-1/2 py-3.5 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-zinc-700 rounded-xl text-xs font-bold hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-center"
+                  disabled={submitting}
+                  className="w-1/2 py-3.5 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-zinc-700 rounded-xl text-xs font-bold hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors cursor-pointer text-center disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="w-1/2 py-3.5 bg-[#0F3D2E] dark:bg-emerald-700 text-white rounded-xl text-xs font-bold hover:bg-[#185541] dark:hover:bg-emerald-600 transition-colors cursor-pointer text-center"
+                  disabled={submitting}
+                  className="w-1/2 py-3.5 bg-[#0F3D2E] dark:bg-emerald-700 text-white rounded-xl text-xs font-bold hover:bg-[#185541] dark:hover:bg-emerald-600 transition-colors cursor-pointer text-center disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Add Bank Route
+                  {submitting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Adding...</span>
+                    </>
+                  ) : (
+                    <span>Add Bank Route</span>
+                  )}
                 </button>
               </div>
             </form>
@@ -290,4 +350,3 @@ export default function PayoutMethodsForm({
     </div>
   );
 }
-

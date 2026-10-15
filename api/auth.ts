@@ -106,6 +106,15 @@ export const authApi = {
       throw error;
     }
   },
+
+  deactivateAccount: async () => {
+    try {
+      const response = await api.post("/auth/deactivate");
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
+  },
 };
 
 export interface SessionItem {

@@ -5,6 +5,7 @@ export default interface SignUpData {
   email: string;
   createPassword: string;
   confirmPassword: string;
+  bvn: string;
 }
 export interface LoginData{
 
