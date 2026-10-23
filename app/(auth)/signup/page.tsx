@@ -137,6 +137,22 @@ export default function Signup() {
               )}
             </div>
 
+            <div className="mt-3">
+              <label htmlFor="bvn" className="tracking-[0.4em] text-xs" >BVN OR NIN</label>
+              <Input id="bvn" type="text" maxLength={11} {...register("bvn", {
+                required: "BVN or NIN is required",
+                pattern: {
+                  value: /^\d{11}$/,
+                  message: "Enter an 11-digit BVN or NIN"
+                }
+              })} />{errors.bvn && (
+                <p className="text-red-500 text-sm">
+                  {errors.bvn.message}
+                </p>
+              )}
+              <p className="text-[11px] text-gray-400 mt-1">Needed to set up your wallet&apos;s dedicated funding account.</p>
+            </div>
+
             <Button type="submit" disabled={isSubmitting || loading}>{isSubmitting ? "Creating..." : "Create Profile"}</Button>
 
 
