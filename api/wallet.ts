@@ -58,5 +58,10 @@ export const walletApi = {
     const response = await api.patch(`/wallet/payout-accounts/${id}/default`);
     return response.data;
   },
+
+  withdraw: async (payload: { amount: number; payoutAccountId: string }) => {
+    const response = await api.post("/wallet/withdraw", payload);
+    return response.data;
+  },
 };
 
