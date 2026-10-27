@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Escrow Africa Frontend
+
+This is the user-facing Next.js application for Escrow Africa. It provides the authentication flow, dashboard experience, wallet interactions, escrow management, and dispute-related views used by buyers and sellers.
+
+## Overview
+
+- Framework: Next.js 16 with React 19 and TypeScript
+- Styling: Tailwind CSS and custom theme support
+- State management: Zustand stores for auth and wallet state
+- API layer: Axios client with token-based auth handling
+- Charts and UI: Recharts, lucide-react, and custom dashboard components
+
+## Project Structure
+
+- [app/](app) — route-based pages such as sign-up, login, dashboard, and account views
+- [components/](components) — reusable UI primitives and dashboard widgets
+- [api/](api) — API wrappers for auth, escrow, and wallet endpoints
+- [store/](store) — global state for authentication and wallet data
+- [hooks/](hooks) — custom hooks such as dispute chat logic
+- [utils/](utils) — helpers for token handling and related utilities
+- [types/](types) — TypeScript models for domain entities
+
+## Main Features
+
+- User onboarding and authentication flow
+- OTP-based verification and password reset flows
+- Wallet funding and balance views
+- Escrow dashboard and transaction history
+- Dispute chat and moderation screens
+- Light/dark theme support
+
+## Environment Variables
+
+Create a local environment file with the API base URL used by the frontend:
+
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:3000/api
+```
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open http://localhost:3000 in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Available Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev      # start the Next.js development server
+npm run build    # create a production build
+npm run start    # run the production build locally
+npm run lint     # run ESLint checks
+```
 
-## Learn More
+## Notes
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The app expects the backend gateway to be running so the API calls in [api/axios.ts](api/axios.ts) can reach the correct endpoints.
+- Authentication tokens are stored in cookies using helpers from [utils/token.ts](utils/token.ts).
