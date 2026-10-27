@@ -1,42 +1,35 @@
 import { api } from "./axios";
-import toast from "react-hot-toast";
-
 
 export const walletApi = {
+  // Previously these four caught their own errors and showed an alert()/toast() internally,
+  // then returned undefined instead of re-throwing. Callers (FundWalletFlow, the wallet store)
+  // couldn't tell a failed call apart from a real response with no fields set, so they fell
+  // through to their success path anyway - e.g. funding a wallet that actually failed to charge
+  // still showed "Wallet funded successfully!". Letting the error propagate lets each caller's
+  // own catch block (which already exists and already shows a real error) actually run.
   getWalletDetails: async (page = 1, limit = 20) => {
-    try {
-      const response = await api.get(`/wallet/details?page=${page}&limit=${limit}`);
-      return response.data;
-    } catch {
-      toast.error("Failed to fetch wallet details. Please try again.");
-    }
+    const response = await api.get(`/wallet/details?page=${page}&limit=${limit}`);
+    return response.data;
   },
 
   getBankList: async () => {
-    try {
-      const response = await api.get("/wallet/banks");
-      return response.data;
-    } catch {
-      alert("Failed to fetch bank list. Please try again.");
-    }
+    const response = await api.get("/wallet/banks");
+    return response.data;
   },
 
   fundWallet: async (payload: { amount: number; method: string;[key: string]: any }) => {
-    try {
-      const response = await api.post("/wallet/topup", payload);
-      return response.data;
-    } catch {
-      alert("Failed to initiate top-up. Please try again.");
-    }
+    const response = await api.post("/wallet/topup", payload);
+    return response.data;
   },
 
   verifyCardOtp: async (payload: { token: string; transactionReference: string; tokenId: string;[key: string]: any }) => {
-    try {
-      const response = await api.post("/wallet/card-otp", payload);
-      return response.data;
-    } catch {
-      alert("An error occurred during verification.");
-    }
+    const response = await api.post("/wallet/card-otp", payload);
+    return response.data;
+  },
+
+  verifyCardPin: async (payload: { transactionReference: string; pin: string; card: { number: string; expiryMonth: string; expiryYear: string; cvv?: string } }) => {
+    const response = await api.post("/wallet/card-pin", payload);
+    return response.data;
   },
 
   getPayoutAccounts: async () => {

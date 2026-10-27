@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { CreditCard, Building2, Smartphone, Check, ShieldCheck, Clock, Copy } from "lucide-react";
+import { CreditCard, Building2, Smartphone, Check, ShieldCheck, Clock, Copy, ExternalLink, Loader2 } from "lucide-react";
 import { useWalletStore } from "../../../store/walletStore";
 import toast from "react-hot-toast";
 
 interface FundWalletFlowProps {
   onComplete: () => void;
 }
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
   const [step, setStep] = useState<number>(1);
@@ -22,10 +24,44 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
   const [transactionReference, setTransactionReference] = useState("");
   const [tokenId, setTokenId] = useState("");
 
+  // PIN Step (step 8)
+  const [pin, setPin] = useState("");
+
+  // Redirect/3D-Secure Step (step 9)
+  const [redirectUrl, setRedirectUrl] = useState("");
+  const [verifyingRedirect, setVerifyingRedirect] = useState(false);
+
   // Details from API
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
 
-  const { fundWallet, verifyCardOtp, isLoading } = useWalletStore();
+  const { fundWallet, verifyCardOtp, verifyCardPin, fetchWalletDetails, walletDetails, isLoading } = useWalletStore();
+
+  const cardPayload = () => {
+    const [expiryMonth, expiryYearRaw] = expiry.split('/');
+    const expiryYear = expiryYearRaw?.trim().length === 2 ? `20${expiryYearRaw.trim()}` : expiryYearRaw?.trim();
+    return { number: cardNumber.replace(/\s/g, ''), cvv, expiryMonth: expiryMonth?.trim(), expiryYear };
+  };
+
+  // After a 3D-Secure redirect, there's no code to submit - the cardholder completes the
+  // verification on Flutterwave's hosted page and the final status arrives via webhook. Poll the
+  // real balance for a bit rather than assuming success just because the user clicked "I've verified".
+  const pollForCredit = async () => {
+    setVerifyingRedirect(true);
+    const startingBalance = walletDetails?.balance ?? 0;
+    for (let i = 0; i < 8; i++) {
+      await sleep(2500);
+      await fetchWalletDetails();
+    }
+    setVerifyingRedirect(false);
+    const latest = useWalletStore.getState().walletDetails?.balance ?? startingBalance;
+    if (latest > startingBalance) {
+      toast.success("Wallet funded successfully!");
+      setStep(4);
+    } else {
+      toast("Still waiting for your bank to confirm. Check your transaction history shortly.", { icon: "⏳" });
+      onComplete();
+    }
+  };
 
   const handleAmountSelect = (val: string) => {
     setAmount(val);
@@ -61,25 +97,26 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
       setStep(3); // Processing
       try {
         const numAmount = parseFloat(amount.replace(/,/g, ''));
-        const [expiryMonth, expiryYearRaw] = expiry.split('/');
-        const expiryYear = expiryYearRaw?.trim().length === 2 ? `20${expiryYearRaw.trim()}` : expiryYearRaw?.trim();
 
         const response = await fundWallet({
           amount: numAmount,
           method: "card",
-          card: {
-            number: cardNumber.replace(/\s/g, ''),
-            cvv,
-            expiryMonth: expiryMonth?.trim(),
-            expiryYear
-          }
+          card: cardPayload()
         });
 
         const rawData = response?.raw || response?.data?.raw;
-        const isOtpRequired = response?.requiresOtp || response?.data?.requiresOtp || rawData?.status === "OTP_AUTHORIZATION_REQUIRED";
+        const authMode = response?.authorizationMode || response?.data?.authorizationMode;
+        const ref = rawData?.transactionReference || response?.transactionReference || response?.data?.transactionReference || "";
 
-        if (isOtpRequired) {
-          setTransactionReference(rawData?.transactionReference || response?.transactionReference || response?.data?.transactionReference || "");
+        if (authMode === "pin") {
+          setTransactionReference(ref);
+          setStep(8); // Move to PIN step
+        } else if (authMode === "redirect") {
+          setTransactionReference(ref);
+          setRedirectUrl(response?.redirectUrl || response?.data?.redirectUrl || "");
+          setStep(9); // Move to 3D-Secure redirect step
+        } else if (authMode === "otp" || response?.requiresOtp || response?.data?.requiresOtp) {
+          setTransactionReference(ref);
           setTokenId(rawData?.otpData?.id || response?.otpData?.id || response?.data?.otpData?.id || "");
           setStep(7); // Move to OTP step
         } else {
@@ -108,6 +145,37 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
         toast.error(error?.response?.data?.message || error?.message || "Invalid OTP or verification failed.");
         setStep(7); // Go back to OTP
       }
+    }
+  };
+
+  const handleVerifyPin = async () => {
+    if (pin) {
+      setStep(3); // Processing
+      try {
+        const response = await verifyCardPin({
+          transactionReference,
+          pin,
+          card: cardPayload()
+        });
+
+        const authMode = response?.authorizationMode || response?.data?.authorizationMode;
+        if (authMode === "redirect") {
+          setRedirectUrl(response?.redirectUrl || response?.data?.redirectUrl || "");
+          setStep(9);
+        } else {
+          toast.success("Wallet funded successfully!");
+          setStep(4); // Success
+        }
+      } catch (error: any) {
+        toast.error(error?.response?.data?.message || error?.message || "Incorrect PIN or verification failed.");
+        setStep(8); // Go back to PIN step
+      }
+    }
+  };
+
+  const handleOpenRedirect = () => {
+    if (redirectUrl) {
+      window.open(redirectUrl, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -341,6 +409,92 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
             >
               Verify & Complete
             </button>
+          </div>
+        )}
+
+        {/* Step 8: Card PIN Step */}
+        {step === 8 && (
+          <div className="flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="text-center mb-4">
+              <h2 className="text-lg font-bold text-gray-900 mb-1">Enter Card PIN</h2>
+              <p className="text-gray-500 text-xs">Your bank requires your card PIN to authorize this payment</p>
+            </div>
+
+            <div className="mb-2">
+              <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-500 mb-2 text-center">
+                CARD PIN
+              </label>
+              <input
+                type="password"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                placeholder="Enter 4-digit PIN"
+                maxLength={4}
+                className="w-full text-center bg-gray-50/70 border border-gray-100 text-gray-900 text-xl font-bold tracking-widest rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-[#0F3D2E]/20"
+              />
+            </div>
+
+            <button
+              onClick={handleVerifyPin}
+              disabled={pin.length < 4 || isLoading}
+              className={`w-full py-3 rounded-xl font-bold transition-colors mb-3 text-sm ${(pin.length >= 4 && !isLoading) ? "bg-[#0F3D2E] text-white hover:bg-[#185541]" : "bg-[#8DAAA0] text-white cursor-not-allowed text-opacity-90"
+                }`}
+            >
+              Verify & Complete
+            </button>
+
+            <div className="flex items-center justify-center gap-2 text-gray-400">
+              <ShieldCheck size={14} />
+              <span className="text-[10px] font-bold uppercase tracking-wider">PCI-DSS COMPLIANT SECURE PAYMENT</span>
+            </div>
+          </div>
+        )}
+
+        {/* Step 9: 3D-Secure Redirect Step */}
+        {step === 9 && (
+          <div className="flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {!verifyingRedirect ? (
+              <>
+                <div className="text-center mb-4">
+                  <h2 className="text-lg font-bold text-gray-900 mb-1">Additional Verification Required</h2>
+                  <p className="text-gray-500 text-xs">
+                    Your bank requires you to verify this payment on a secure page.
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 mb-4 flex flex-col items-center text-center gap-2">
+                  <ShieldCheck size={20} className="text-[#0F3D2E]" />
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Click below to open your bank&rsquo;s verification page in a new tab. Once you&rsquo;ve completed
+                    verification there, come back and press &ldquo;I&rsquo;ve Completed Verification&rdquo;.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleOpenRedirect}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-colors mb-3 text-sm bg-[#0F3D2E] text-white hover:bg-[#185541]"
+                >
+                  Open Verification Page <ExternalLink size={14} />
+                </button>
+
+                <button
+                  onClick={pollForCredit}
+                  className="w-full py-3 rounded-xl font-bold transition-colors text-sm border border-gray-200 text-gray-700 hover:bg-gray-50"
+                >
+                  I&rsquo;ve Completed Verification
+                </button>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-5">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#0F3D2E] mb-3">
+                  <Loader2 size={24} className="animate-spin" />
+                </div>
+                <h2 className="text-lg font-bold text-gray-900 mb-2 text-center">Confirming Payment</h2>
+                <p className="text-gray-500 text-xs text-center max-w-[260px] leading-relaxed">
+                  We&rsquo;re checking with your bank to confirm the verification. This can take a moment.
+                </p>
+              </div>
+            )}
           </div>
         )}
 
