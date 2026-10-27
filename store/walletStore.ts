@@ -32,6 +32,7 @@ interface WalletState {
   fetchBankList: () => Promise<void>;
   fundWallet: (payload: any) => Promise<any>;
   verifyCardOtp: (payload: any) => Promise<any>;
+  verifyCardPin: (payload: any) => Promise<any>;
   clearError: () => void;
 }
 
@@ -121,6 +122,21 @@ export const useWalletStore = create<WalletState>((set) => ({
     } catch (error: any) {
       set({
         error: error.response?.data?.message || "Failed to verify OTP",
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  verifyCardPin: async (payload: any) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await walletApi.verifyCardPin(payload);
+      set({ isLoading: false });
+      return response;
+    } catch (error: any) {
+      set({
+        error: error.response?.data?.message || "Failed to verify card PIN",
         isLoading: false,
       });
       throw error;
