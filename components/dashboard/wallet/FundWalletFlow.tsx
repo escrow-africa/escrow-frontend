@@ -137,7 +137,7 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
         await verifyCardOtp({
           transactionReference,
           tokenId,
-          token: Number(otp)
+          token: otp
         });
         toast.success("Wallet funded successfully!");
         setStep(4); // Success
@@ -158,10 +158,16 @@ export default function FundWalletFlow({ onComplete }: FundWalletFlowProps) {
           card: cardPayload()
         });
 
+        const rawData = response?.raw || response?.data?.raw;
         const authMode = response?.authorizationMode || response?.data?.authorizationMode;
         if (authMode === "redirect") {
           setRedirectUrl(response?.redirectUrl || response?.data?.redirectUrl || "");
           setStep(9);
+        } else if (authMode === "otp") {
+          // Some cards whose auth_model is "PIN" still follow up with an OTP after the PIN is
+          // accepted - route back through the existing OTP step rather than assuming success.
+          setTokenId(response?.tokenId || response?.data?.tokenId || rawData?.flw_ref || "");
+          setStep(7);
         } else {
           toast.success("Wallet funded successfully!");
           setStep(4); // Success
